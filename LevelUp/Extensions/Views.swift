@@ -8,20 +8,21 @@
 import Foundation
 import SwiftUI
 
+struct ElevatedCard: ViewModifier {
+    @Environment(\.theme) private var theme
+    var corner: CGFloat?
+
+    func body(content: Content) -> some View {
+        content
+            .background(theme.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: corner ?? theme.cornerRadiusLarge, style: .continuous))
+            .shadow(color: theme.shadowLight, radius: 8, y: 4)
+            .shadow(color: theme.shadowDark, radius: 18, y: 12)
+    }
+}
 extension View {
-    func elevatedCard(corner: CGFloat = 16) -> some View {
-        self
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
-            // subtle glossy edge
-            .overlay(
-                RoundedRectangle(cornerRadius: corner, style: .continuous)
-                    .strokeBorder(.white.opacity(0.5), lineWidth: 1)
-                    .blendMode(.overlay)
-            )
-            // layered shadows = depth
-            .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
-            .shadow(color: .black.opacity(0.14), radius: 22, y: 16)
+    func elevatedCard(corner: CGFloat? = nil) -> some View {
+        self.modifier(ElevatedCard(corner: corner))
     }
 }
 

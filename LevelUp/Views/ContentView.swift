@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.theme) private var theme   // ← get your theme
+
     var body: some View {
         VStack {
             
@@ -29,11 +31,14 @@ struct ContentView: View {
                     Text("Settings")
                 }
             }
-            .tint(.orange)
+            .tint(theme.primary)
+            .toolbarBackground(theme.cardBackground, for: .tabBar)
+            .background(theme.background.ignoresSafeArea())
         }
     }
 }
 
 #Preview {
     ContentView()
+        .environment(\.theme, .blue)
 }

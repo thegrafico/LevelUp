@@ -8,25 +8,21 @@
 import SwiftUI
 
 struct BannerTitle: View {
+    @Environment(\.theme) private var theme
+
     var body: some View {
         HStack {
             
             Image(systemName: "person.circle")
                 .resizable()
                 .frame(width: 64, height: 64)
-                .foregroundStyle(.yellow)
+                .foregroundStyle(theme.textBlack)
                 .fontWeight(.bold)
             
             Text("LEVEL UP")
                 .font(.system(size: 42, weight: .black, design: .rounded))
                 .kerning(2)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.yellow, .orange],
-                        startPoint: .leading, endPoint: .trailing
-                    )
-                )   // solid color
-            
+                .foregroundStyle(theme.textBlack)
             
             Spacer()
         }.padding(.horizontal, 20)

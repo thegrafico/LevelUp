@@ -8,27 +8,28 @@ import SwiftUI
 
 // MARK: - Middle Hub (Quick Actions + Today’s Progress)
 struct MiddleHubSection: View {
+    @Environment(\.theme) private var theme
     @State private var showQuickActions = false
 
     var body: some View {
         HStack(spacing: 12) {
             // LEFT: Quick Actions (tappable)
             Button {
-                let h = UIImpactFeedbackGenerator(style: .soft); h.impactOccurred()
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
                 showQuickActions = true
             } label: {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 8) {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(theme.primary)
                         Text("Quick Actions")
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(theme.textPrimary)
                     }
                     Text("Streak 5 days")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(theme.textSecondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -36,7 +37,7 @@ struct MiddleHubSection: View {
 
             // VERTICAL DIVIDER
             Rectangle()
-                .fill(Color.black.opacity(0.12))
+                .fill(theme.textPrimary.opacity(0.12))
                 .frame(width: 1, height: 36)
                 .cornerRadius(0.5)
 
@@ -44,29 +45,33 @@ struct MiddleHubSection: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Today’s Progress")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(theme.textPrimary)
 
                 ProgressView(value: 0.42) { EmptyView() }
-                    .progressViewStyle(ThickLinearProgressStyle(height: 8))
+                    .progressViewStyle(ThickLinearProgressStyle(height: 8)) // themed style
                     .frame(maxWidth: .infinity)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
-        .shadow(color: .black.opacity(0.12), radius: 16, y: 10)
+        .background(theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadiusLarge, style: .continuous))
+        .shadow(color: theme.shadowLight, radius: 8, y: 4)
+        .shadow(color: theme.shadowDark, radius: 16, y: 10)
         .sheet(isPresented: $showQuickActions) {
             QuickActionsSheet()
                 .presentationDetents([.medium, .large])
+                .background(theme.background.ignoresSafeArea())
         }
+        .padding(.horizontal, 30)
+        .padding(.bottom, 12)
     }
 }
 
 // MARK: - Quick Actions Sheet (modal)
 struct QuickActionsSheet: View {
+    @Environment(\.theme) private var theme
     private let columns = [GridItem(.adaptive(minimum: 120), spacing: 12, alignment: .top)]
 
     var body: some View {
@@ -84,37 +89,38 @@ struct QuickActionsSheet: View {
             }
             .navigationTitle("Quick Actions")
             .navigationBarTitleDisplayMode(.inline)
-            .background(Color(.systemGroupedBackground))
+            .background(theme.background)
         }
     }
 }
 
 struct ActionTile: View {
+    @Environment(\.theme) private var theme
     var icon: String
     var title: String
 
     var body: some View {
         Button {
-            let h = UIImpactFeedbackGenerator(style: .soft); h.impactOccurred()
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
         } label: {
             HStack(spacing: 10) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color.orange.opacity(0.12))
+                    RoundedRectangle(cornerRadius: theme.cornerRadiusSmall, style: .continuous)
+                        .fill(theme.primary.opacity(0.12))
                         .frame(width: 40, height: 40)
                     Image(systemName: icon)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(theme.primary)
                 }
                 Text(title)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(theme.textPrimary)
                 Spacer(minLength: 0)
             }
             .padding(12)
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .shadow(color: .black.opacity(0.05), radius: 6, y: 3)
+            .background(theme.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadiusSmall, style: .continuous))
+            .shadow(color: theme.shadowLight, radius: 6, y: 3)
         }
         .buttonStyle(.plain)
     }
@@ -122,9 +128,10 @@ struct ActionTile: View {
 
 // MARK: - Big Complete Button
 struct CompleteButton: View {
+    @Environment(\.theme) private var theme
     var title: String = "COMPLETE"
     var action: () -> Void = {
-        let h = UIImpactFeedbackGenerator(style: .heavy); h.impactOccurred()
+        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
     }
 
     var body: some View {
@@ -132,20 +139,24 @@ struct CompleteButton: View {
             Text(title)
                 .font(.headline.weight(.heavy))
                 .kerning(1)
-                .foregroundStyle(.white)
+                .foregroundStyle(theme.textInverse)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 18)
                 .background(
-                    LinearGradient(colors: [.orange, .orange.opacity(0.85)],
+                    LinearGradient(colors: [theme.primary, theme.primary.opacity(0.85)],
                                    startPoint: .topLeading, endPoint: .bottomTrailing)
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .shadow(color: .black.opacity(0.12), radius: 10, y: 8)
+                .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadiusLarge, style: .continuous))
+                .shadow(color: theme.shadowDark, radius: 10, y: 8)
         }
         .buttonStyle(.plain)
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
     }
 }
 #Preview {
     MiddleHubSection()
+        .environment(\.theme, .blue)
     CompleteButton()
+        .environment(\.theme, .blue)
 }

@@ -8,9 +8,10 @@
 import SwiftUI
 
 struct UserLevelXPCard: View {
+    @Environment(\.theme) private var theme
+
     var onTap: () -> Void = {
-        let g = UIImpactFeedbackGenerator(style: .soft)
-        g.impactOccurred()
+        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
     }
 
     var body: some View {
@@ -20,39 +21,38 @@ struct UserLevelXPCard: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Level 3")
                             .font(.title2.weight(.bold))
-                            .foregroundStyle(.black)
-                        Text("210/400 XP")
-                            .font(.subheadline)
-                            .foregroundStyle(.black.opacity(0.75))
+                            .foregroundStyle(theme.textPrimary)
+                            .monospaced()
+                        Text("210 / 400 XP")
+                            .font(theme.bodyFont)
+                            .foregroundStyle(theme.textSecondary)
                             .monospaced()
                     }
                     Spacer()
                 }
 
-                ProgressView(value: 210, total: 400) { Text("XP") }
-                    .progressViewStyle(
-                        ThickLinearProgressStyle(height: 22)
-                    )
+                ProgressView(value: 210, total: 400) { EmptyView() }
+                    .progressViewStyle(ThickLinearProgressStyle(height: 22))
             }
             .padding(20)
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: theme.cornerRadiusLarge, style: .continuous))
         }
-        .buttonStyle(PressableCardStyle())
-        .elevatedCard(corner: 16)
+        .buttonStyle(PressableCardStyleThemed())   // ← themed press style
+        .elevatedCard()                            // ← themed card background + shadows + radius
         .padding(.horizontal, 20)
         .padding(.top, 8)
     }
 }
 
-struct PressableCardStyle: ButtonStyle {
+struct PressableCardStyleThemed: ButtonStyle {
+    @Environment(\.theme) private var theme
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
-            .shadow(color: .black.opacity(configuration.isPressed ? 0.04 : 0.14),
+            .shadow(color: configuration.isPressed ? theme.shadowLight : theme.shadowDark,
                     radius: configuration.isPressed ? 10 : 22,
                     y: configuration.isPressed ? 8 : 16)
-            .animation(.spring(duration: 0.25, bounce: 0.25),
-                       value: configuration.isPressed)
+            .animation(.spring(duration: 0.25, bounce: 0.25), value: configuration.isPressed)
     }
 }
 

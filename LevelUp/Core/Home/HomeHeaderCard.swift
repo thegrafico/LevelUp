@@ -7,41 +7,42 @@
 
 import SwiftUI
 
-
-
 struct TopBannerBackground: View {
+    @Environment(\.theme) private var theme
+
     var height: CGFloat = 220
-    var radius: CGFloat = 120
+    var radius: CGFloat = 60
 
     var body: some View {
         LinearGradient(
-            colors: [
-                Color(red: 0.78, green: 0.40, blue: 0.16), // warm orange
-                Color(red: 0.55, green: 0.27, blue: 0.10)  // deep brown
-            ],
+            colors: [theme.primary, theme.primary.opacity(0.75)],  // simple on-brand gradient
             startPoint: .topLeading, endPoint: .bottomTrailing
         )
-        .overlay( // subtle highlight
-            LinearGradient(colors: [.white.opacity(0.12), .clear],
-                           startPoint: .top, endPoint: .bottom)
+        .overlay(
+            LinearGradient(
+                colors: [.white.opacity(0.12), .clear],
+                startPoint: .top,
+                endPoint: .bottom
+                )
         )
-        .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+        .frame(
+            maxWidth: .infinity,
+            minHeight: height,
+            maxHeight: height
+        )
         .mask(
             UnevenRoundedRectangle(
                 topLeadingRadius: 0,
                 bottomLeadingRadius: radius,
                 bottomTrailingRadius: radius,
                 topTrailingRadius: 0,
-                
-                
-                
-                
                 style: .continuous
             )
         )
-        .shadow(color: .black.opacity(0.12), radius: 16, y: 8)
+        .shadow(color: theme.shadowDark, radius: 16, y: 8)
     }
 }
 #Preview {
     TopBannerBackground()
+        .environment(\.theme, .orange)
 }

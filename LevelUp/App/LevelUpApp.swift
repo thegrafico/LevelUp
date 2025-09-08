@@ -14,6 +14,7 @@ struct LevelUpApp: App {
         WindowGroup {
             ContentView()
                 .modelContainer(for: Mission.self)
+                .environment(\.theme, .orange)   // inject theme here
         }
     }
 }

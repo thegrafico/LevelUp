@@ -16,19 +16,23 @@ struct BannerTitle: View {
             Image(systemName: "person.circle")
                 .resizable()
                 .frame(width: 64, height: 64)
-                .foregroundStyle(theme.textBlack)
                 .fontWeight(.bold)
             
             Text("LEVEL UP")
                 .font(.system(size: 42, weight: .black, design: .rounded))
                 .kerning(2)
-                .foregroundStyle(theme.textBlack)
+                
             
             Spacer()
-        }.padding(.horizontal, 20)
+        }
+        .padding(.horizontal, 20)
+        .foregroundStyle(theme.textInverse)
     }
 }
 
 #Preview {
     BannerTitle()
+        .padding(20)
+        .background(Color.black)
+    
 }

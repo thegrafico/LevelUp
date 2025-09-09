@@ -20,11 +20,11 @@ struct ContentView: View {
                 }
                 
                 Tab("Leaderboard", systemImage: "trophy.fill") {
-                    Text("Board")
+                    LeaderboardView()
                 }
                 
                 Tab("Friends", systemImage: "person.3.fill") {
-                    Text("Friends")
+                    FriendsView()
                 }
                 
                 Tab("Settings", systemImage: "gear") {
@@ -40,5 +40,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .environment(\.theme, .blue)
+        .environment(\.theme, .orange)
 }

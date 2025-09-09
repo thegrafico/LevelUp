@@ -11,15 +11,9 @@ import SwiftUI
 
 struct Header: View {
     
-    private let bannerH: CGFloat = 220
-    private let bannerCorner: CGFloat = 60
-    
     var body: some View {
         ZStack(alignment: .top) {
-            TopBannerBackground(
-                height: bannerH,
-                radius: bannerCorner
-            )
+            TopBannerBackground()
                 .ignoresSafeArea(edges: .top)
 
             VStack(spacing: 0) {

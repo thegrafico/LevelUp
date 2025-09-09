@@ -9,15 +9,15 @@ import SwiftUI
 
 struct MissionRow: View {
     @Environment(\.theme) var theme
-    @Bindable var mission: Mission
-    var onToggle: (Mission) -> Void
+    @Binding var mission: Mission
+//    var onToggle: (Mission) -> Void
 
     var body: some View {
         Button {
             let h = UIImpactFeedbackGenerator(style: .soft); h.impactOccurred()
             withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                 mission.completed.toggle()
-                onToggle(mission)
+//                onToggle(mission)
             }
         } label: {
             HStack(spacing: 14) {
@@ -64,6 +64,6 @@ struct MissionRow: View {
 }
 
 #Preview {
-    MissionRow(mission: Mission.sampleData[0], onToggle: {_ in })
+    MissionRow(mission: .constant(Mission.sampleData[0]))//, onToggle: {_ in })
         .environment(\.theme, .orange)
 }

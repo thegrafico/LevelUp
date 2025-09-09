@@ -1,8 +1,9 @@
 import SwiftUI
 
 struct HomeView: View {
-    private let bannerH: CGFloat = 220
-    private let bannerCorner: CGFloat = 60
+    
+    @State private var missions: [Mission] = Mission.sampleData
+
 
     var body: some View {
         VStack(spacing: 0) {
@@ -14,16 +15,16 @@ struct HomeView: View {
             MiddleHubSection()
                 
             // MARK: Mission List
-            MissionList()
+            MissionList(missions: $missions)
 
         }
         .background(Color(.systemGroupedBackground))
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 12) {
                 
-                // MARK: COMPLETE BTN
-                CompleteButton()
-                    .padding(.bottom, 20)
+                if missions.contains(where: { $0.completed }) {
+                    CompleteButton().padding(.bottom, 20)
+                }
             }
         }
     }

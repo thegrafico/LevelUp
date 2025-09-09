@@ -8,8 +8,9 @@ import SwiftUI
 
 // MARK: - Section
 struct MissionList: View {
-
-    @State private var items: [Mission] = Mission.sampleData
+    
+    @Binding var missions: [Mission]
+//    @State private var items: [Mission] = Mission.sampleData
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -20,8 +21,8 @@ struct MissionList: View {
             ScrollView {
 
                 VStack(spacing: 16) {
-                    ForEach(items.indices, id: \.self) { i in
-                        MissionRow(mission: items[i], onToggle: { _ in })
+                    ForEach($missions, id: \.id) { $mission in
+                        MissionRow(mission: $mission)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -35,7 +36,7 @@ struct MissionList: View {
 #Preview {
     ScrollView {
         VStack(spacing: 16) {
-            MissionList()
+            MissionList(missions: .constant(Mission.sampleData))
         }
         .padding(.vertical, 20)
     }

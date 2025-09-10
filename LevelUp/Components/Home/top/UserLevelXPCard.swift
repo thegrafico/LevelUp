@@ -31,7 +31,7 @@ struct UserLevelXPCard: View {
                     Spacer()
                 }
 
-                ProgressView(value: 210, total: 400) { EmptyView() }
+                ProgressView(value: 300, total: 400) { EmptyView() }
                     .progressViewStyle(ThickLinearProgressStyle(height: 22))
             }
             .padding(20)

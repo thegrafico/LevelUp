@@ -1,0 +1,49 @@
+//
+//  User.swift
+//  LevelUp
+//
+//  Created by Raúl Pichardo Avalo on 9/10/25.
+//
+
+import Foundation
+import SwiftData
+
+@Model
+final class User: Identifiable {
+    @Attribute(.unique) var id: UUID
+    
+    var username: String
+    var passwordHash: String
+    var email: String
+
+    
+    var level: Int
+    var xp: Int
+    
+    var avatar: String?
+    
+    // Relationships
+    @Relationship(deleteRule: .cascade) var missions: [Mission] = []
+    @Relationship(deleteRule: .cascade) var friends: [Friend] = []
+    @Relationship(deleteRule: .cascade) var settings: Settings?
+    
+    init(
+        username: String,
+        passwordHash: String,
+        email: String,
+        avatar: String = "person.fill",
+        level: Int = 1,
+        xp: Int = 0,
+        settings: Settings? = nil,
+        id: UUID = UUID()
+    ) {
+        self.username = username
+        self.passwordHash = passwordHash
+        self.email = email
+        self.avatar = avatar
+        self.level = level
+        self.xp = xp
+        self.settings = settings
+        self.id = id
+    }
+}

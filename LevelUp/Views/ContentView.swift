@@ -28,7 +28,7 @@ struct ContentView: View {
                 }
                 
                 Tab("Settings", systemImage: "gear") {
-                    Text("Settings")
+                   SettingsView()
                 }
             }
             .tint(theme.primary)

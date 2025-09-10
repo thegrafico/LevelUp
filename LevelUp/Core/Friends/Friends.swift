@@ -26,20 +26,23 @@ private let demoFriends: [UIFriend] = [
     .init(name: "Sofia",  username: "@sofia",  avatar: "person.fill", isOnline: true),
 ]
 
-struct FriendsHeader: View {
+struct BannerHeader: View {
     @Environment(\.theme) private var theme
+    var title: String
+    var subtitle: String
+    
     var height: CGFloat = 200
     var radius: CGFloat = 0
-
+    
     var body: some View {
         TopBannerBackground(height: height, radius: radius)
             .overlay(alignment: .bottomLeading) {     // <- text sits ON the banner
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("FRIENDS")
+                    Text(title)
                         .font(.system(size: 34, weight: .black, design: .rounded))
                         .kerning(1.5)
                         .foregroundStyle(theme.textInverse)
-                    Text("Find and add friends")
+                    Text(subtitle)
                         .font(.headline)
                         .foregroundStyle(theme.textInverse.opacity(0.85))
                 }
@@ -68,17 +71,9 @@ struct FriendsView: View {
     var body: some View {
         VStack(spacing: 16) {
             // Banner header with title on top of gradient
-            FriendsHeader(height: 200, radius: 0)
+            BannerHeader(title: "Friends", subtitle: "Find and add friends")
             
             VStack {
-                
-                
-                // Add button row
-                HStack {
-                    Spacer()
-                    
-                }
-                .padding(.horizontal, 20)
                 
                 // Search
                 HStack(spacing: 8) {

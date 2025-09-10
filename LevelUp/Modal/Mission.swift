@@ -17,13 +17,31 @@ final class Mission: Identifiable {
     var icon: String
     var xp: Int
     var completed: Bool
-    var id: UUID
-    init(title: String, icon: String, xp: Int, completed: Bool = false, id: UUID = UUID()) {
-        self.id = id
+    var reminderDate: Date?
+    var type: MissionType
+    private var completedDate: Date?
+    
+    @Attribute(.unique) var id: UUID
+    
+    var user: User?   // inverse relationship
+    
+    init(
+        title: String,
+        icon: String,
+        xp: Int,
+        type: MissionType = .custom,
+        completed: Bool = false,
+        reminderDate: Date? = nil,
+        id: UUID = UUID()
+    ) {
         self.title = title
         self.icon = icon
         self.xp = xp
+        self.type = type
         self.completed = completed
+        self.reminderDate = reminderDate
+        self.id = id
+        self.completedDate = completed ? Date() : nil
     }
     
     static let sampleData: [Mission] = [
@@ -37,4 +55,8 @@ final class Mission: Identifiable {
         .init(title: "Go to the Gym",icon: "dumbbell.fill",  xp: 15),
         .init(title: "Read",         icon: "book.fill",      xp: 10)
     ]
+}
+
+enum MissionType: String, Codable {
+    case global, custom
 }

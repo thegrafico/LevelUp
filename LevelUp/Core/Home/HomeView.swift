@@ -22,6 +22,7 @@ struct HomeView: View {
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 12) {
                 
+                // MARK: Complete BTN
                 if missions.contains(where: { $0.completed }) {
                     CompleteButton().padding(.bottom, 20)
                 }

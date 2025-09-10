@@ -72,13 +72,16 @@ struct MiddleHubSection: View {
 // MARK: - Quick Actions Sheet (modal)
 struct QuickActionsSheet: View {
     @Environment(\.theme) private var theme
+    @State private var showAddMission = false
     private let columns = [GridItem(.adaptive(minimum: 120), spacing: 12, alignment: .top)]
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 12) {
-                    ActionTile(icon: "plus.circle.fill", title: "New Mission")
+                    ActionTile(icon: "plus.circle.fill", title: "New Mission") {
+                        showAddMission = true
+                    }
                     ActionTile(icon: "figure.run",       title: "Start Run")
                     ActionTile(icon: "dumbbell.fill",    title: "Gym")
                     ActionTile(icon: "book.fill",        title: "Read")
@@ -91,6 +94,10 @@ struct QuickActionsSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(theme.background)
         }
+        .sheet(isPresented: $showAddMission) {
+            AddMissionView()
+                .environment(\.theme, theme)
+        }
     }
 }
 
@@ -98,11 +105,13 @@ struct ActionTile: View {
     @Environment(\.theme) private var theme
     var icon: String
     var title: String
+    var action: () -> Void = {}   // default no-op
 
     var body: some View {
-        Button {
+        Button(action: {
             UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        } label: {
+            action()
+        }) {
             HStack(spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: theme.cornerRadiusSmall, style: .continuous)
@@ -125,7 +134,6 @@ struct ActionTile: View {
         .buttonStyle(.plain)
     }
 }
-
 // MARK: - Big Complete Button
 struct CompleteButton: View {
     @Environment(\.theme) private var theme

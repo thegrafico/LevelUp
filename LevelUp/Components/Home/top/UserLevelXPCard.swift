@@ -19,11 +19,11 @@ struct UserLevelXPCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Level 3")
+                        Text("Level 1")
                             .font(.title2.weight(.bold))
                             .foregroundStyle(theme.textPrimary)
                             .monospaced()
-                        Text("210 / 400 XP")
+                        Text("10 / 100 XP")
                             .font(theme.bodyFont)
                             .foregroundStyle(theme.textSecondary)
                             .monospaced()

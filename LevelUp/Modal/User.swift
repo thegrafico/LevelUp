@@ -16,16 +16,15 @@ final class User: Identifiable {
     var passwordHash: String
     var email: String
 
-    
     var level: Int
     var xp: Int
     
     var avatar: String?
     
-    // Relationships
+    // When a user is deleted, all its reletionship gets deleted as well
     @Relationship(deleteRule: .cascade) var missions: [Mission] = []
     @Relationship(deleteRule: .cascade) var friends: [Friend] = []
-    @Relationship(deleteRule: .cascade) var settings: Settings?
+    @Relationship(deleteRule: .cascade) var settings: UserSettings?
     
     init(
         username: String,
@@ -34,7 +33,7 @@ final class User: Identifiable {
         avatar: String = "person.fill",
         level: Int = 1,
         xp: Int = 0,
-        settings: Settings? = nil,
+        settings: UserSettings? = nil,
         id: UUID = UUID()
     ) {
         self.username = username
@@ -46,4 +45,9 @@ final class User: Identifiable {
         self.settings = settings
         self.id = id
     }
+    
+    
+    static let sampleData: [User] = [
+        .init(username: "Alex", passwordHash: "test", email: "test@test.com")
+    ]
 }

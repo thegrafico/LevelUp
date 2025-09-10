@@ -13,6 +13,7 @@ struct HomeView: View {
 
             // MARK: Quick actions and Today's progress
             MiddleHubSection()
+                .padding(.bottom, 12)
                 
             // MARK: Mission List
             MissionList(missions: $missions)

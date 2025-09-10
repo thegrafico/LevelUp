@@ -19,7 +19,9 @@ final class Mission: Identifiable {
     var completed: Bool
     var reminderDate: Date?
     var type: MissionType
+    
     private var completedDate: Date?
+    private var createdAt: Date
     
     @Attribute(.unique) var id: UUID
     
@@ -38,10 +40,13 @@ final class Mission: Identifiable {
         self.icon = icon
         self.xp = xp
         self.type = type
+        
         self.completed = completed
         self.reminderDate = reminderDate
         self.id = id
+        
         self.completedDate = completed ? Date() : nil
+        self.createdAt = Date()
     }
     
     static let sampleData: [Mission] = [

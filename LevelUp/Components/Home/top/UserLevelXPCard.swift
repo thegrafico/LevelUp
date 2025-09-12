@@ -23,7 +23,7 @@ struct UserLevelXPCard: View {
                             .font(.title2.weight(.bold))
                             .foregroundStyle(theme.textPrimary)
                             .monospaced()
-                        Text("10 / 100 XP")
+                        Text("50 / 100 XP")
                             .font(theme.bodyFont)
                             .foregroundStyle(theme.textSecondary)
                             .monospaced()
@@ -31,7 +31,7 @@ struct UserLevelXPCard: View {
                     Spacer()
                 }
 
-                ProgressView(value: 300, total: 400) { EmptyView() }
+                ProgressView(value: 50, total: 100) { EmptyView() }
                     .progressViewStyle(ThickLinearProgressStyle(height: 22))
             }
             .padding(20)

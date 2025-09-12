@@ -50,6 +50,7 @@ struct LeagueControls: View {
                 }
             }
             .elevatedCard(corner: theme.cornerRadiusLarge)
+            .background(theme.background)
         }
     }
 }

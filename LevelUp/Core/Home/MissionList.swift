@@ -14,8 +14,8 @@ import SwiftUI
 
 // MARK: - Mission Filter
 enum MissionFilter: String, CaseIterable, Identifiable {
-    case custom = "My Missions"
     case global = "Global"
+    case custom = "My Missions"
     case all = "All"
     var id: String { rawValue }
 }
@@ -28,7 +28,7 @@ struct MissionList: View {
     // later: global missions could come from SwiftData
     private let globalMissions: [Mission] = Mission.sampleData
 
-    @State private var selectedFilter: MissionFilter = .custom
+    @State private var selectedFilter: MissionFilter = .global
 
     // Filtered list
     private var filteredMissions: [Mission] {
@@ -68,7 +68,7 @@ struct MissionList: View {
                         .onTapGesture { selectedFilter = filter }
                 }
             }
-            .padding(.bottom, 10)
+
             .padding(.horizontal, 20)
             
 
@@ -79,6 +79,7 @@ struct MissionList: View {
                         MissionRow(mission: .constant(mission))
                     }
                 }
+                .padding(.top, 16)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
             }

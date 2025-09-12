@@ -33,7 +33,7 @@ final class User: Identifiable {
         avatar: String = "person.fill",
         level: Int = 1,
         xp: Int = 0,
-        settings: UserSettings? = nil,
+        settings: UserSettings? = UserSettings(),
         id: UUID = UUID()
     ) {
         self.username = username

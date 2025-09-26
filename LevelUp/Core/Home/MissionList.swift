@@ -1,55 +1,56 @@
-//
-//  MissionList.swift
-//  LevelUp
-//
-//  Created by Raúl Pichardo Avalo on 9/6/25.
-//
-//
-//  MissionList.swift
-//  LevelUp
-//
-//  Created by Raúl Pichardo Avalo on 9/6/25.
-//
 import SwiftUI
 
-// MARK: - Mission Filter
-enum MissionFilter: String, CaseIterable, Identifiable {
-    case global = "Global"
-    case custom = "My Missions"
-    case all = "All"
-    var id: String { rawValue }
-}
 
 // MARK: - Section
 struct MissionList: View {
     @Environment(\.theme) private var theme
-    @Binding var missions: [Mission]
-
-    // later: global missions could come from SwiftData
-    private let globalMissions: [Mission] = Mission.sampleData
-
+    
+    // MARK: Missions
+    @Binding var customMissions: [Mission]
+    @Binding var globalMissions: [Mission]
+    
+    // MARK: Filters
     @State private var selectedFilter: MissionFilter = .global
-
-    // Filtered list
+    @State private var selectedSort: MissionSort = .name
+        
     private var filteredMissions: [Mission] {
+        let base: [Mission]
+        
         switch selectedFilter {
-        case .all:
-            return globalMissions + missions
-        case .global:
-            return globalMissions
-        case .custom:
-            return missions
+            case .all: base = globalMissions + customMissions
+            case .global: base = globalMissions
+            case .custom: base = customMissions
+        }
+        
+        // Sort applied on top
+        switch selectedSort {
+            case .name:
+                return base.sorted { $0.title < $1.title }
+            case .xpAscending:
+                return base.sorted { $0.xp < $1.xp }
+            case .xpDescending:
+                return base.sorted { $0.xp > $1.xp }
+            case .completed:
+                return base.sorted { $0.completed && !$1.completed }
+            case .creationDateAscending:
+                return base.sorted { $0.createdAt > $1.createdAt }
+            case .creationDateDescending:
+                return base.sorted { $0.createdAt < $1.createdAt }
         }
     }
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Daily Missions")
-                .font(.title3.weight(.bold))
-                .padding(.horizontal, 20)
-
+            // MARK: Header Row
+            HStack {
+                Text("Daily Missions")
+                    .font(.title3.weight(.bold))
+            }
+            .padding(.horizontal, 20)
+            
             // MARK: Filter Chips
             HStack(spacing: 8) {
+                
                 ForEach(MissionFilter.allCases) { filter in
                     let isSelected = selectedFilter == filter
                     Text(filter.rawValue)
@@ -67,17 +68,46 @@ struct MissionList: View {
                         )
                         .onTapGesture { selectedFilter = filter }
                 }
+                
+                Spacer()
+                
+                // Sort menu
+                Menu {
+                    ForEach(MissionSort.allCases) { sort in
+                        Button {
+                            selectedSort = sort
+                        } label: {
+                            HStack {
+                                Text(sort.rawValue)
+                                if selectedSort == sort {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Label("Sort", systemImage: "arrow.up.arrow.down")
+                        .labelStyle(.iconOnly)
+                        .font(.title3)
+                        .foregroundStyle(theme.primary)
+                }
             }
-
             .padding(.horizontal, 20)
             
-
-            // MARK: Mission List
+            // MARK: List of missions
             ScrollView {
                 VStack(spacing: 16) {
-                    ForEach(filteredMissions, id: \.id) { mission in
-                        MissionRow(mission: .constant(mission))
+                    if !filteredMissions.isEmpty {
+                        ForEach(filteredMissions, id: \.id) { mission in
+                            MissionRow(mission: .constant(mission))
+                        }
+                    } else {
+                        ContentUnavailableView("Add Mission", systemImage: "list.bullet.circle.fill")
+                            .fontWeight(.semibold)
+                            .opacity(0.5)
+                            .padding(.top, 30)
                     }
+                    
                 }
                 .padding(.top, 16)
                 .padding(.horizontal, 20)
@@ -87,11 +117,14 @@ struct MissionList: View {
     }
 }
 
-// MARK: - Preview (UI-only)
+
 #Preview {
     ScrollView {
         VStack(spacing: 16) {
-            MissionList(missions: .constant(Mission.sampleData))
+            MissionList(
+                customMissions: .constant(Mission.sampleData),
+                globalMissions: .constant(Mission.sampleGlobalMissions)
+            )
         }
         .padding(.vertical, 20)
     }

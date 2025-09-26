@@ -10,11 +10,35 @@ import SwiftData
 
 @main
 struct LevelUpApp: App {
+    @StateObject private var userStore = UserStore(user: User.sampleUser())
+
     var body: some Scene {
+
         WindowGroup {
+            RootGate()
+                .modelContainer(for: [
+                    User.self,
+                    Mission.self,
+                    Friend.self,
+                    ProgressLog.self,
+                    UserSettings.self
+                ])
+                .environment(\.theme, .orange)
+                .environmentObject(userStore)
+
+        }
+    }
+}
+
+struct RootGate: View {
+    @EnvironmentObject private var userStore: UserStore
+
+    var body: some View {
+        if let user = userStore.user {
             ContentView()
-                .modelContainer(for: Mission.self)
-                .environment(\.theme, .orange)   // inject theme here
+                .environment(\.currentUser, user)
+        } else {
+            AuthView()
         }
     }
 }

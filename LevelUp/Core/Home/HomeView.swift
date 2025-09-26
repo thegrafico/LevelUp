@@ -1,10 +1,18 @@
 import SwiftUI
 
+
+
 struct HomeView: View {
     
-    @State private var missions: [Mission] = Mission.sampleData
-
-
+    @State private var customMissions: [Mission] = Mission.sampleData
+    @State private var globalMissions: [Mission] = Mission.sampleGlobalMissions
+    @State private var user: User = User.sampleUser()
+    
+    private var allMissions: [Mission] {
+        globalMissions + customMissions
+    }
+    
+    
     var body: some View {
         VStack(spacing: 0) {
 
@@ -16,7 +24,7 @@ struct HomeView: View {
                 .padding(.bottom, 12)
                 
             // MARK: Mission List
-            MissionList(missions: $missions)
+            MissionList(customMissions: $customMissions, globalMissions: $globalMissions)
 
         }
         .background(Color(.systemGroupedBackground))
@@ -24,7 +32,7 @@ struct HomeView: View {
             VStack(spacing: 12) {
                 
                 // MARK: Complete BTN
-                if missions.contains(where: { $0.completed }) {
+                if allMissions.contains(where: { $0.completed }) {
                     CompleteButton().padding(.bottom, 20)
                 }
             }

@@ -8,113 +8,60 @@
 //  AddMissionView.swift
 //  LevelUp
 //
-
 import SwiftUI
 
 struct AddMissionView: View {
     @Environment(\.theme) private var theme
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
     
-    // UI-only
-    @State private var title: String = ""
-    @State private var selectedIcon: String = "star.fill"
-    @State private var selectedXP: Int = 5
-    @State private var reminderEnabled: Bool = false
-    @State private var reminderDate: Date = Date()
+    var onSave: (Mission) -> Void
+    var onCancel: () -> Void
+
+    // Draft Mission that will be saved if user confirms
+    @State private var newMission = Mission(title: "", xp: 5, icon: Mission.availableIcons.first!)
+
     
-    // Expanded icons (daily actions)
-    private let availableIcons = [
-        "figure.run", "dumbbell.fill", "book.fill", "brain.head.profile",
-        "cup.and.saucer.fill", "drop.fill", "moon.fill", "sun.max.fill",
-        "mappin.and.ellipse", "checkmark.circle.fill", "heart.fill", "star.fill"
-    ]
+    init(
+        onSave: @escaping (Mission) -> Void = { _ in },
+        onCancel: @escaping () -> Void = {}
+    ) {
+        self.onSave = onSave
+        self.onCancel = onCancel
+    }
     
-    // Allowed XP values
-    private let xpValues = [5, 10, 15, 20]
     
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Mission Info")) {
-                    TextField("Title", text: $title)
+                
+                // MARK: Title
+                Section("Mission Info") {
+                    TextField("Title", text: $newMission.title)
                         .textInputAutocapitalization(.words)
                 }
                 
-                Section(header: Text("XP Reward")) {
-                    LazyVGrid(
-                        columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), // 4 columns
-                        spacing: 12
-                    ) {
-                        ForEach(xpValues, id: \.self) { value in
-                            let isSelected = selectedXP == value
-                            
-                            Text("\(value)")
-                                .font(.subheadline.weight(.semibold))
-                                .frame(maxWidth: .infinity) // stretch inside grid cell
-                                .padding(.vertical, 10)
-                                .background(
-                                    RoundedRectangle(cornerRadius: theme.cornerRadiusSmall, style: .continuous)
-                                        .fill(isSelected ? theme.primary : theme.cardBackground)
-                                )
-                                .foregroundStyle(isSelected ? theme.textInverse : theme.textPrimary)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: theme.cornerRadiusSmall, style: .continuous)
-                                        .stroke(theme.textSecondary.opacity(0.2), lineWidth: isSelected ? 0 : 1)
-                                )
-                                .onTapGesture { selectedXP = value }
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
+                // MARK: XP
+                XPRewardPicker(selectedXP: $newMission.xp)
                 
-                Section(header: Text("Icon")) {
-                    ScrollView(.horizontal, showsIndicators: true) {
-                        HStack(spacing: 16) {
-                            ForEach(availableIcons, id: \.self) { icon in
-                                Button {
-                                    selectedIcon = icon
-                                } label: {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                            .fill(selectedIcon == icon ? theme.primary.opacity(0.2) : theme.cardBackground)
-                                            .frame(width: 50, height: 50)
-                                        Image(systemName: icon)
-                                            .foregroundStyle(theme.primary)
-                                            .font(.system(size: 20, weight: .semibold))
-                                    }
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.vertical, 8)
-                    }
-                }
+                // MARK: ICON
+                IconPicker(selectedIcon: $newMission.icon)
                 
-                Section(header: Text("Reminder")) {
-                    Toggle("Set Reminder", isOn: $reminderEnabled)
-                    
-                    if reminderEnabled {
-                        DatePicker(
-                            "Time",
-                            selection: $reminderDate,
-                            displayedComponents: .hourAndMinute
-                        )
-                        .datePickerStyle(.compact) // or .wheel for iOS
-                    }
-                }
+                // MARK: Reminder
+                ReminderSection(reminderDate: $newMission.reminderDate)
+                
             }
             .navigationTitle("New Mission")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        onCancel()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
-                        // later: save mission
-                        dismiss()
-                    }
-                    .disabled(title.isEmpty)
+                       onSave(newMission)
+                   }.disabled(newMission.title.isEmpty)
                 }
             }
         }

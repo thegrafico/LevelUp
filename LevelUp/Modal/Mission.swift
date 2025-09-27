@@ -121,6 +121,7 @@ extension Mission {
         "cup.and.saucer.fill", "drop.fill", "moon.fill", "sun.max.fill",
         "mappin.and.ellipse", "checkmark.circle.fill", "heart.fill", "star.fill"
     ]
+    
 }
 
 extension Mission {

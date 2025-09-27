@@ -92,6 +92,11 @@ extension User {
     }
 }
 
+
+extension User {
+    static var LIMIT_POINTS_PER_DAY : Double = 150
+}
+
 //// MARK: - Sample Users
 //extension User {
 //    static let sampleData: [User] = [

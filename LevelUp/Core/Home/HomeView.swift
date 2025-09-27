@@ -53,4 +53,6 @@ struct HomeView: View {
     HomeView()
         .modelContainer(SampleData.shared.modelContainer)
         .environment(\.theme, .orange)
+        .environmentObject(
+            MissionController(context: SampleData.shared.modelContainer.mainContext))
 }

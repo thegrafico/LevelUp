@@ -4,7 +4,11 @@ import SwiftUI
 // MARK: - Section
 struct MissionList: View {
     @Environment(\.theme) private var theme
-    
+    @Environment(\.modelContext) private var context
+
+    private var missionController: MissionController {
+        MissionController(context: context)
+    }
     // MARK: Missions
     var customMissions: [Mission]
     var globalMissions: [Mission]
@@ -18,6 +22,7 @@ struct MissionList: View {
     // MARK: Filters
     @State private var selectedFilter: MissionFilter = .global
     @State private var selectedSort: MissionSort = .name
+    @State private var showDeleteConfirmation = false
         
     private var filteredMissions: [Mission] {
         let base: [Mission]
@@ -45,6 +50,10 @@ struct MissionList: View {
         }
     }
     
+    private var selectedCustomMissions: [Mission] {
+        customMissions.filter { $0.isSelected }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // MARK: Header Row
@@ -63,16 +72,16 @@ struct MissionList: View {
                 
                 if selectedFilter == .custom {
                    Button {
-                       // delete action
+                       showDeleteConfirmation = true
                    } label: {
                        Image(systemName: "trash.fill")
                            .font(.title3)
                            .symbolRenderingMode(.hierarchical)
                            .foregroundStyle(theme.primary)
-                           .opacity(filteredMissions.contains(where: {$0.isSelected && $0.type == .custom}) ? 1 : 0.3)
+                       .opacity(!selectedCustomMissions.isEmpty ? 1 : 0.3)
                            .symbolEffect(.bounce, value: selectedFilter == .custom) // fun pop on appear
                    }
-                   .disabled(filteredMissions.contains(where: {$0.isSelected && $0.type == .custom}))
+                   .disabled(selectedCustomMissions.isEmpty)
                    .transition(.asymmetric(
                        insertion: .move(edge: .trailing).combined(with: .opacity),
                        removal:  .scale(scale: 0.7).combined(with: .opacity)
@@ -85,7 +94,6 @@ struct MissionList: View {
                 MissionSortMenu(selectedSort: $selectedSort)
                 
             }.animation(.spring(response: 0.35, dampingFraction: 0.82), value: selectedFilter)
-                .padding(.horizontal, 20)
             .padding(.horizontal, 20)
             
             // MARK: List of missions
@@ -93,15 +101,7 @@ struct MissionList: View {
                 VStack(spacing: 16) {
                     if !filteredMissions.isEmpty {
                         ForEach(filteredMissions, id: \.id) { mission in
-                            Button {
-                                let h = UIImpactFeedbackGenerator(style: .rigid); h.impactOccurred()
-                                    print("Tapped: \(mission.title)")
-                                } label: {
-                                    MissionRow(mission: mission)
-                                }
-                            
-                                .buttonStyle(TapBounceStyle()) // 👈 new style
-                            
+                            MissionRow(mission: mission).tapBounce()
                         }
                     } else {
                         ContentUnavailableView("Add Mission", systemImage: "list.bullet.circle.fill")
@@ -109,12 +109,20 @@ struct MissionList: View {
                             .opacity(0.5)
                             .padding(.top, 30)
                     }
-                    
                 }
                 .padding(.top, 16)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
             }
+        }
+        .alert("Delete Selected Missions?",
+               isPresented: $showDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                missionController.deleteMissions(selectedCustomMissions)
+            }
+        } message: {
+            Text("You are about to delete \(selectedCustomMissions.count) mission(s). This action cannot be undone.")
         }
     }
 }
@@ -130,5 +138,6 @@ struct MissionList: View {
         }
         .padding(.vertical, 20)
     }
+    .modelContainer(SampleData.shared.modelContainer)
     .environment(\.theme, .orange)
 }

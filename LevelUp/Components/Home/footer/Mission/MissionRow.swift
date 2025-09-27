@@ -57,7 +57,6 @@ struct MissionRow: View {
             .buttonStyle(.plain)
         }
         .padding(16)
-        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .elevatedCard(corner: 18)
     }
 }

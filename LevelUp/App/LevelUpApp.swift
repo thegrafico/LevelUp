@@ -11,9 +11,8 @@ import SwiftData
 @main
 struct LevelUpApp: App {
     @StateObject private var userStore = UserStore(user: User.sampleUser())
-
+    
     var body: some Scene {
-
         WindowGroup {
             RootGate()
                 .modelContainer(for: [
@@ -27,11 +26,10 @@ struct LevelUpApp: App {
                 .preferredColorScheme(.light)
                 .environment(\.theme, .orange)
                 .environmentObject(userStore)
-
+                
         }
     }
 }
-
 struct RootGate: View {
     @EnvironmentObject private var userStore: UserStore
 

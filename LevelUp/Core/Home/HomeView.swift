@@ -1,15 +1,24 @@
 import SwiftUI
-
-
+import SwiftData
 
 struct HomeView: View {
     
-    @State private var customMissions: [Mission] = Mission.sampleData
-    @State private var globalMissions: [Mission] = Mission.sampleGlobalMissions
-    @State private var user: User = User.sampleUser()
+    // MARK: Getting User Custom Missions
+    @Query private var customMissions: [Mission]
     
+    @State private var globalMissions: [Mission] = Mission.sampleGlobalMissions
+    
+    
+    // MARK: All Missions
     private var allMissions: [Mission] {
         globalMissions + customMissions
+    }
+    
+    
+    init() {
+        let customMissionType = MissionType.custom.rawValue
+        
+        _customMissions = Query(filter: #Predicate<Mission> { $0.typeRaw == customMissionType})
     }
     
     
@@ -24,7 +33,7 @@ struct HomeView: View {
                 .padding(.bottom, 12)
                 
             // MARK: Mission List
-            MissionList(customMissions: $customMissions, globalMissions: $globalMissions)
+            MissionList(customMissions, globalMissions)
 
         }
         .background(Color(.systemGroupedBackground))
@@ -32,7 +41,7 @@ struct HomeView: View {
             VStack(spacing: 12) {
                 
                 // MARK: Complete BTN
-                if allMissions.contains(where: { $0.completed }) {
+                if allMissions.contains(where: { $0.isSelected }) {
                     CompleteButton().padding(.bottom, 20)
                 }
             }
@@ -42,5 +51,6 @@ struct HomeView: View {
 
 #Preview {
     HomeView()
+        .modelContainer(SampleData.shared.modelContainer)
         .environment(\.theme, .orange)
 }

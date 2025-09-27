@@ -6,8 +6,14 @@ struct MissionList: View {
     @Environment(\.theme) private var theme
     
     // MARK: Missions
-    @Binding var customMissions: [Mission]
-    @Binding var globalMissions: [Mission]
+    var customMissions: [Mission]
+    var globalMissions: [Mission]
+    
+    init(_ customMissions: [Mission], _ globalMissions: [Mission]) {
+        self.customMissions = customMissions
+        self.globalMissions = globalMissions
+    }
+    
     
     // MARK: Filters
     @State private var selectedFilter: MissionFilter = .global
@@ -51,47 +57,35 @@ struct MissionList: View {
             // MARK: Filter Chips
             HStack(spacing: 8) {
                 
-                ForEach(MissionFilter.allCases) { filter in
-                    let isSelected = selectedFilter == filter
-                    Text(filter.rawValue)
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(isSelected ? theme.textInverse : theme.textPrimary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: theme.cornerRadiusSmall, style: .continuous)
-                                .fill(isSelected ? theme.primary : theme.cardBackground)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: theme.cornerRadiusSmall, style: .continuous)
-                                .stroke(theme.textPrimary.opacity(0.08), lineWidth: isSelected ? 0 : 1)
-                        )
-                        .onTapGesture { selectedFilter = filter }
-                }
+                MissionFilterChips(selectedFilter: $selectedFilter)
                 
                 Spacer()
                 
-                // Sort menu
-                Menu {
-                    ForEach(MissionSort.allCases) { sort in
-                        Button {
-                            selectedSort = sort
-                        } label: {
-                            HStack {
-                                Text(sort.rawValue)
-                                if selectedSort == sort {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    Label("Sort", systemImage: "arrow.up.arrow.down")
-                        .labelStyle(.iconOnly)
-                        .font(.title3)
-                        .foregroundStyle(theme.primary)
+                if selectedFilter == .custom {
+                   Button {
+                       // delete action
+                   } label: {
+                       Image(systemName: "trash.fill")
+                           .font(.title3)
+                           .symbolRenderingMode(.hierarchical)
+                           .foregroundStyle(theme.primary)
+                           .opacity(filteredMissions.contains(where: {$0.isSelected && $0.type == .custom}) ? 1 : 0.3)
+                           .symbolEffect(.bounce, value: selectedFilter == .custom) // fun pop on appear
+                   }
+                   .disabled(filteredMissions.contains(where: {$0.isSelected && $0.type == .custom}))
+                   .transition(.asymmetric(
+                       insertion: .move(edge: .trailing).combined(with: .opacity),
+                       removal:  .scale(scale: 0.7).combined(with: .opacity)
+                   ))
+                   .id("trash")
                 }
-            }
+
+                
+                // MARK: SORT
+                MissionSortMenu(selectedSort: $selectedSort)
+                
+            }.animation(.spring(response: 0.35, dampingFraction: 0.82), value: selectedFilter)
+                .padding(.horizontal, 20)
             .padding(.horizontal, 20)
             
             // MARK: List of missions
@@ -99,7 +93,15 @@ struct MissionList: View {
                 VStack(spacing: 16) {
                     if !filteredMissions.isEmpty {
                         ForEach(filteredMissions, id: \.id) { mission in
-                            MissionRow(mission: .constant(mission))
+                            Button {
+                                let h = UIImpactFeedbackGenerator(style: .rigid); h.impactOccurred()
+                                    print("Tapped: \(mission.title)")
+                                } label: {
+                                    MissionRow(mission: mission)
+                                }
+                            
+                                .buttonStyle(TapBounceStyle()) // 👈 new style
+                            
                         }
                     } else {
                         ContentUnavailableView("Add Mission", systemImage: "list.bullet.circle.fill")
@@ -122,8 +124,8 @@ struct MissionList: View {
     ScrollView {
         VStack(spacing: 16) {
             MissionList(
-                customMissions: .constant(Mission.sampleData),
-                globalMissions: .constant(Mission.sampleGlobalMissions)
+                Mission.sampleData,
+                Mission.sampleGlobalMissions
             )
         }
         .padding(.vertical, 20)

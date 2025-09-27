@@ -17,7 +17,7 @@ struct TodayProgress: View {
                 .foregroundStyle(theme.textPrimary)
 
             ProgressView(value: 0.42) { EmptyView() }
-                .progressViewStyle(ThickLinearProgressStyle(height: 8)) // themed style
+                .progressViewStyle(ThickLinearProgressStyle(height: 8))
                 .frame(maxWidth: .infinity)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -15,7 +15,7 @@ final class ProgressLog: Identifiable {
     var xpGained: Int
     
     var missionTitle: String?
-    var missionID: PersistentIdentifier?
+    var missionID: UUID?
     
     var id: UUID
     

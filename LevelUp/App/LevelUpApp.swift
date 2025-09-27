@@ -20,9 +20,11 @@ struct LevelUpApp: App {
                     User.self,
                     Mission.self,
                     Friend.self,
+                    FriendRequest.self,
                     ProgressLog.self,
                     UserSettings.self
                 ])
+                .preferredColorScheme(.light)
                 .environment(\.theme, .orange)
                 .environmentObject(userStore)
 

@@ -17,7 +17,6 @@ struct MiddleHubSection: View {
             // MARK: LEFT: Quick Actions (tappable)
             QuickActionsView(showActionsSheet: $showQuickActions)
             
-
             // VERTICAL DIVIDER
             Rectangle()
                 .fill(theme.textPrimary.opacity(0.12))

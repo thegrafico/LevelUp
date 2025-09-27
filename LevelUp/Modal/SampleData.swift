@@ -10,7 +10,6 @@ import SwiftData
 
 @MainActor
 class SampleData {
-    
     static let shared = SampleData()
     
     let modelContainer: ModelContainer
@@ -21,31 +20,62 @@ class SampleData {
     
     private init() {
         let schema = Schema([
-            Friend.self,
-            Mission.self,
-            ProgressLog.self,
             User.self,
+            Mission.self,
+            Friend.self,
+            FriendRequest.self,
+            ProgressLog.self,
             UserSettings.self
         ])
         
-        let modelConfiguration = ModelConfiguration(schema:schema, isStoredInMemoryOnly: true)
+        let configuration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: true // ✅ keeps this Preview-only
+        )
         
         do {
-            modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            modelContainer = try ModelContainer(
+                for: schema,
+                configurations: [configuration]
+            )
             
-            insertSampleData()
-            
+            insertSampleMissions()
             try context.save()
+            
         } catch {
-            fatalError("Unable to create Model Container: \(error)")
+            fatalError("❌ Unable to create Sample Model Container: \(error)")
         }
-        
     }
     
-    private func insertSampleData() {
-        for mission in Mission.sampleData {
+    private func insertSampleMissions() {
+        // Insert sample missions
+        print("Inserting sample missions")
+        for mission in (Mission.sampleData + Mission.sampleGlobalMissions) {
+            print("Mission: \(mission.title), With Type: \(mission.type.rawValue)")
             context.insert(mission)
         }
+        print("Done.")
+
     }
-    
+}
+
+
+@MainActor
+enum PreviewContainer {
+    static var missions: ModelContainer = {
+        do {
+            let schema = Schema([Mission.self]) // only include what you need for the preview
+            let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            let container = try ModelContainer(for: schema, configurations: [configuration])
+            
+            // Preload sample missions
+            let context = container.mainContext
+            Mission.sampleGlobalMissions.forEach { context.insert($0) }
+            
+            try? context.save()
+            return container
+        } catch {
+            fatalError("❌ Failed to create PreviewContainer: \(error)")
+        }
+    }()
 }

@@ -64,6 +64,25 @@ struct PressableCardStyleThemed: ButtonStyle {
             .animation(.spring(duration: 0.25, bounce: 0.25), value: configuration.isPressed)
     }
 }
+struct TapBounceStyle: ButtonStyle {
+    @State private var tapped = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.92 : (tapped ? 0.96 : 1.0))
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: tapped)
+            .onChange(of: configuration.isPressed) { _, isPressed in
+                if !isPressed {
+                    // simulate a bounce after tap release
+                    tapped = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                        tapped = false
+                    }
+                }
+            }
+    }
+}
 
 #Preview {
     UserLevelXPCard()

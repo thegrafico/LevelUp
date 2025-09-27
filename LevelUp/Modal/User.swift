@@ -10,7 +10,7 @@ import SwiftData
 
 @Model
 final class User: Identifiable {
-    @Attribute(.unique) var id: UUID
+    var id: UUID
     
     var username: String
     var passwordHash: String

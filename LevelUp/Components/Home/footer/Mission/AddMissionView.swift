@@ -9,26 +9,17 @@
 //  LevelUp
 //
 import SwiftUI
+//import SwiftData
 
 struct AddMissionView: View {
     @Environment(\.theme) private var theme
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-    
-    var onSave: (Mission) -> Void
-    var onCancel: () -> Void
 
     // Draft Mission that will be saved if user confirms
-    @State private var newMission = Mission(title: "", xp: 5, icon: Mission.availableIcons.first!)
+    @Bindable var mission: Mission /*Mission(title: "", xp: 5, icon: Mission.availableIcons.first!)*/
+    var isNew: Bool = false
 
-    
-    init(
-        onSave: @escaping (Mission) -> Void = { _ in },
-        onCancel: @escaping () -> Void = {}
-    ) {
-        self.onSave = onSave
-        self.onCancel = onCancel
-    }
-    
     
     var body: some View {
         NavigationStack {
@@ -36,32 +27,37 @@ struct AddMissionView: View {
                 
                 // MARK: Title
                 Section("Mission Info") {
-                    TextField("Title", text: $newMission.title)
+                    TextField("Title", text: $mission.title)
                         .textInputAutocapitalization(.words)
                 }
                 
                 // MARK: XP
-                XPRewardPicker(selectedXP: $newMission.xp)
+                XPRewardPicker(selectedXP: $mission.xp)
                 
                 // MARK: ICON
-                IconPicker(selectedIcon: $newMission.icon)
+                IconPicker(selectedIcon: $mission.icon)
                 
                 // MARK: Reminder
-                ReminderSection(reminderDate: $newMission.reminderDate)
+                ReminderSection(reminderDate: $mission.reminderDate)
                 
             }
-            .navigationTitle("New Mission")
+            .navigationTitle(isNew ? "New Mission" : "Edit Mission")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        onCancel()
+                        dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") {
-                       onSave(newMission)
-                   }.disabled(newMission.title.isEmpty)
+                    Button(isNew ? "Add" : "Save" ) {
+                        
+                        if isNew {
+                            context.insert(mission)
+                        }
+                        
+                        dismiss()
+                   }.disabled(mission.title.isEmpty)
                 }
             }
         }
@@ -69,6 +65,6 @@ struct AddMissionView: View {
 }
 
 #Preview {
-    AddMissionView()
+    AddMissionView(mission: .init(title: "New Mission", xp: 5, icon: Mission.availableIcons.first!), isNew: false)
         .environment(\.theme, .orange)
 }

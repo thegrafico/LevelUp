@@ -39,7 +39,6 @@ struct QuickActionsView: View {
 // MARK: - Quick Actions Sheet (modal)
 struct QuickActionsSheet: View {
     @Environment(\.theme) private var theme
-    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     
     @State private var showAddMission = false
@@ -51,8 +50,10 @@ struct QuickActionsSheet: View {
         NavigationStack {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 12) {
+                    
                     ActionTile(icon: "plus.circle.fill", title: "New Mission") {
-                        showAddMission = true
+                        newMission = Mission(title: "", xp: Mission.xpValues.first!, icon: Mission.availableIcons.first!)
+                        showAddMission.toggle()
                     }
                     ActionTile(icon: "figure.run",       title: "Start Run")
                     ActionTile(icon: "dumbbell.fill",    title: "Gym")
@@ -66,18 +67,12 @@ struct QuickActionsSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(theme.background)
         }
-        .sheet(isPresented: $showAddMission) {
-            AddMissionView(
-                onSave: { newMission in
-                    context.insert(newMission)
-                    try? context.save()
-                    dismiss()
-                },
-                onCancel: {
-                    dismiss()
-                }
-            )
-            .environment(\.theme, theme)
+        .sheet(item: $newMission) { mission in
+//            if let mission = newMission {
+                AddMissionView(mission: mission, isNew: true)
+                .environment(\.theme, theme)
+//            }
+            
         }
     }
 }

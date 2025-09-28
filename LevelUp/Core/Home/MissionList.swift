@@ -26,30 +26,47 @@ struct MissionList: View {
     @State private var selectedSort: MissionSort = .name
     @State private var showDeleteConfirmation = false
         
+    // MARK: Active missions (filtered + sorted)
     private var filteredMissions: [Mission] {
         let base: [Mission]
-        
+
         switch selectedFilter {
             case .all: base = globalMissions + customMissions
             case .global: base = globalMissions
             case .custom: base = customMissions
         }
         
-        // Sort applied on top
+        // Keep only *active* ones here
+        let activeBase = base.filter { !$0.completed }
+        
+        // Apply sorting
         switch selectedSort {
             case .name:
-                return base.sorted { $0.title < $1.title }
+                return activeBase.sorted { $0.title < $1.title }
             case .xpAscending:
-                return base.sorted { $0.xp < $1.xp }
+                return activeBase.sorted { $0.xp < $1.xp }
             case .xpDescending:
-                return base.sorted { $0.xp > $1.xp }
+                return activeBase.sorted { $0.xp > $1.xp }
             case .completed:
-                return base.sorted { $0.completed && !$1.completed }
+                return activeBase // all inactive, so "completed" sort doesn’t matter
             case .creationDateAscending:
-                return base.sorted { $0.createdAt > $1.createdAt }
+                return activeBase.sorted { $0.createdAt > $1.createdAt }
             case .creationDateDescending:
-                return base.sorted { $0.createdAt < $1.createdAt }
+                return activeBase.sorted { $0.createdAt < $1.createdAt }
         }
+    }
+
+    // MARK: Completed missions
+    private var completedMissions: [Mission] {
+        let base: [Mission]
+
+        switch selectedFilter {
+            case .all: base = globalMissions + customMissions
+            case .global: base = globalMissions
+            case .custom: base = customMissions
+        }
+        
+        return base.filter { $0.isDisabledToday }
     }
     
     private var selectedCustomMissions: [Mission] {
@@ -69,6 +86,12 @@ struct MissionList: View {
             HStack(spacing: 8) {
                 
                 MissionFilterChips(selectedFilter: $selectedFilter)
+                    .onChange(of: selectedFilter) {
+                        badgeManager?.clear(.filter(selectedFilter))
+                        
+                        // MARK: TODO: Check this probably once at day
+                        missionController.updateCompleteStatus(for: completedMissions)
+                    }
                 
                 Spacer()
                 
@@ -100,87 +123,53 @@ struct MissionList: View {
             .padding(.horizontal, 20)
             
             // MARK: List of missions
+            // MARK: List of missions
             ScrollView {
                 VStack(spacing: 16) {
+                    // ✅ Active missions
                     if !filteredMissions.isEmpty {
                         ForEach(filteredMissions, id: \.id) { mission in
                             MissionRow(mission: mission)
                                 .tapBounce()
                                 .id(mission.id)
-                                // MARK: Scale Transition
-//                                .transition(.scale.combined(with: .opacity))
-                                // MARK: Go left
-//                                .transition(
-//                                    .asymmetric(
-//                                        insertion: .scale.combined(with: .opacity),
-//                                        removal: .move(edge: .leading)
-//                                            .combined(with: .opacity)
-//                                            .combined(with: .scale(scale: 0.5))
-//                                    )
-//                                )
-                            // MARK: Explosion
-                                .transition(
-                                    .asymmetric(
-                                        insertion: .opacity,
-                                        removal: .scale(scale: 1.3).combined(with: .opacity)
-                                    )
-                                )
-                            // MARK: flip
-//                                .transition(
-//                                    .asymmetric(
-//                                        insertion: .identity,
-//                                        removal: .modifier(
-//                                            active: FlipAwayModifier(),
-//                                            identity: FlipAwayModifier(reset: true)
-//                                        )
-//                                    )
-//                                )
-                            // MARK: Blur
-//                            .transition(
-//                                .asymmetric(
-//                                    insertion: .identity,
-//                                    removal: .opacity
-//                                        .combined(with: .scale(scale: 0.5))
-//                                        .combined(with: .modifier(
-//                                            active: BlurModifier(),
-//                                            identity: BlurModifier(reset: true)
-//                                        ))
-//                                )
-//                            )
-                            
-                            // MARK: DROP FADE
-//                            .transition(
-//                                .asymmetric(
-//                                    insertion: .scale.combined(with: .opacity),
-//                                    removal: .offset(y: 100)
-//                                        .combined(with: .opacity)
-//                                        .combined(with: .scale(scale: 0.8))
-//                                )
-//                            )
-                            
-                            // MARK: Sping
-//                            .transition(
-//                                .asymmetric(
-//                                    insertion: .identity,
-//                                    removal: .scale(scale: 0.5)
-//                                        .combined(with: .opacity)
-//                                        .combined(with: .modifier(
-//                                            active: SpinModifier(),
-//                                            identity: SpinModifier(reset: true)
-//                                        ))
-//                                )
-//                            )
-//                                .transition(.fadeRightToLeft)
-
+                                .transition(.fadeRightToLeft)
                         }
-                        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: customMissions)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: filteredMissions)
                     } else {
-                        ContentUnavailableView("Add Mission", systemImage: "list.bullet.circle.fill")
-                            .fontWeight(.semibold)
-                            .opacity(0.5)
-                            .padding(.top, 30)
+                        
+                        if selectedFilter == .custom {
+                            ContentUnavailableView("Add Mission", systemImage: "list.bullet.circle.fill")
+                                .fontWeight(.semibold)
+                                .opacity(0.5)
+                                .padding(.top, 30)
+                        } else {
+                            EmptyView()
+                        }
+                        
                     }
-                }
+
+                    // ✅ Completed missions section (only if non-empty)
+                    if !completedMissions.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Completed")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.top, 8)
+
+                            ForEach(completedMissions, id: \.id) { mission in
+                                MissionRow(mission: mission)
+                                    .grayscale(1.0)
+                                    .opacity(0.5)
+                                    .allowsHitTesting(false)
+                                    .id(mission.id)
+                                    .transition(.opacity.combined(with: .scale))
+                            }
+                        }
+                        .padding(.top, 12)
+                        .transition(.move(edge: .bottom).combined(with: .opacity)) // 👈 section slides in
+                    }
+                    
+                }.animation(.spring(response: 0.6, dampingFraction: 0.8), value: completedMissions)
                 .padding(.top, 16)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
@@ -201,52 +190,6 @@ struct MissionList: View {
     }
 }
 
-extension AnyTransition {
-    static var fadeRightToLeft: AnyTransition {
-        .asymmetric(
-            insertion: .opacity
-                .combined(with: .move(edge: .trailing)),
-            removal: .opacity
-                .combined(with: .move(edge: .leading))
-        )
-    }
-}
-
-struct FlipAwayModifier: ViewModifier {
-    var reset = false
-    func body(content: Content) -> some View {
-        content
-            .rotation3DEffect(
-                .degrees(reset ? 0 : 90),
-                axis: (x: 0, y: 1, z: 0)
-            )
-            .opacity(reset ? 1 : 0)
-    }
-}
-
-struct PixelateModifier: ViewModifier {
-    var reset = false
-    func body(content: Content) -> some View {
-        content
-            .blur(radius: reset ? 0 : 10)
-            .saturation(reset ? 1 : 0.1)
-    }
-}
-
-struct BlurModifier: ViewModifier {
-    var reset = false
-    func body(content: Content) -> some View {
-        content.blur(radius: reset ? 0 : 8)
-    }
-}
-
-struct SpinModifier: ViewModifier {
-    var reset = false
-    func body(content: Content) -> some View {
-        content.rotationEffect(.degrees(reset ? 0 : 720))
-    }
-}
-
 struct MissionListPreviewWrapper: View {
     
     
@@ -260,6 +203,7 @@ struct MissionListPreviewWrapper: View {
         MissionList(customMissions, globalMissions)
     }
 }
+
 
 #Preview {
     MissionListPreviewWrapper()

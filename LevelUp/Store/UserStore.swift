@@ -8,8 +8,10 @@
 import Foundation
 import SwiftUI
 
+
+@Observable
 final class UserStore: ObservableObject {
-    @Published var user: User? = nil
+    var user: User? = nil
 
     // maybe convenience initializer
     init(user: User? = nil) {

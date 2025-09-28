@@ -17,15 +17,17 @@ final class Mission: Identifiable {
     var icon: String
     
     var completed: Bool
+    var completionDate: Date?  // ✅ when it was completed
     var isSelected: Bool = false
 
     var reminderDate: Date?
+    
+    // MARK: track when task was created
     var createdAt: Date
     var id: UUID
 
-    // store raw value instead of the enum directly
+    // MARK: For filtering mostly
     var typeRaw: String
-
     var type: MissionType {
         get { MissionType(rawValue: typeRaw) ?? .custom }
         set { typeRaw = newValue.rawValue }
@@ -37,6 +39,7 @@ final class Mission: Identifiable {
         type: MissionType = .custom,
         icon: String,
         completed: Bool = false,
+        completionDate: Date? = nil,
         reminderDate: Date? = nil,
         id: UUID = UUID()
     ) {
@@ -45,6 +48,7 @@ final class Mission: Identifiable {
         self.xp = xp
         self.id = id
         self.completed = completed
+        self.completionDate = completionDate
         self.reminderDate = reminderDate
         self.createdAt = Date()
         self.typeRaw = type.rawValue
@@ -83,11 +87,29 @@ extension Mission {
         .init(title: "Finish a Task on Time", xp: 15, type: .global, icon: "checkmark.circle.fill"),
         .init(title: "Plan Tomorrow", xp: 12, type: .global, icon: "calendar"),
     ]
+    
+    static let xpValues = [5, 10, 15, 20]
+    
+    static let availableIcons = [
+        "figure.run", "dumbbell.fill", "book.fill", "brain.head.profile",
+        "cup.and.saucer.fill", "drop.fill", "moon.fill", "sun.max.fill",
+        "mappin.and.ellipse", "checkmark.circle.fill", "heart.fill", "star.fill"
+    ]
+    
 }
 
 extension Mission {
     var isGlobal: Bool { type == .global }
     var isCustom: Bool { type == .custom }
+    var isReminderEnabled: Bool {
+        return reminderDate != nil
+    }
+    
+    var isNew: Bool {
+        // check if this mission creation data was less than 2 amount of hours
+        return Calendar.current.dateComponents([.hour], from: createdAt, to: Date()).hour! < 2
+    }
+
 }
 
 enum MissionType: String, Codable, Identifiable, CaseIterable {
@@ -108,21 +130,55 @@ enum MissionSort: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+// MARK: FOR COMPLETION AND TODAYS UPDATES
 extension Mission {
-    static let xpValues = [5, 10, 15, 20]
+    /// True if mission was completed today
+    var completedToday: Bool {
+        guard let completionDate else { return false }
+        return Calendar.current.isDateInToday(completionDate)
+    }
+
+    /// True if mission should be disabled (completed today)
+    var isDisabledToday: Bool {
+        completed && completedToday
+    }
+
+    /// Call when marking as completed
+    func markCompleted() {
+        completed = true
+        isSelected = false
+        completionDate = .now
+    }
     
-    static let availableIcons = [
-        "figure.run", "dumbbell.fill", "book.fill", "brain.head.profile",
-        "cup.and.saucer.fill", "drop.fill", "moon.fill", "sun.max.fill",
-        "mappin.and.ellipse", "checkmark.circle.fill", "heart.fill", "star.fill"
-    ]
-    
+    func markIncomplete() {
+        completed = false
+        isSelected = false
+        completionDate = nil
+    }
+
+    /// Auto reset if the day changed
+    func refreshDailyState() {
+        if !isDisabledToday {
+            markIncomplete()
+        }
+    }
 }
 
 extension Mission {
-    
-    var isReminderEnabled: Bool {
-        return reminderDate != nil
+    /// Returns true if completed within the given time interval (in seconds)
+    func completedTime(inLast seconds: TimeInterval) -> Bool {
+        guard let completionDate else { return false }
+        return Date().timeIntervalSince(completionDate) <= seconds
+    }
+
+    /// Completed within the last X minutes
+    func completedInLast(minutes: Int) -> Bool {
+        return completedTime(inLast: Double(minutes) * 60)
+    }
+
+    /// Completed within the last X hours
+    func completedInLast(hours: Int) -> Bool {
+        return completedTime(inLast: Double(hours) * 3600)
     }
 }
 

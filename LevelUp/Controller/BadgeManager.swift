@@ -27,7 +27,7 @@ class BadgeManager {
         #if DEBUG
         print("[DEBUG] Incrementing badge for \(key) by \(value)")
         #endif
-        counts[key, default: 0] += value
+        counts[key, default: defaultCount] += value
     }
 
     func clear(_ key: BadgeKey) {

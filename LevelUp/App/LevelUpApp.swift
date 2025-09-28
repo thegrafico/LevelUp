@@ -10,8 +10,8 @@ import SwiftData
 
 @main
 struct LevelUpApp: App {
-    @StateObject private var userStore = UserStore(user: User.sampleUser())
-    
+    @StateObject private var userStore = UserStore()
+
     var body: some Scene {
         WindowGroup {
             RootGate()
@@ -26,19 +26,33 @@ struct LevelUpApp: App {
                 .preferredColorScheme(.light)
                 .environment(\.theme, .orange)
                 .environmentObject(userStore)
-                
+
         }
     }
 }
+
 struct RootGate: View {
+    @Environment(\.modelContext) private var context
     @EnvironmentObject private var userStore: UserStore
 
     var body: some View {
-        if let user = userStore.user {
-            ContentView()
-                .environment(\.currentUser, user)
-        } else {
-            AuthView()
+        Group {
+            if let user = userStore.user {
+                ContentView()
+                    .environment(\.currentUser, user)
+                    .task {
+//                        try? DataSeeder.clearAll(from: context)
+                        await DataSeeder.loadGlobalMissions(into: context)
+                        print("Loading User from UserStore: \(user.username)")
+                    }
+            } else {
+                AuthView()
+                    .task {
+                        if let user = await DataSeeder.loadUserIfNeeded(into: context) {
+                            userStore.user = user
+                        }
+                    }
+            }
         }
     }
 }

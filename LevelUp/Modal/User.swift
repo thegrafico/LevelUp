@@ -47,14 +47,6 @@ final class User: Identifiable {
     }
 }
 
-// MARK: - Sample Missions
-extension Mission {
-    static let sampleMissions: [Mission] = [
-        .init(title: "Read 10 pages", xp: 10, icon: "book.fill"),
-        .init(title: "Go for a run", xp: 15, icon: "figure.run"),
-        .init(title: "Drink water", xp: 5, icon: "drop.fill")
-    ]
-}
 
 // MARK: - Sample Friends
 extension Friend {
@@ -75,7 +67,7 @@ extension User {
             level: 1,
             xp: 10,
         )
-        user.missions = Mission.sampleMissions
+        user.missions = []
         user.friends = Friend.sampleFriends
         return user
     }
@@ -95,6 +87,24 @@ extension User {
 
 extension User {
     static var LIMIT_POINTS_PER_DAY : Double = 150
+}
+
+extension User {
+    /// Adds XP to the user and updates their level if needed.
+    func addXP(_ amount: Int) {
+        xp += amount
+
+        // Loop in case we level up multiple times at once
+        while xp >= requiredXP() {
+            xp -= requiredXP() // carry over extra XP
+            level += 1
+        }
+    }
+    
+    /// XP progress as a percentage toward next level.
+    var progressToNextLevel: Double {
+        Double(xp) / Double(requiredXP())
+    }
 }
 
 //// MARK: - Sample Users

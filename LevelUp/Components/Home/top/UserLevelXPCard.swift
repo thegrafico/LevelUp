@@ -38,6 +38,8 @@ struct UserLevelXPCard: View {
                         EmptyView()
                     }
                     .progressViewStyle(ThickLinearProgressStyle(height: 22))
+                    .animation(.easeOut(duration: 0.6), value: user.xp) // smooth fill animation
+
             }
             .padding(20)
             .contentShape(

@@ -31,9 +31,19 @@ final class MissionController: ObservableObject {
         }
     }
     
+    func updateCompleteStatus(for missions: [Mission]) -> Void {
+        for mission in missions {
+            mission.refreshDailyState()
+        }
+    }
+    
     func deleteMissions(_ missions: [Mission]) {
         for mission in missions {
             print("Deleting mission: \(mission.title)")
+            
+            if mission.isNew, let badgeManager = badgeManager {
+                badgeManager.increment(.filter(mission.type), by: -1)
+            }
             context.delete(mission)
         }
         
@@ -41,6 +51,20 @@ final class MissionController: ObservableObject {
             try context.save()
         } catch {
             print("❌ Failed to delete missions: \(error)")
+        }
+    }
+    
+    func markAsCompleted(_ missions: [Mission], forUser user: User? = nil) {
+        
+        for mission in missions {
+            mission.markCompleted()
+            user?.addXP(mission.xp)
+        }
+        
+        do {
+            try context.save()
+        } catch {
+            print("❌ Failed mark mission as complete: \(error)")
         }
     }
 }

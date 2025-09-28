@@ -12,7 +12,6 @@ struct ContentView: View {
     @State private var badgeManager = BadgeManager()
     @State private var leaderBoardIsAvailable: Bool = true
 
-
     var body: some View {
         VStack {
             
@@ -47,5 +46,7 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .modelContainer(SampleData.shared.modelContainer)
         .environment(\.theme, .orange)
+        .environment(\.currentUser, User.sampleUser())
 }

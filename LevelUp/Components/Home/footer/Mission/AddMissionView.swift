@@ -18,8 +18,18 @@ struct AddMissionView: View {
 
     // Draft Mission that will be saved if user confirms
     @Bindable var mission: Mission /*Mission(title: "", xp: 5, icon: Mission.availableIcons.first!)*/
-    var isNew: Bool = false
-
+    var isNew: Bool
+    var onSave: (_ mission: Mission) -> Void
+    
+    init(
+        mission: Mission,
+        isNew: Bool = false,
+        onSave: @escaping (Mission) -> Void = { _ in },
+       ) {
+           self.mission = mission
+           self.isNew = isNew
+           self.onSave = onSave
+       }
     
     var body: some View {
         NavigationStack {
@@ -55,7 +65,7 @@ struct AddMissionView: View {
                         if isNew {
                             context.insert(mission)
                         }
-                        
+                        onSave(mission)
                         dismiss()
                    }.disabled(mission.title.isEmpty)
                 }

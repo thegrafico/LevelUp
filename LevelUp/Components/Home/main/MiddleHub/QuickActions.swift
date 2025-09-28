@@ -43,6 +43,7 @@ struct QuickActionsSheet: View {
     
     @State private var showAddMission = false
     @State private var newMission: Mission? = nil
+    @State private var showPopup = false   // 👈 control variable
     
     private let columns = [GridItem(.adaptive(minimum: 120), spacing: 12, alignment: .top)]
 
@@ -50,11 +51,12 @@ struct QuickActionsSheet: View {
         NavigationStack {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 12) {
-                    
                     ActionTile(icon: "plus.circle.fill", title: "New Mission") {
                         newMission = Mission(title: "", xp: Mission.xpValues.first!, icon: Mission.availableIcons.first!)
                         showAddMission.toggle()
+                        self.showPopup = false
                     }
+                    
                     ActionTile(icon: "figure.run",       title: "Start Run")
                     ActionTile(icon: "dumbbell.fill",    title: "Gym")
                     ActionTile(icon: "book.fill",        title: "Read")
@@ -68,12 +70,22 @@ struct QuickActionsSheet: View {
             .background(theme.background)
         }
         .sheet(item: $newMission) { mission in
-//            if let mission = newMission {
-                AddMissionView(mission: mission, isNew: true)
+            AddMissionView(mission: mission, isNew: true, onSave: { _ in
+                    self.showPopup.toggle()
+            })
                 .environment(\.theme, theme)
-//            }
+        }.overlay(
             
-        }
+            Group {
+                if showPopup {
+                    FloatingPopup(duration: 3, text: "+1 Mission!")
+                        .offset(y: -100)
+                }
+                
+            },
+            alignment: .centerLastTextBaseline
+        )
+        
     }
 }
 

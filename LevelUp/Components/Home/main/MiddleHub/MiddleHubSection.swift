@@ -36,7 +36,7 @@ struct MiddleHubSection: View {
         .sheet(isPresented: $showQuickActions) {
             QuickActionsSheet()
                 .presentationDetents([.medium, .large])
-                .background(theme.background.ignoresSafeArea())
+                .background(theme.background.ignoresSafeArea())       
         }
         .padding(.horizontal, 30)
         .padding(.bottom, 12)

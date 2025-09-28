@@ -15,9 +15,14 @@ struct AddMissionView: View {
     @Environment(\.theme) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-
-    // Draft Mission that will be saved if user confirms
-    @Bindable var mission: Mission /*Mission(title: "", xp: 5, icon: Mission.availableIcons.first!)*/
+    @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
+    
+    private var missionController: MissionController {
+        MissionController(context: context, badgeManager: badgeManager)
+    }
+    
+    @Bindable var mission: Mission
+    
     var isNew: Bool
     var onSave: (_ mission: Mission) -> Void
     
@@ -63,7 +68,7 @@ struct AddMissionView: View {
                     Button(isNew ? "Add" : "Save" ) {
                         
                         if isNew {
-                            context.insert(mission)
+                            missionController.insertMission(mission)
                         }
                         onSave(mission)
                         dismiss()
@@ -75,6 +80,10 @@ struct AddMissionView: View {
 }
 
 #Preview {
-    AddMissionView(mission: .init(title: "New Mission", xp: 5, icon: Mission.availableIcons.first!), isNew: false)
-        .environment(\.theme, .orange)
+    AddMissionView(
+        mission: .init(title: "New Mission", xp: 5, icon: Mission.availableIcons.first!),
+        isNew: true
+    )
+    .environment(\.theme, .orange)
+    .environment(BadgeManager()) // 👈 inject preview manager
 }

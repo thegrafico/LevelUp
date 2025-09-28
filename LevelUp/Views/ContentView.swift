@@ -8,7 +8,10 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(\.theme) private var theme   // ← get your theme
+    @Environment(\.theme) private var theme
+    @State private var badgeManager = BadgeManager()
+    @State private var leaderBoardIsAvailable: Bool = true
+
 
     var body: some View {
         VStack {
@@ -17,11 +20,15 @@ struct ContentView: View {
                 
                 Tab("Home", systemImage: "house") {
                     HomeView()
+                        .environment(badgeManager)
                 }
                 
-                Tab("Leaderboard", systemImage: "trophy.fill") {
-                    LeaderboardView()
+                if leaderBoardIsAvailable {
+                    Tab("Leaderboard", systemImage: "trophy.fill") {
+                        LeaderboardView()
+                    }
                 }
+                
                 
                 Tab("Friends", systemImage: "person.3.fill") {
                     FriendsView()

@@ -5,17 +5,15 @@ struct HomeView: View {
     
     // MARK: Getting User Custom Missions
     @Query private var customMissions: [Mission]
-    
     @State private var globalMissions: [Mission] = Mission.sampleGlobalMissions
-    
     
     // MARK: All Missions
     private var allMissions: [Mission] {
         globalMissions + customMissions
     }
     
-    
     init() {
+        // Hacky way of using Query with enums. They need to be declared firts.
         let customMissionType = MissionType.custom.rawValue
         
         _customMissions = Query(filter: #Predicate<Mission> { $0.typeRaw == customMissionType})
@@ -27,6 +25,7 @@ struct HomeView: View {
 
             // MARK: HEADER
             Header()
+
 
             // MARK: Quick actions and Today's progress
             MiddleHubSection()
@@ -49,10 +48,14 @@ struct HomeView: View {
     }
 }
 
+
+
 #Preview {
     HomeView()
         .modelContainer(SampleData.shared.modelContainer)
         .environment(\.theme, .orange)
         .environmentObject(
             MissionController(context: SampleData.shared.modelContainer.mainContext))
+        .environment(BadgeManager())
+
 }

@@ -90,12 +90,7 @@ extension Mission {
     var isCustom: Bool { type == .custom }
 }
 
-enum MissionType: String, Codable, Identifiable, Equatable {
-    case global, custom
-    var id: String { rawValue }
-}
-
-enum MissionFilter: String, CaseIterable, Identifiable {
+enum MissionType: String, Codable, Identifiable, CaseIterable {
     case global = "Global"
     case custom = "Custom"
     case all = "All"

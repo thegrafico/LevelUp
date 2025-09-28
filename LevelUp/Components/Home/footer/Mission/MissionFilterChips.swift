@@ -9,11 +9,12 @@ import SwiftUI
 
 struct MissionFilterChips: View {
     @Environment(\.theme) private var theme
-    @Binding var selectedFilter: MissionFilter
+    @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
+    @Binding var selectedFilter: MissionType
 
     var body: some View {
         HStack{
-            ForEach(MissionFilter.allCases) { filter in
+            ForEach(MissionType.allCases) { filter in
                 let isSelected = selectedFilter == filter
                 Text(filter.rawValue)
                     .font(.footnote.weight(.semibold))
@@ -28,14 +29,29 @@ struct MissionFilterChips: View {
                         RoundedRectangle(cornerRadius: theme.cornerRadiusSmall, style: .continuous)
                             .stroke(theme.textPrimary.opacity(0.08), lineWidth: isSelected ? 0 : 1)
                     )
-                    .onTapGesture { selectedFilter = filter }
+                    .overlay(alignment: .topTrailing) {
+                        if let badgeManager = badgeManager {
+                            
+                            let count = badgeManager.count(for: .filter(filter))
+                            if count > 0 {
+                                BadgeView(count: count, size: 20)
+                                    .offset(x: 8, y: -8)
+                            } else {
+                                EmptyView()
+                            }
+                        }
+                    }.onTapGesture { selectedFilter = filter }
+                    
             }
         }
     }
 }
 
 #Preview {
-    MissionFilterChips(selectedFilter: .constant(.custom))
+    MissionFilterChips(selectedFilter: .constant(.custom))        .environment(BadgeManager(defaultCount: 20)) // 👈 inject once
+
+
     MissionFilterChips(selectedFilter: .constant(.global))
-    MissionFilterChips(selectedFilter: .constant(.all))
+        .environment(BadgeManager()) // 👈 inject once
+
 }

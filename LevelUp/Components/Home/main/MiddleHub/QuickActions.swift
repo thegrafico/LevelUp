@@ -57,11 +57,15 @@ struct QuickActionsSheet: View {
                         self.showPopup = false
                     }
                     
-                    ActionTile(icon: "figure.run",       title: "Start Run")
-                    ActionTile(icon: "dumbbell.fill",    title: "Gym")
-                    ActionTile(icon: "book.fill",        title: "Read")
-                    ActionTile(icon: "mappin.and.ellipse", title: "Visit Place")
-                    ActionTile(icon: "bell.badge.fill",  title: "Reminders")
+                    Group {
+                        ActionTile(icon: "figure.run",       title: "Start Run")
+                        ActionTile(icon: "dumbbell.fill",    title: "Gym")
+                        ActionTile(icon: "book.fill",        title: "Read")
+                        ActionTile(icon: "mappin.and.ellipse", title: "Visit Place")
+                        ActionTile(icon: "bell.badge.fill",  title: "Reminders")
+                    }
+                    .disabled(true)
+                    
                 }
                 .padding(16)
             }

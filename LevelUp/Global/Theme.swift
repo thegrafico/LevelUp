@@ -25,13 +25,17 @@ struct Theme {
     let shadowLight: Color
     let shadowDark: Color
     
-    // Radi
+    // Radii
     let cornerRadiusSmall: CGFloat
     let cornerRadiusLarge: CGFloat
     
-    // Typography (you can expand later if needed)
+    // Typography
     let titleFont: Font
     let bodyFont: Font
+
+    // 🎯 Brand / Icon Colors
+    let brandGradient: [Color]
+    let brandStroke: [Color]
 }
 
 extension Theme {
@@ -53,7 +57,10 @@ extension Theme {
         cornerRadiusLarge: 20,
         
         titleFont: .system(.title2, design: .rounded).weight(.bold),
-        bodyFont: .system(.body, design: .rounded)
+        bodyFont: .system(.body, design: .rounded),
+
+        brandGradient: [Color.orange, Color(red: 1.0, green: 0.5, blue: 0.0)],
+        brandStroke: [Color.white.opacity(0.9), Color.yellow.opacity(0.9)]
     )
 
     static let blue = Theme(
@@ -74,7 +81,10 @@ extension Theme {
         cornerRadiusLarge: 20,
         
         titleFont: .system(.title2, design: .rounded).weight(.bold),
-        bodyFont: .system(.body, design: .rounded)
+        bodyFont: .system(.body, design: .rounded),
+
+        brandGradient: [Color.blue, Color.purple],
+        brandStroke: [Color.white.opacity(0.9), Color.cyan.opacity(0.9)]
     )
 }
 

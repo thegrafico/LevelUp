@@ -67,4 +67,10 @@ final class MissionController: ObservableObject {
             print("❌ Failed mark mission as complete: \(error)")
         }
     }
+    
+    func printMissions(_ missions: [Mission]) {
+        for mission in missions {
+            print("Mission: \(mission.title), type: \(mission.type), completed today?: \(mission.completedToday)")
+        }
+    }
 }

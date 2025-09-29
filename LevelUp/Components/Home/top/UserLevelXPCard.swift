@@ -7,6 +7,28 @@
 
 import SwiftUI
 
+struct AnimatedNumberText: View {
+    var value: Int
+    var font: Font = .body
+    var style: Font.TextStyle? = nil
+    
+    @State private var displayedValue: Int = 0
+    
+    var body: some View {
+        Text("\(displayedValue)")
+            .font(font)
+            .monospaced()
+            .onChange(of: value) { old, new in
+                withAnimation(.easeOut(duration: 0.6)) {
+                    displayedValue = new
+                }
+            }
+            .onAppear {
+                displayedValue = value
+            }
+    }
+}
+
 struct UserLevelXPCard: View {
     @Environment(\.theme) private var theme
     @Environment(\.currentUser) private var user
@@ -24,10 +46,25 @@ struct UserLevelXPCard: View {
                             .font(.title2.weight(.bold))
                             .foregroundStyle(theme.textPrimary)
                             .monospaced()
-                        Text("\(user.xp) / \(user.requiredXP()) XP")
-                            .font(theme.bodyFont)
-                            .foregroundStyle(theme.textSecondary)
-                            .monospaced()
+                        
+                        HStack(spacing: 0) {
+                            AnimatedNumberText(value: user.xp, font: theme.bodyFont)
+                                .foregroundStyle(theme.textSecondary)
+                            Text(" / ")
+                                .font(theme.bodyFont)
+                                .foregroundStyle(theme.textSecondary)
+                                .monospaced()
+                            AnimatedNumberText(value: user.requiredXP(), font: theme.bodyFont)
+                                .foregroundStyle(theme.textSecondary)
+                            Text(" XP")
+                                .font(theme.bodyFont)
+                                .foregroundStyle(theme.textSecondary)
+                                .monospaced()
+                        }
+//                        Text("\(user.xp) / \(user.requiredXP()) XP")
+//                            .font(theme.bodyFont)
+//                            .foregroundStyle(theme.textSecondary)
+//                            .monospaced()
                     }
                     Spacer()
                 }

@@ -37,7 +37,7 @@ struct MissionList: View {
         }
         
         // Keep only *active* ones here
-        let activeBase = base.filter { !$0.completed }
+        let activeBase = base.filter { !$0.isDisabledToday }
         
         // Apply sorting
         switch selectedSort {
@@ -89,8 +89,14 @@ struct MissionList: View {
                     .onChange(of: selectedFilter) {
                         badgeManager?.clear(.filter(selectedFilter))
                         
+                        print("Filtered missions: \(filteredMissions.count)")
+                        missionController.printMissions(filteredMissions)
+                        
+                        print("customMissions: \(customMissions.count)")
+                        print("global missions: \(globalMissions.count)")
+                        
                         // MARK: TODO: Check this probably once at day
-                        missionController.updateCompleteStatus(for: completedMissions)
+                        missionController.updateCompleteStatus(for: filteredMissions)
                     }
                 
                 Spacer()

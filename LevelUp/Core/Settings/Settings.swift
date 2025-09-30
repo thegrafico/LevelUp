@@ -11,6 +11,12 @@ struct SettingsView: View {
     @Environment(\.theme) private var theme
     @State private var notificationsOn = true
     @State private var darkModeOn = false
+    
+    @Environment(\.modelContext) private var context
+    @Environment(\.currentUser) private var user
+    
+    @State private var showResetAlert = false
+    @State private var showDeleteAlert = false
         
     var body: some View {
         VStack(spacing: 0) {
@@ -42,12 +48,32 @@ struct SettingsView: View {
                         SettingsRow(icon: "info.circle.fill", title: "App Version 1.0")
                         SettingsRow(icon: "envelope.fill", title: "Feedback")
                     }
+                    
+                    SettingsSection(title: "Danger Zone") {
+                        Button {
+                            showResetAlert = true
+                        } label: {
+                            SettingsRow(icon: "arrow.counterclockwise", title: "Reset Progress")
+                        }
+                        .tint(.red)
+                    }
+                    
+                                        
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 .padding(.bottom, 40)
             }
         }
+        .alert("Reset Progress?", isPresented: $showResetAlert) {
+                    Button("Cancel", role: .cancel) { }
+                    Button("Reset", role: .destructive) {
+                        user.deleteAllData(context: context)
+                    }
+                } message: {
+                    Text("This will reset your level, XP, missions, and logs, but keep your account.")
+                }
+                
         .background(theme.background)
     }
 }
@@ -141,5 +167,7 @@ struct IconBox: View {
     NavigationStack {
         SettingsView()
     }
+    .modelContainer(SampleData.shared.modelContainer)
     .environment(\.theme, .orange)
+    .environment(\.currentUser, User.sampleUser())
 }

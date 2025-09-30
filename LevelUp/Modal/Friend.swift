@@ -11,18 +11,19 @@ import SwiftData
 @Model
 final class Friend: Identifiable {
     var id: UUID
+    var userId: UUID
     var username: String
     var avatar: String
     var xp: Int
-    
-    var user: User?   // inverse relationship
-    
+        
     init(
+        userId: UUID,
         username: String,
         avatar: String = "person.fill",
         xp: Int = 0,
         id: UUID = UUID()
     ) {
+        self.userId = userId
         self.username = username
         self.avatar = avatar
         self.xp = xp

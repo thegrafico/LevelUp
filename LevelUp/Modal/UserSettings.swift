@@ -7,24 +7,23 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 final class UserSettings: Identifiable {
     var id: UUID
     var notificationsOn: Bool
-    var darkModeOn: Bool
     var theme: String
     
-    var user: User?   // inverse relationship
+    var userId: UUID
     
-    init(
+    init(userId: UUID,
         notificationsOn: Bool = true,
-        darkModeOn: Bool = false,
         theme: String = "orange",
         id: UUID = UUID()
     ) {
+        self.userId = userId
         self.notificationsOn = notificationsOn
-        self.darkModeOn = darkModeOn
         self.theme = theme
         self.id = id
     }

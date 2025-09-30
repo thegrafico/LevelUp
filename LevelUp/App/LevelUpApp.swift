@@ -73,11 +73,6 @@ struct RootGate: View {
             if let user = userStore.user {
                 ContentView()
                     .environment(\.currentUser, user)
-                    .task {
-//                        try? DataSeeder.clearAll(from: context)
-                        await DataSeeder.loadGlobalMissions(into: context)
-                        print("Loading User from UserStore: \(user.username)")
-                    }
             } else {
                 AuthView()
                     .task {

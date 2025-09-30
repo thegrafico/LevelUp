@@ -11,6 +11,7 @@ struct MiddleHubSection: View {
     @Environment(\.theme) private var theme
     @State private var showQuickActions = false
 
+
     var body: some View {
         HStack(spacing: 12) {
             
@@ -46,4 +47,6 @@ struct MiddleHubSection: View {
 
 #Preview {
     MiddleHubSection()
+        .environment(\.currentUser, User.sampleUser())
+
 }

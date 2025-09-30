@@ -7,9 +7,11 @@ struct MissionList: View {
     @Environment(\.theme) private var theme
     @Environment(\.modelContext) private var context
     @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
+    @Environment(\.currentUser) private var user
+
 
     private var missionController: MissionController {
-        MissionController(context: context, badgeManager: badgeManager)
+        MissionController(context: context, user: user, badgeManager: badgeManager)
     }
     
     // MARK: Missions
@@ -87,13 +89,9 @@ struct MissionList: View {
                 
                 MissionFilterChips(selectedFilter: $selectedFilter)
                     .onChange(of: selectedFilter) {
+                        
+                        print("Global Missions: \(globalMissions.count)")
                         badgeManager?.clear(.filter(selectedFilter))
-                        
-                        print("Filtered missions: \(filteredMissions.count)")
-                        missionController.printMissions(filteredMissions)
-                        
-                        print("customMissions: \(customMissions.count)")
-                        print("global missions: \(globalMissions.count)")
                         
                         // MARK: TODO: Check this probably once at day
                         missionController.updateCompleteStatus(for: filteredMissions)

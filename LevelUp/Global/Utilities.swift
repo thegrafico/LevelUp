@@ -14,7 +14,7 @@ enum DataSeeder {
     // Clear all data from all models
     static func clearAll(from context: ModelContext) throws {
         let entities: [any PersistentModel.Type] = [
-            User.self,
+//            User.self,
             Mission.self,
             Friend.self,
             FriendRequest.self,
@@ -82,23 +82,25 @@ enum DataSeeder {
         return nil
     }
     
-    static func loadGlobalMissions(into context: ModelContext) async {
+    
+    static func loadGlobalMissions(for user: User, in context: ModelContext) async {
         do {
-            let gloabalMissionType = MissionType.global.rawValue
-            // 1. Fetch existing global missions
-            let existing = try context.fetch(
-                FetchDescriptor<Mission>(predicate: #Predicate { $0.typeRaw == gloabalMissionType })
-            )
+            let globalMissionType = MissionType.global.rawValue
+
+            // 1. Check if the user already has global missions
+            let existing = user.missions.filter { $0.typeRaw == globalMissionType }
 
             // 2. Only insert if none exist
             if existing.isEmpty {
                 for mission in Mission.sampleGlobalMissions {
-                    print("Adding Global mission to CoreData: \(mission.title)")
+                    print("Adding Global mission to user: \(mission.title)")
+                    mission.printMission()
                     context.insert(mission)
+                    user.missions.append(mission)  // ✅ attach to the user
                 }
                 try context.save()
             } else {
-                print("✅ Global missions already exist (\(existing.count))")
+                print("✅ User already has global missions (\(existing.count))")
             }
 
         } catch {

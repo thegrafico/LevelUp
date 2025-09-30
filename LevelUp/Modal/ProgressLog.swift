@@ -8,28 +8,72 @@
 import Foundation
 import SwiftData
 
+
 @Model
 final class ProgressLog: Identifiable {
-    var userId: UUID
-    var date: Date
-    
-    // MARK: LIST OF MISSION FROM THE USER
-    var missions: [Mission]
-    
     var id: UUID
-    
-    init(userId: UUID, date: Date = .now, missions: [Mission] = [], id: UUID = UUID()) {
-        self.userId = userId
-        self.date = date
-        self.missions = missions
-        self.id = id
+    /// Use the start-of-day timestamp to represent the “date key” for a log
+    var date: Date
+
+    @Relationship(deleteRule: .cascade)
+    var events: [ProgressEvent] = []
+
+    init(date: Date = Date()) {
+        self.id = UUID()
+        // Normalize to start of day
+        self.date = Calendar.current.startOfDay(for: date)
     }
 }
 
+@Model
+final class ProgressEvent: Identifiable {
+    var id: UUID
+    var date: Date
+    var typeRaw: String
+    var missionId: UUID?
+    var missionTitle: String?
+    var missionXP: Int?
+    var missionType: String?
+    var missionCompletionTime: Date?
+    var userLevel: Int?
+    var details: String?
 
-extension ProgressLog {
-    
-    var isToday: Bool {
-        Calendar.current.isDate(date, inSameDayAs: .now)
+    var type: ProgressEventType {
+        get { ProgressEventType(rawValue: typeRaw) ?? .addMission }
+        set { typeRaw = newValue.rawValue }
     }
+
+    init(
+        type: ProgressEventType,
+        missionId: UUID? = nil,
+        missionTitle: String? = nil,
+        missionXP: Int? = nil,
+        missionType: MissionType? = nil,
+        missionCompletionTime: Date? = nil,
+        userLevel: Int? = nil,
+        details: String? = nil,
+        date: Date = Date()
+    ) {
+        self.id = UUID()
+        self.date = date
+        self.typeRaw = type.rawValue
+        self.missionId = missionId
+        self.missionTitle = missionTitle
+        self.missionXP = missionXP
+        self.missionType = missionType?.rawValue
+        self.missionCompletionTime = missionCompletionTime
+        self.userLevel = userLevel
+        self.details = details
+        
+    }
+}
+
+// The event type enum
+enum ProgressEventType: String, Codable {
+    case addMission
+    case deleteMission
+    case editedMission
+    case completedMission
+    case userLevelUp
+    case friendAdded
 }

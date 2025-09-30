@@ -12,39 +12,48 @@ import SwiftData
 final class MissionController: ObservableObject {
     private let context: ModelContext
     private let badgeManager: BadgeManager?
+    private let user: User?
     
-    init(context: ModelContext, badgeManager: BadgeManager? = nil) {
+    init(context: ModelContext, user: User? = nil, badgeManager: BadgeManager? = nil) {
         self.context = context
+        self.user = user
         self.badgeManager = badgeManager
     }
     
     func insertMission(_ mission: Mission) {
-        context.insert(mission)
+        guard let user else { return }
+        
+        // Attach to user
+        user.missions.append(mission)
+        user.logEvent(.addMission, mission: mission)
         
         do {
             try context.save()
-            if let badgeManager = badgeManager {
-                badgeManager.increment(.filter(mission.type))
-            }
+            badgeManager?.increment(.filter(mission.type))
         } catch {
             print("❌ Failed to insert mission: \(error)")
         }
     }
     
-    func updateCompleteStatus(for missions: [Mission]) -> Void {
+    func updateCompleteStatus(for missions: [Mission]) {
         for mission in missions {
             mission.refreshDailyState()
         }
     }
     
     func deleteMissions(_ missions: [Mission]) {
+        guard let user else { return }
+        
         for mission in missions {
             print("Deleting mission: \(mission.title)")
             
-            if mission.isNew, let badgeManager = badgeManager {
-                badgeManager.increment(.filter(mission.type), by: -1)
+            if mission.isNew {
+                badgeManager?.increment(.filter(mission.type), by: -1)
             }
-            context.delete(mission)
+            
+            user.logEvent(.deleteMission, mission: mission)
+            user.missions.removeAll { $0.id == mission.id }
+            context.delete(mission) // not strictly needed since removing from user + cascade should handle it
         }
         
         do {
@@ -54,11 +63,14 @@ final class MissionController: ObservableObject {
         }
     }
     
-    func markAsCompleted(_ missions: [Mission], forUser user: User? = nil) {
+    func markAsCompleted(_ missions: [Mission]) {
+        guard let user else { return }
         
         for mission in missions {
             mission.markCompleted()
-            user?.addXP(mission.xp)
+            user.addXP(mission.xp)
+            
+            user.logEvent(.completedMission, mission: mission)
         }
         
         do {

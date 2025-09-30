@@ -9,7 +9,8 @@ import SwiftUI
 
 struct TodayProgress: View {
     @Environment(\.theme) private var theme
-    var userXp: Double = 50.0
+    @Environment(\.currentUser) private var user
+
     var limitPointsPerDay: Double = User.LIMIT_POINTS_PER_DAY
     
     var body: some View {
@@ -18,9 +19,13 @@ struct TodayProgress: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(theme.textPrimary)
 
-            ProgressView(value: userXp, total: limitPointsPerDay) { EmptyView() }
+            ProgressView(
+                value: user.clampedXpToday,
+                total: limitPointsPerDay
+            ) { EmptyView() }
                 .progressViewStyle(ThickLinearProgressStyle(height: 8))
                 .frame(maxWidth: .infinity)
+                .animation(.easeOut(duration: 0.6), value: user.xpGainedToday) // smooth fill animation
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -28,4 +33,8 @@ struct TodayProgress: View {
 
 #Preview {
     TodayProgress()
+        .modelContainer(SampleData.shared.modelContainer)
+        .environment(\.theme, .orange)
+        .environment(BadgeManager())
+        .environment(\.currentUser, User.sampleUser())
 }

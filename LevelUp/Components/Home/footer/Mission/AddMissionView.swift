@@ -16,9 +16,11 @@ struct AddMissionView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
+    @Environment(\.currentUser) private var user
+
     
     private var missionController: MissionController {
-        MissionController(context: context, badgeManager: badgeManager)
+        MissionController(context: context, user: user, badgeManager: badgeManager)
     }
     
     @Bindable var mission: Mission

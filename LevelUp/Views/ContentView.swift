@@ -11,6 +11,8 @@ struct ContentView: View {
     @Environment(\.theme) private var theme
     @State private var badgeManager = BadgeManager()
     @State private var leaderBoardIsAvailable: Bool = true
+    @Environment(\.modelContext) private var context
+    @Environment(\.currentUser) private var user
 
     var body: some View {
         VStack {
@@ -20,6 +22,11 @@ struct ContentView: View {
                 Tab("Home", systemImage: "house") {
                     HomeView()
                         .environment(badgeManager)
+                        .task {
+                            // Runs when HomeView appears
+                            print("Loading Global missions...")
+                            await DataSeeder.loadGlobalMissions(for: user, in: context)
+                        }
                 }
                 
                 if leaderBoardIsAvailable {

@@ -13,24 +13,13 @@ struct HomeView: View {
     @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
 
     private var missionController: MissionController {
-        MissionController(context: context, badgeManager: badgeManager)
+        MissionController(context: context, user: user, badgeManager: badgeManager)
     }
     
     // MARK: All Missions
     private var allMissions: [Mission] {
-        globalMissions + customMissions
+        user.allMissions
     }
-    
-    init() {
-        // Hacky way of using Query with enums. They need to be declared firts.
-        let customMissionType = MissionType.custom.rawValue
-        let globalMissionType = MissionType.global.rawValue
-        
-        _customMissions = Query(filter: #Predicate<Mission> { $0.typeRaw == customMissionType})
-        
-        _globalMissions = Query(filter: #Predicate<Mission> { $0.typeRaw == globalMissionType})
-    }
-    
     
     var body: some View {
         VStack(spacing: 0) {
@@ -44,7 +33,7 @@ struct HomeView: View {
                 .padding(.bottom, 12)
             
             // MARK: Mission List
-            MissionList(customMissions, globalMissions)
+            MissionList(user.customMissions, user.globalMissions)
 
         }
         .background(Color(.systemGroupedBackground))
@@ -54,7 +43,7 @@ struct HomeView: View {
                 let selectedMissions = allMissions.filter(\.isSelected)
                 if !selectedMissions.isEmpty {
                     CompleteButton(title: "Complete \(selectedMissions.count)x") {
-                        missionController.markAsCompleted(selectedMissions, forUser: user)
+                        missionController.markAsCompleted(selectedMissions)
                     }
                     .scaleEffect(animateBounce ? 1.1 : 0.9)
                     .padding(.bottom, 20)

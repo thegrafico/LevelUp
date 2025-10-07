@@ -13,6 +13,13 @@ struct ContentView: View {
     @State private var leaderBoardIsAvailable: Bool = true
     @Environment(\.modelContext) private var context
     @Environment(\.currentUser) private var user
+    @Environment(\.scenePhase) private var scenePhase
+
+    
+    private var missionController: MissionController {
+        MissionController(context: context, user: user, badgeManager: badgeManager)
+    }
+
 
     var body: some View {
         VStack {
@@ -24,8 +31,23 @@ struct ContentView: View {
                         .environment(badgeManager)
                         .task {
                             // Runs when HomeView appears
-                            print("Loading Global missions...")
                             await DataSeeder.loadGlobalMissions(for: user, in: context)
+                            
+                            let log = user.log(for: Date())
+                            print("Getting todays log: \(log.date.formatted())")
+                            
+                            missionController.updateCompleteStatus(for: user.missions)
+
+                        }
+                     
+                        .onChange(of: scenePhase) { _, newPhase in
+                            if newPhase == .active {
+                                
+                                let log = user.log(for: Date())
+                                print("Getting todays log: \(log.date.formatted())")
+                                
+                                missionController.updateCompleteStatus(for: user.missions)
+                            }
                         }
                 }
                 

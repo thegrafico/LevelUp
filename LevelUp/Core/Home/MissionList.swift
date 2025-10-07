@@ -93,8 +93,6 @@ struct MissionList: View {
                         print("Global Missions: \(globalMissions.count)")
                         badgeManager?.clear(.filter(selectedFilter))
                         
-                        // MARK: TODO: Check this probably once at day
-                        missionController.updateCompleteStatus(for: filteredMissions)
                     }
                 
                 Spacer()

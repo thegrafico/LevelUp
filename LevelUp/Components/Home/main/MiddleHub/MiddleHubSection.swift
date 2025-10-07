@@ -10,6 +10,7 @@ import SwiftUI
 struct MiddleHubSection: View {
     @Environment(\.theme) private var theme
     @State private var showQuickActions = false
+    @State private var showUserProgress = false
 
 
     var body: some View {
@@ -25,7 +26,7 @@ struct MiddleHubSection: View {
                 .cornerRadius(0.5)
             
             // MARK: RIGHT: Today's Progress
-            TodayProgress()
+            TodayProgress(showTodaysProgressSheet: $showUserProgress)
             
         }
         .padding(.horizontal, 16)
@@ -38,6 +39,11 @@ struct MiddleHubSection: View {
             QuickActionsSheet()
                 .presentationDetents([.medium, .large])
                 .background(theme.background.ignoresSafeArea())       
+        }
+        .sheet(isPresented: $showUserProgress) {
+            UserProgressSheet()
+                .presentationDetents([.large])
+                .background(theme.background.ignoresSafeArea())
         }
         .padding(.horizontal, 30)
         .padding(.bottom, 12)

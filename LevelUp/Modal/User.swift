@@ -18,6 +18,8 @@ final class User: Identifiable {
     var level: Int
     var xp: Int
     var avatar: String?
+    
+    var lastRefreshTrigger: Date = Date()
 
     @Relationship(deleteRule: .cascade)
     var missions: [Mission] = []

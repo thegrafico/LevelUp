@@ -79,3 +79,16 @@ enum PreviewContainer {
         }
     }()
 }
+//
+//static func sampleUser() -> User {
+//    let user = User(
+//        username: "TestUser",
+//        passwordHash: "hash123",
+//        email: "test@demo.com",
+//        level: 1,
+//        xp: 10,
+//    )
+//    user.missions = []
+//    user.friends = []
+//    return user
+//}

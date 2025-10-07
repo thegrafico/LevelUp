@@ -11,7 +11,7 @@ struct HomeView: View {
     @Environment(\.currentUser) private var user
     @Environment(\.modelContext) private var context
     @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
-
+    
     private var missionController: MissionController {
         MissionController(context: context, user: user, badgeManager: badgeManager)
     }
@@ -36,6 +36,7 @@ struct HomeView: View {
             MissionList(user.customMissions, user.globalMissions)
 
         }
+        
         .background(Color(.systemGroupedBackground))
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 12) {

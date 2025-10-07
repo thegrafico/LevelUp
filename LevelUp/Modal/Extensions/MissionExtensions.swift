@@ -18,6 +18,7 @@ extension Mission {
     /// True if mission should be disabled (completed today)
     var isDisabledToday: Bool {
         completed && completedToday
+
     }
 
     /// Call when marking as completed
@@ -42,20 +43,14 @@ extension Mission {
 }
 
 extension Mission {
-    /// Returns true if completed within the given time interval (in seconds)
-    func completedTime(inLast seconds: TimeInterval) -> Bool {
+    /// Check if the mission was completed within the last given time interval.
+    func completedInLast(_ component: Calendar.Component, _ value: Int) -> Bool {
         guard let completionDate else { return false }
-        return Date().timeIntervalSince(completionDate) <= seconds
-    }
-
-    /// Completed within the last X minutes
-    func completedInLast(minutes: Int) -> Bool {
-        return completedTime(inLast: Double(minutes) * 60)
-    }
-
-    /// Completed within the last X hours
-    func completedInLast(hours: Int) -> Bool {
-        return completedTime(inLast: Double(hours) * 3600)
+        let now = Date()
+        guard let threshold = Calendar.current.date(byAdding: component, value: -value, to: now) else {
+            return false
+        }
+        return completionDate >= threshold && completionDate <= now
     }
 }
 

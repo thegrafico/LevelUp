@@ -63,12 +63,15 @@ enum DataSeeder {
     
     static func loadUserIfNeeded(into context: ModelContext) async -> User? {
         do {
+            print("Loading user from swift data...")
             let descriptor = FetchDescriptor<User>()
             let users = try context.fetch(descriptor)
 
             if let first = users.first {
+                print("Found user: \(first.username)")
                 return first
             } else {
+                print("User not found, using sample user.")
                 let newUser = User.sampleUser()
                 context.insert(newUser)
                 
@@ -94,7 +97,7 @@ enum DataSeeder {
             if existing.isEmpty {
                 for mission in Mission.sampleGlobalMissions {
                     print("Adding Global mission to user: \(mission.title)")
-                    mission.printMission()
+//                    mission.printMission()
                     context.insert(mission)
                     user.missions.append(mission)  // ✅ attach to the user
                 }

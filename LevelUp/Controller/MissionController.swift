@@ -68,8 +68,9 @@ final class MissionController: ObservableObject {
         
         for mission in missions {
             mission.markCompleted()
-            user.addXP(mission.xp)
             
+            user.addXP(mission.xp)
+            user.updateStreakIfNeeded()
             user.logEvent(.completedMission, mission: mission)
         }
         

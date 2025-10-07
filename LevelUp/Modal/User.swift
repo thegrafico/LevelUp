@@ -19,6 +19,9 @@ final class User: Identifiable {
     var xp: Int
     var avatar: String?
     
+    var streakCount: Int = 0
+    var lastStreakCompletedDate: Date? = nil
+    
     var lastRefreshTrigger: Date = Date()
 
     @Relationship(deleteRule: .cascade)

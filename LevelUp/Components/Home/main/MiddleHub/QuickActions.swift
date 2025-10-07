@@ -8,10 +8,10 @@ import SwiftUI
 
 
 struct QuickActionsView: View {
-    
-    @Binding var showActionsSheet: Bool
     @Environment(\.theme) private var theme
-    
+    @Environment(\.currentUser) private var user
+    @Binding var showActionsSheet: Bool
+
     var body: some View {
         Button {
             UIImpactFeedbackGenerator(style: .soft).impactOccurred()
@@ -26,13 +26,20 @@ struct QuickActionsView: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(theme.textPrimary)
                 }
-                Text("Streak 5 days")
+
+                Text("Streak \(user.streakCount) day\(user.streakCount == 1 ? "" : "s")")
                     .font(.footnote)
                     .foregroundStyle(theme.textSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .buttonStyle(.plain)
+        .onAppear {
+            // Only rebuild once if the streak hasn't been calculated yet
+            if user.streakCount == 0 {
+                user.rebuildStreakFromLogs()
+            }
+        }
     }
 }
 

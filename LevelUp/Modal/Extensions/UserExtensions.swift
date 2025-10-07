@@ -347,3 +347,84 @@ extension User {
         return Double(totalXP)
     }
 }
+
+
+extension User {
+    func updateStreakIfNeeded() {
+        let today = Calendar.current.startOfDay(for: Date())
+
+        // Get all completed missions today
+        let completedToday = events(on: today)
+            .contains { $0.type == .completedMission }
+
+        guard completedToday else { return } // only update if at least one mission done
+
+        let calendar = Calendar.current
+        if let lastDate = lastStreakCompletedDate {
+            let lastDay = calendar.startOfDay(for: lastDate)
+
+            if calendar.isDateInToday(lastDay) {
+                // Already updated today — no change
+                return
+            } else if let diff = calendar.dateComponents([.day], from: lastDay, to: today).day {
+                if diff == 1 {
+                    // Continued streak (yesterday → today)
+                    streakCount += 1
+                } else {
+                    // Missed a day → reset
+                    streakCount = 1
+                }
+            }
+        } else {
+            // First completion ever
+            streakCount = 1
+        }
+
+        lastStreakCompletedDate = today
+    }
+    
+    func rebuildStreakFromLogs() {
+        let calendar = Calendar.current
+
+        // 1️⃣ Sort log dates in ascending order
+        let sortedDates = progressLogs
+            .map { calendar.startOfDay(for: $0.date) }
+            .sorted()
+
+        guard !sortedDates.isEmpty else {
+            streakCount = 0
+            lastStreakCompletedDate = nil
+            return
+        }
+
+        var currentStreak = 0
+        var previousDay: Date? = nil
+
+        for day in sortedDates {
+            // Check if this log actually has at least one completed mission
+            let hasCompleted = progressLogs
+                .first(where: { calendar.isDate($0.date, inSameDayAs: day) })?
+                .events
+                .contains(where: { $0.type == .completedMission }) ?? false
+
+            guard hasCompleted else { continue }
+
+            if let prev = previousDay {
+                let diff = calendar.dateComponents([.day], from: prev, to: day).day ?? 0
+
+                if diff == 1 {
+                    currentStreak += 1
+                } else {
+                    currentStreak = 1
+                }
+            } else {
+                currentStreak = 1
+            }
+
+            previousDay = day
+        }
+
+        streakCount = currentStreak
+        lastStreakCompletedDate = previousDay
+    }
+}

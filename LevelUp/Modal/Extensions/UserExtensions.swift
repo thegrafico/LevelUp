@@ -251,11 +251,17 @@ extension User {
         return dict
     }
     
-    var xpGainedToday: Double {
     
-        return Double(events(on: Date()).reduce(0) { sum, event in
-            sum + (event.missionXP ?? 0)
-        })
+    
+    var xpGainedToday: Double {
+        let completedEvents = events(on: Date())
+            .filter { $0.type == .completedMission }
+
+        return Double(
+            completedEvents.reduce(0) { sum, event in
+                sum + (event.missionXP ?? 0)
+            }
+        )
     }
     
     var clampedXpToday: Double {

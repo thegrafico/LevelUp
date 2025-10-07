@@ -271,10 +271,10 @@ extension UserProgressSheet {
         TabView {
             missionTimeline
                 .tag(0)
-
+            
             missionTypeHistogram
                 .tag(1)
-
+            
             weeklyXPTrend
                 .tag(2)
         }
@@ -311,89 +311,103 @@ extension UserProgressSheet {
                     return t1 < t2
                 }
                 
-                Chart(sortedEvents, id: \.id) { event in
-                    if let time = event.missionCompletionTime {
-                        LineMark(
-                            x: .value("Time", time),
-                            y: .value("XP", event.missionXP ?? 0)
-                        )
-                        .interpolationMethod(.catmullRom)
-                        .foregroundStyle(theme.primary.gradient)
-                        
-                        PointMark(
-                            x: .value("Time", time),
-                            y: .value("XP", event.missionXP ?? 0)
-                        )
-                        .symbol(.circle)
-                        .foregroundStyle(theme.primary)
-                    }
-                }
-                .chartYAxis {
-                    AxisMarks(position: .leading)
-                }
-                .chartPlotStyle { plot in
-                    plot
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 20)
-                }
-                .chartXScale(domain: paddedDomain(for: sortedEvents))
-                .chartOverlay { proxy in
-                    GeometryReader { geo in
-                        Rectangle()
-                            .fill(Color.clear)
-                            .contentShape(Rectangle())
-                            // only allow hit-testing while actively interacting
-                            .allowsHitTesting(isChartInteracting)
-                            .gesture(
-                                LongPressGesture(minimumDuration: 0.15)
-                                    .onChanged { _ in
-                                        isChartInteracting = true
-                                    }
-                                    .sequenced(before: DragGesture(minimumDistance: 0))
-                                    .onChanged { value in
-                                        switch value {
-                                        case .second(true, let drag?):
-                                            if let date: Date = proxy.value(atX: drag.location.x) {
-                                                let nearest = sortedEvents.min(by: {
-                                                    abs(($0.missionCompletionTime ?? .distantPast)
-                                                        .timeIntervalSince(date)) <
-                                                    abs(($1.missionCompletionTime ?? .distantPast)
-                                                        .timeIntervalSince(date))
-                                                })
-                                                selectedEvent = nearest
-                                            }
-                                        default:
-                                            break
-                                        }
-                                    }
-                                    .onEnded { _ in
-                                        isChartInteracting = false
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                            selectedEvent = nil
-                                        }
-                                    }
+                ZStack(alignment: .bottomLeading) {
+                    Chart(sortedEvents, id: \.id) { event in
+                        if let time = event.missionCompletionTime {
+                            LineMark(
+                                x: .value("Time", time),
+                                y: .value("XP", event.missionXP ?? 0)
                             )
-
-                        // 💬 Annotation bubble
-                        if let event = selectedEvent,
-                           let time = event.missionCompletionTime,
-                           let positionX = proxy.position(forX: time) {
-                            Text("\(time.formatted(date: .omitted, time: .shortened))  +\(event.missionXP ?? 0) XP")
-                                .font(.caption2.weight(.semibold))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 4)
-                                .background(theme.primary.opacity(0.15))
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
-                                .position(x: positionX, y: 26)
+                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(theme.primary.gradient)
+                            
+                            PointMark(
+                                x: .value("Time", time),
+                                y: .value("XP", event.missionXP ?? 0)
+                            )
+                            .symbol(.circle)
+                            .foregroundStyle(theme.primary)
                         }
                     }
+                    .chartYAxis {
+                        AxisMarks(position: .leading)
+                    }
+                    .chartPlotStyle { plot in
+                        plot
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 20)
+                    }
+                    .chartXScale(domain: paddedDomain(for: sortedEvents))
+                    .chartOverlay { proxy in
+                        GeometryReader { _ in
+                            Rectangle()
+                                .fill(Color.clear)
+                                .contentShape(Rectangle())
+                                .allowsHitTesting(isChartInteracting)
+                                .gesture(
+                                    LongPressGesture(minimumDuration: 0.15)
+                                        .onChanged { _ in isChartInteracting = true }
+                                        .sequenced(before: DragGesture(minimumDistance: 0))
+                                        .onChanged { value in
+                                            switch value {
+                                            case .second(true, let drag?):
+                                                if let date: Date = proxy.value(atX: drag.location.x) {
+                                                    let nearest = sortedEvents.min(by: {
+                                                        abs(($0.missionCompletionTime ?? .distantPast)
+                                                            .timeIntervalSince(date)) <
+                                                                abs(($1.missionCompletionTime ?? .distantPast)
+                                                                    .timeIntervalSince(date))
+                                                    })
+                                                    selectedEvent = nearest
+                                                }
+                                            default: break
+                                            }
+                                        }
+                                        .onEnded { _ in
+                                            isChartInteracting = false
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                                selectedEvent = nil
+                                            }
+                                        }
+                                )
+                            
+                            // 💬 Tooltip
+                            if let event = selectedEvent,
+                               let time = event.missionCompletionTime,
+                               let positionX = proxy.position(forX: time) {
+                                Text("\(time.formatted(date: .omitted, time: .shortened))  +\(event.missionXP ?? 0) XP")
+                                    .font(.caption2.weight(.semibold))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 4)
+                                    .background(theme.primary.opacity(0.15))
+                                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                                    .position(x: positionX, y: 26)
+                            }
+                        }
+                    }
+                    .frame(height: 200)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 30)
+                    .background(theme.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .shadow(color: theme.shadowLight, radius: 4, y: 2)
+                    
+                    // 👇 Add tiny axis labels INSIDE the card bounds
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("XP")
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundStyle(theme.textSecondary.opacity(0.5))
+                            .rotationEffect(.degrees(-90))
+                            .offset(x: 10, y: -30)
+                    }
+                    
+                    Text("Time")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(theme.textSecondary.opacity(0.5))
+                        .frame(maxWidth: .infinity, alignment: .bottomTrailing)
+                        .padding(.bottom, 20)
+                        .padding(.horizontal, 20)
                 }
-                .frame(height: 200)
-                .padding(.horizontal, 20)
-                .padding(.top, 30)
-                .background(theme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .shadow(color: theme.shadowLight, radius: 4, y: 2)
             }
         }
     }
@@ -405,7 +419,7 @@ extension UserProgressSheet {
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(theme.textPrimary)
                 .padding(.bottom, 4)
-
+            
             if events.isEmpty {
                 Text("No missions completed on this day.")
                     .font(.subheadline)
@@ -418,38 +432,49 @@ extension UserProgressSheet {
                 let data = grouped.map { (type, missions) in
                     (type, missions.count)
                 }
-
-                Chart(data, id: \.0) { type, count in
-                    BarMark(
-                        x: .value("Mission Type", type),
-                        y: .value("Completed", count)
-                    )
-                    .foregroundStyle(
-                        type == "Global"
-                        ? theme.accent.opacity(0.8)
-                        : theme.primary.opacity(0.8)
-                    )
-                    .cornerRadius(6)
-                    .annotation(position: .top) {
-                        Text("\(count)")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(theme.textPrimary)
+                ZStack(alignment: .bottomLeading) {
+                    // your current Chart code here
+                    Chart(data, id: \.0) { type, count in
+                        BarMark(
+                            x: .value("Mission Type", type),
+                            y: .value("Completed", count)
+                        )
+                        .foregroundStyle(
+                            type == "Global"
+                            ? theme.textSecondary.opacity(0.5)
+                            : theme.primary.opacity(0.8)
+                        )
+                        .cornerRadius(6)
+                        .annotation(position: .top) {
+                            Text("\(count)")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(theme.textPrimary)
+                        }
                     }
-                }
-                .chartYAxis {
-                    AxisMarks(position: .leading)
-                }
-                .chartXAxis {
-                    AxisMarks(values: .automatic) { _ in
-                        AxisValueLabel()
-                            .font(.caption.weight(.medium))
+                    .chartYAxis {
+                        AxisMarks(position: .leading)
                     }
+                    .chartXAxis {
+                        AxisMarks(values: .automatic) { _ in
+                            AxisValueLabel()
+                                .font(.caption.weight(.medium))
+                        }
+                    }
+                    .frame(height: 180)
+                    .padding()
+                    .background(theme.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .shadow(color: theme.shadowLight, radius: 4, y: 2)
+                    
+                    VStack(alignment: .leading) {
+                        Text("Count")
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundStyle(theme.textSecondary.opacity(0.5))
+                            .rotationEffect(.degrees(-90))
+                            .offset(x: -3, y: -25)
+                    }
+                        
                 }
-                .frame(height: 180)
-                .padding()
-                .background(theme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .shadow(color: theme.shadowLight, radius: 4, y: 2)
             }
         }
     }
@@ -460,47 +485,58 @@ extension UserProgressSheet {
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(theme.textPrimary)
                 .padding(.bottom, 4)
-
+            
             let weekStart = calendar.date(byAdding: .day, value: -6, to: selectedDate) ?? .now
             let days = (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: weekStart) }
-
+            
             let weeklyData: [(Date, Double)] = days.map { day in
                 let dailyXP = user.events(on: day)
                     .filter { $0.type == .completedMission }
                     .reduce(0) { $0 + Double($1.missionXP ?? 0) }
                 return (day, dailyXP)
             }
-
-            Chart(weeklyData, id: \.0) { date, xp in
-                LineMark(
-                    x: .value("Date", date),
-                    y: .value("XP", xp)
-                )
-                .interpolationMethod(.catmullRom)
-                .foregroundStyle(theme.primary.gradient)
-
-                AreaMark(
-                    x: .value("Date", date),
-                    y: .value("XP", xp)
-                )
-                .foregroundStyle(theme.primary.opacity(0.15))
-            }
-            .chartXAxis {
-                AxisMarks(values: days) { value in
-                    AxisGridLine()
-                    AxisValueLabel(format: .dateTime.weekday(.abbreviated))
-                        .font(.caption2)
-                        .foregroundStyle(theme.textSecondary)
+            ZStack(alignment: .bottomLeading) {
+                
+                Chart(weeklyData, id: \.0) { date, xp in
+                    LineMark(
+                        x: .value("Date", date),
+                        y: .value("XP", xp)
+                    )
+                    .interpolationMethod(.catmullRom)
+                    .foregroundStyle(theme.primary.gradient)
+                    
+                    AreaMark(
+                        x: .value("Date", date),
+                        y: .value("XP", xp)
+                    )
+                    .foregroundStyle(theme.primary.opacity(0.15))
+                }
+                .chartXAxis {
+                    AxisMarks(values: days) { value in
+                        AxisGridLine()
+                        AxisValueLabel(format: .dateTime.weekday(.abbreviated))
+                            .font(.caption2)
+                            .foregroundStyle(theme.textSecondary)
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading)
+                }
+                .frame(height: 180)
+                .padding()
+                .background(theme.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: theme.shadowLight, radius: 4, y: 2)
+                
+                // 👇 Add tiny axis labels INSIDE the card bounds
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("XP")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(theme.textSecondary.opacity(0.5))
+                        .rotationEffect(.degrees(-90))
+                        .offset(x: 10, y: -30)
                 }
             }
-            .chartYAxis {
-                AxisMarks(position: .leading)
-            }
-            .frame(height: 180)
-            .padding()
-            .background(theme.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .shadow(color: theme.shadowLight, radius: 4, y: 2)
         }
     }
     
@@ -573,7 +609,7 @@ extension UserProgressSheet {
                                 : theme.primary
                             )
                             .font(.title3)
-
+                        
                         VStack(alignment: .leading, spacing: 3) {
                             Text(event.missionTitle ?? "Unknown mission")
                                 .font(.subheadline.weight(.semibold))
@@ -585,9 +621,9 @@ extension UserProgressSheet {
                                     .foregroundStyle(theme.textSecondary)
                             }
                         }
-
+                        
                         Spacer()
-
+                        
                         Text("+\(event.missionXP ?? 0) XP")
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(theme.primary)

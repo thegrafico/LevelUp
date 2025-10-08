@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 
+// MARK: USER XP LEVEL
 extension User {
     /// XP required to reach the next level.
     func requiredXP() -> Int {
@@ -33,121 +34,7 @@ extension User {
     }
 }
 
-// MARK: STATIC Var/Func
-extension User {
-    
-    static var LIMIT_POINTS_PER_DAY : Double = 100
-    
-    static func sampleUser() -> User {
-        let user = User(
-            username: "TestUser",
-            passwordHash: "hash123",
-            email: "test@demo.com",
-            level: 1,
-            xp: 10,
-        )
-        user.missions = []
-        user.friends = []
-        return user
-    }
-}
-
-// MARK: - Sample Data for Testing
-extension User {
-    static func sampleUserWithLogs() -> User {
-        let user = User(
-            username: "RaúlTest",
-            passwordHash: "hash123",
-            email: "raul@test.com",
-            level: 4,
-            xp: 60
-        )
-
-        let calendar = Calendar.current
-        let now = Date()
-
-        // --- Create sample missions with icons ---
-        let baseMissions: [Mission] = [
-            Mission(title: "Morning Run", xp: 30, type: .global, icon: "figure.run"),
-            Mission(title: "Read a Chapter", xp: 20, type: .global, icon: "book.fill"),
-            Mission(title: "Cook a Meal", xp: 40, type: .global, icon: "fork.knife"),
-            Mission(title: "Clean Desk", xp: 15, type: .custom, icon: "deskview.fill"),
-            Mission(title: "Meditate", xp: 25, type: .custom, icon: "brain.head.profile"),
-            Mission(title: "Push-up Challenge", xp: 35, type: .global, icon: "bolt.fill"),
-            Mission(title: "Water Plants", xp: 10, type: .custom, icon: "leaf.fill"),
-            Mission(title: "Call a Friend", xp: 15, type: .global, icon: "phone.fill"),
-            Mission(title: "Finish a Task", xp: 20, type: .custom, icon: "checkmark.seal.fill"),
-            Mission(title: "Stretch", xp: 10, type: .custom, icon: "figure.cooldown"),
-            Mission(title: "Write Journal", xp: 20, type: .custom, icon: "pencil.and.scribble"),
-            Mission(title: "Listen to Podcast", xp: 25, type: .global, icon: "headphones"),
-            Mission(title: "Evening Walk", xp: 30, type: .global, icon: "figure.walk.motion"),
-            Mission(title: "Plan Tomorrow", xp: 15, type: .custom, icon: "calendar.badge.clock"),
-            Mission(title: "Do Laundry", xp: 10, type: .custom, icon: "washer.fill"),
-            Mission(title: "Learn Something New", xp: 50, type: .global, icon: "lightbulb.fill")
-        ]
-
-        user.missions.append(contentsOf: baseMissions)
-
-        // --- Create progress logs for the past 7 days ---
-        let daysRange = (-6...0).compactMap { calendar.date(byAdding: .day, value: $0, to: now) }
-
-        for day in daysRange {
-            let log = ProgressLog(date: calendar.startOfDay(for: day))
-
-            // ✅ Randomize number of missions per day
-            let missionCount = Int.random(in: 3...15)
-            let dailyMissions = (0..<missionCount).compactMap { _ in baseMissions.randomElement() }
-
-            for mission in dailyMissions {
-                // ✅ Random time between 7 AM – 10 PM
-                let randomHour = Int.random(in: 7...22)
-                let randomMinute = Int.random(in: 0...59)
-                let completionDate = calendar.date(
-                    bySettingHour: randomHour,
-                    minute: randomMinute,
-                    second: 0,
-                    of: day
-                )!
-
-                mission.completionDate = completionDate
-                mission.completed = true
-
-                let event = ProgressEvent(
-                    type: .completedMission,
-                    missionId: mission.id,
-                    missionTitle: mission.title,
-                    missionXP: mission.xp + Int.random(in: -5...10), // small XP variance
-                    missionType: mission.type,
-                    missionCompletionTime: completionDate,
-                    userLevel: user.level,
-                    details: "Completed successfully"
-                )
-
-                log.events.append(event)
-            }
-
-            // Sort events by time for realism
-            log.events.sort {
-                ($0.missionCompletionTime ?? .distantPast) <
-                ($1.missionCompletionTime ?? .distantPast)
-            }
-
-            user.progressLogs.append(log)
-        }
-
-        // --- Simulate XP & Level ---
-        let totalXP = user.progressLogs
-            .flatMap { $0.events }
-            .reduce(0) { $0 + ($1.missionXP ?? 0) }
-
-        user.xp = totalXP / 4
-        user.level = 1 + (totalXP / 500)
-
-        return user
-    }
-}
-
-
+// MARK: LOGS
 extension User {
     /// Get or create a `ProgressLog` for a specific date (normalized to start of day)
     func log(for date: Date = Date()) -> ProgressLog {
@@ -160,8 +47,8 @@ extension User {
             return newLog
         }
     }
-
-    /// Add an event to a day's log (default: today)
+    
+    @MainActor
     func logEvent(
         _ type: ProgressEventType,
         mission: Mission? = nil,
@@ -180,6 +67,7 @@ extension User {
             details: details
         )
         logEntry.events.append(event)
+        lastRefreshTrigger = Date() // ✅ forces SwiftUI to refresh computed values
     }
 
     /// Fetch events for a specific day
@@ -269,6 +157,45 @@ extension User {
     }
 }
 
+// MARK: FOR LOGS TESTING
+extension User {
+    
+    enum LogGranularity {
+        case day
+        case minute
+    }
+
+    /// Get or create a `ProgressLog` for a specific date (normalized to start of day)
+    func log(for date: Date = Date(), granularity: LogGranularity) -> ProgressLog {
+        let calendar = Calendar.current
+        let key: Date
+        switch granularity {
+            case .day:
+                key = calendar.startOfDay(for: date)
+            case .minute:
+                key = calendar.date(from: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date))!
+        }
+
+        if let existing = progressLogs.first(where: { calendar.isDate($0.date, equalTo: key, toGranularity: granularity == .day ? .day : .minute) }) {
+            return existing
+        } else {
+            let newLog = ProgressLog(date: key)
+            progressLogs.append(newLog)
+            return newLog
+        }
+    }
+    
+    /// Fetch events for a specific minute (used only in testing)
+    func eventsPerMinute(on date: Date) -> [ProgressEvent] {
+        let calendar = Calendar.current
+        let key = calendar.date(from: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date))!
+        return progressLogs
+            .first(where: { calendar.isDate($0.date, equalTo: key, toGranularity: .minute) })?
+            .events ?? []
+    }
+}
+
+// MARK: RESET USERT
 extension User {
     /// Completely reset the user's progress (keep account but reset XP and level).
     private func resetProgress(context: ModelContext) {
@@ -314,6 +241,7 @@ extension User {
     
 }
 
+// MARK: XP GAINED
 extension User {
     /// XP gained in the last 7 days
     var xpGainedThisWeek: Double {
@@ -348,7 +276,7 @@ extension User {
     }
 }
 
-
+// MARK: STREAK
 extension User {
     func updateStreakIfNeeded() {
         let today = Calendar.current.startOfDay(for: Date())

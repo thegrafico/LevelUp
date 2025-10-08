@@ -54,8 +54,8 @@ final class Mission: Identifiable {
 }
 
 enum MissionType: String, Codable, Identifiable, CaseIterable {
-    case global = "Global"
     case custom = "Custom"
+    case global = "Global"
     case all = "All"
     var id: String { rawValue }
 }
@@ -66,7 +66,6 @@ enum MissionSort: String, CaseIterable, Identifiable {
     case xpDescending = "XP ↓"
     case creationDateAscending = "Creation Date ↑"
     case creationDateDescending = "Creation Date ↓"
-    case completed = "Completed"
     
     var id: String { rawValue }
 }

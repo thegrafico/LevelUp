@@ -31,7 +31,7 @@ struct TodayProgress: View {
                 ) { EmptyView() }
                     .progressViewStyle(ThickLinearProgressStyle(height: 8))
                     .frame(maxWidth: .infinity)
-                    .animation(.easeOut(duration: 0.6), value: user.xpGainedToday) // smooth fill animation
+                    .animation(.easeOut(duration: 0.6), value: user.clampedXpToday) // smooth fill animation
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

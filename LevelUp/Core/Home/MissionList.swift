@@ -49,8 +49,6 @@ struct MissionList: View {
                 return activeBase.sorted { $0.xp < $1.xp }
             case .xpDescending:
                 return activeBase.sorted { $0.xp > $1.xp }
-            case .completed:
-                return activeBase // all inactive, so "completed" sort doesn’t matter
             case .creationDateAscending:
                 return activeBase.sorted { $0.createdAt > $1.createdAt }
             case .creationDateDescending:
@@ -124,7 +122,6 @@ struct MissionList: View {
             }.animation(.spring(response: 0.35, dampingFraction: 0.82), value: selectedFilter)
             .padding(.horizontal, 20)
             
-            // MARK: List of missions
             // MARK: List of missions
             ScrollView {
                 VStack(spacing: 16) {

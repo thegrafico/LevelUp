@@ -77,5 +77,5 @@ struct ContentView: View {
     ContentView()
         .modelContainer(SampleData.shared.modelContainer)
         .environment(\.theme, .orange)
-        .environment(\.currentUser, User.sampleUser())
+        .environment(\.currentUser, User.sampleUserWithLogs())
 }

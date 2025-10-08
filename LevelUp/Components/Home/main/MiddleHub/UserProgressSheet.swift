@@ -15,6 +15,7 @@ struct UserProgressSheet: View {
     
     @State private var selectedDate: Date = Date()
     @State private var showingCalendarPicker: Bool = false
+    @State private var graphIndex: Int = 0
     
     
     @State private var selectedEvent: ProgressEvent? = nil
@@ -56,10 +57,11 @@ struct UserProgressSheet: View {
             VStack(spacing: 24) {
                 header
                 dateSelector
-                    .padding(.bottom, -20) // pull it closer to the summary card
+                    .padding(.bottom, -20)
                 
                 xpSummaryCarousel
                 progressGraphs
+                    
                 activityList
             }
             .padding(.top, 20)
@@ -67,11 +69,14 @@ struct UserProgressSheet: View {
             .padding(.bottom, 50)
         }
         .background(theme.background.ignoresSafeArea())
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Done") { dismiss() }
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(theme.primary)
+        .overlay(alignment: .topTrailing) {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(theme.textSecondary.opacity(0.7))
+                    .padding(16)
             }
         }
     }
@@ -267,21 +272,36 @@ extension UserProgressSheet {
 
 // MARK: - MULTI-GRAPH VIEW
 extension UserProgressSheet {
+  
+
     private var progressGraphs: some View {
-        TabView {
-            missionTimeline
-                .tag(0)
-            
-            missionTypeHistogram
-                .tag(1)
-            
-            weeklyXPTrend
-                .tag(2)
+        VStack(spacing: 0) {
+            TabView(selection: $graphIndex) {
+                missionTimeline
+                    .tag(0)
+                missionTypeHistogram
+                    .tag(1)
+                weeklyXPTrend
+                    .tag(2)
+            }
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))  // hide default dots
+            .frame(height: 260)
+
+            // custom dots below
+            HStack(spacing: 8) {
+                ForEach(0..<3) { idx in
+                    Circle()
+                        .fill(graphIndex == idx ? theme.primary : theme.textSecondary.opacity(0.4))
+                        .frame(width: 6, height: 6)
+                        .onTapGesture {
+                            withAnimation {
+                                graphIndex = idx
+                            }
+                        }
+                }
+            }
+            .padding(.top, 8)
         }
-        .tabViewStyle(.page)
-        .indexViewStyle(.page(backgroundDisplayMode: .always))
-        .frame(height: 260)
-        .padding(.top, 10)
     }
 }
 
@@ -304,10 +324,8 @@ extension UserProgressSheet {
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             } else {
                 let sortedEvents = events.sorted {
-                    guard
-                        let t1 = $0.missionCompletionTime,
-                        let t2 = $1.missionCompletionTime
-                    else { return false }
+                    guard let t1 = $0.missionCompletionTime,
+                          let t2 = $1.missionCompletionTime else { return false }
                     return t1 < t2
                 }
                 
@@ -326,73 +344,30 @@ extension UserProgressSheet {
                                 y: .value("XP", event.missionXP ?? 0)
                             )
                             .symbol(.circle)
-                            .foregroundStyle(theme.primary)
+                            .foregroundStyle(
+                                selectedEvent?.id == event.id
+                                    ? theme.textSecondary
+                                    : theme.primary
+                            )
+                            .symbolSize(selectedEvent?.id == event.id ? 120 : 40)
                         }
                     }
                     .chartYAxis {
                         AxisMarks(position: .leading)
                     }
                     .chartPlotStyle { plot in
-                        plot
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 20)
+                        plot.padding(.horizontal, 20) // ✅ only horizontal
                     }
                     .chartXScale(domain: paddedDomain(for: sortedEvents))
-                    .chartOverlay { proxy in
-                        GeometryReader { _ in
-                            Rectangle()
-                                .fill(Color.clear)
-                                .contentShape(Rectangle())
-                                .allowsHitTesting(isChartInteracting)
-                                .gesture(
-                                    LongPressGesture(minimumDuration: 0.15)
-                                        .onChanged { _ in isChartInteracting = true }
-                                        .sequenced(before: DragGesture(minimumDistance: 0))
-                                        .onChanged { value in
-                                            switch value {
-                                            case .second(true, let drag?):
-                                                if let date: Date = proxy.value(atX: drag.location.x) {
-                                                    let nearest = sortedEvents.min(by: {
-                                                        abs(($0.missionCompletionTime ?? .distantPast)
-                                                            .timeIntervalSince(date)) <
-                                                                abs(($1.missionCompletionTime ?? .distantPast)
-                                                                    .timeIntervalSince(date))
-                                                    })
-                                                    selectedEvent = nearest
-                                                }
-                                            default: break
-                                            }
-                                        }
-                                        .onEnded { _ in
-                                            isChartInteracting = false
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                                selectedEvent = nil
-                                            }
-                                        }
-                                )
-                            
-                            // 💬 Tooltip
-                            if let event = selectedEvent,
-                               let time = event.missionCompletionTime,
-                               let positionX = proxy.position(forX: time) {
-                                Text("\(time.formatted(date: .omitted, time: .shortened))  +\(event.missionXP ?? 0) XP")
-                                    .font(.caption2.weight(.semibold))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 4)
-                                    .background(theme.primary.opacity(0.15))
-                                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                                    .position(x: positionX, y: 26)
-                            }
-                        }
-                    }
+                    .chartYScale(domain: 0...(Double(sortedEvents.map { $0.missionXP ?? 0 }.max() ?? 10) * 1.1))
                     .frame(height: 200)
                     .padding(.horizontal, 20)
-                    .padding(.top, 30)
+                    .padding(.vertical, 12) // ✅ room for labels
                     .background(theme.cardBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .shadow(color: theme.shadowLight, radius: 4, y: 2)
                     
-                    // 👇 Add tiny axis labels INSIDE the card bounds
+                    // axis text overlays
                     VStack(alignment: .leading, spacing: 2) {
                         Text("XP")
                             .font(.system(size: 8, weight: .semibold))
@@ -405,7 +380,7 @@ extension UserProgressSheet {
                         .font(.system(size: 8, weight: .semibold))
                         .foregroundStyle(theme.textSecondary.opacity(0.5))
                         .frame(maxWidth: .infinity, alignment: .bottomTrailing)
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 14) // ✅ a bit more distance
                         .padding(.horizontal, 20)
                 }
             }
@@ -553,21 +528,6 @@ extension UserProgressSheet {
         return minTime.addingTimeInterval(-pad)...maxTime.addingTimeInterval(pad)
     }
     
-    /// Returns up to 3 timestamps: first, middle, last
-    private func xAxisValues(for events: [ProgressEvent]) -> [Date] {
-        let times = events.compactMap { $0.missionCompletionTime }.sorted()
-        guard !times.isEmpty else { return [] }
-        
-        switch times.count {
-        case 1...3:
-            return times
-        default:
-            let first = times.first!
-            let middle = times[times.count / 2]
-            let last = times.last!
-            return [first, middle, last]
-        }
-    }
 }
 
 // MARK: - ACTIVITY LIST
@@ -601,35 +561,44 @@ extension UserProgressSheet {
                     pageSize: 10
                 ) { event in
                     HStack(spacing: 12) {
-                        // 🌍 Use globe for global missions, checkmark for custom
                         Image(systemName: event.missionType == "Global" ? "globe.americas.fill" : "checkmark.circle.fill")
                             .foregroundStyle(
                                 event.missionType == "Global"
-                                ? theme.textSecondary // bright for globals
+                                ? theme.textSecondary
                                 : theme.primary
                             )
                             .font(.title3)
-                        
+
                         VStack(alignment: .leading, spacing: 3) {
                             Text(event.missionTitle ?? "Unknown mission")
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(theme.textPrimary)
-                            
+
                             if let time = event.missionCompletionTime {
                                 Text(time.formatted(date: .omitted, time: .shortened))
                                     .font(.caption)
                                     .foregroundStyle(theme.textSecondary)
                             }
                         }
-                        
+
                         Spacer()
-                        
+
                         Text("+\(event.missionXP ?? 0) XP")
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(theme.primary)
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(selectedEvent?.id == event.id ? theme.primary.opacity(0.1) : .clear)
+                    )
+                    .contentShape(Rectangle()) // ✅ makes the entire row tappable
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedEvent = event
+                        }
+                    }
                 }
                 
             }

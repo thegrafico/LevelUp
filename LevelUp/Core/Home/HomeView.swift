@@ -27,7 +27,6 @@ struct HomeView: View {
             // MARK: HEADER
             Header()
             
-            
             // MARK: Quick actions and Today's progress
             MiddleHubSection()
                 .padding(.bottom, 12)
@@ -72,7 +71,5 @@ struct HomeView: View {
         .modelContainer(SampleData.shared.modelContainer)
         .environment(\.theme, .orange)
         .environment(BadgeManager())
-        .environment(\.currentUser, User.sampleUser())
-
-    
+        .environment(\.currentUser, User.sampleUserWithLogs())
 }

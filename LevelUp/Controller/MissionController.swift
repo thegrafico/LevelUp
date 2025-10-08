@@ -65,19 +65,19 @@ final class MissionController: ObservableObject {
     
     func markAsCompleted(_ missions: [Mission]) {
         guard let user else { return }
-        
+
         for mission in missions {
             mission.markCompleted()
-            
             user.addXP(mission.xp)
-            user.updateStreakIfNeeded()
             user.logEvent(.completedMission, mission: mission)
         }
-        
+
         do {
             try context.save()
+            user.updateStreakIfNeeded()  // ✅ move here, after the save
+            try context.save()           // save again if streak updated
         } catch {
-            print("❌ Failed mark mission as complete: \(error)")
+            print("❌ Failed to mark mission as complete: \(error)")
         }
     }
     

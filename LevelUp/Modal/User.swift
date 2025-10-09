@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import GameplayKit
 
 @Model
 final class User: Identifiable {
@@ -91,7 +92,16 @@ extension User {
         return user
     }
     
-    static func sampleUserWithLogs() -> User {
+    
+
+    static func sampleUserWithLogs(seed: UInt64 = 42) -> User {
+        let randomSource = GKMersenneTwisterRandomSource(seed: seed)
+        let randMissionCount = GKRandomDistribution(randomSource: randomSource, lowestValue: 3, highestValue: 15)
+        let randHour = GKRandomDistribution(randomSource: randomSource, lowestValue: 7, highestValue: 22)
+        let randMinute = GKRandomDistribution(randomSource: randomSource, lowestValue: 0, highestValue: 59)
+        let randXP = GKRandomDistribution(randomSource: randomSource, lowestValue: -5, highestValue: 10)
+        let randMissionIndex = GKRandomDistribution(randomSource: randomSource, lowestValue: 0, highestValue: 15)
+
         let user = User(
             username: "RaúlTest",
             passwordHash: "hash123",
@@ -100,11 +110,6 @@ extension User {
             xp: 60
         )
 
-        let calendar = Calendar.current
-        let now = Date()
-//        let yesterday = calendar.date(byAdding: .day, value: -1, to: now)!
-
-        // --- Create sample missions with icons ---
         let baseMissions: [Mission] = [
             Mission(title: "Morning Run", xp: 30, type: .global, icon: "figure.run"),
             Mission(title: "Read a Chapter", xp: 20, type: .global, icon: "book.fill"),
@@ -124,37 +129,33 @@ extension User {
             Mission(title: "Learn Something New", xp: 50, type: .global, icon: "lightbulb.fill")
         ]
 
-        user.missions.append(contentsOf: baseMissions)
-
-        // --- Create progress logs for the past 7 days ---
+        let calendar = Calendar.current
+        let now = Date()
         let daysRange = (-6...0).compactMap { calendar.date(byAdding: .day, value: $0, to: now) }
 
         for day in daysRange {
             let log = ProgressLog(date: calendar.startOfDay(for: day))
+            let missionCount = randMissionCount.nextInt()
 
-            // ✅ Randomize number of missions per day
-            let missionCount = Int.random(in: 3...15)
-            let dailyMissions = (0..<missionCount).compactMap { _ in baseMissions.randomElement() }
+            for _ in 0..<missionCount {
+                let mission = baseMissions[randMissionIndex.nextInt() % baseMissions.count]
 
-            for mission in dailyMissions {
-                // ✅ Random time between 7 AM – 10 PM
-                let randomHour = Int.random(in: 7...22)
-                let randomMinute = Int.random(in: 0...59)
                 let completionDate = calendar.date(
-                    bySettingHour: randomHour,
-                    minute: randomMinute,
+                    bySettingHour: randHour.nextInt(),
+                    minute: randMinute.nextInt(),
                     second: 0,
                     of: day
                 )!
 
-                mission.completionDate = completionDate
+                let xp = mission.xp + randXP.nextInt()
                 mission.completed = true
+                mission.completionDate = completionDate
 
                 let event = ProgressEvent(
                     type: .completedMission,
                     missionId: mission.id,
                     missionTitle: mission.title,
-                    missionXP: mission.xp + Int.random(in: -5...10), // small XP variance
+                    missionXP: xp,
                     missionType: mission.type,
                     missionCompletionTime: completionDate,
                     userLevel: user.level,
@@ -164,7 +165,6 @@ extension User {
                 log.events.append(event)
             }
 
-            // Sort events by time for realism
             log.events.sort {
                 ($0.missionCompletionTime ?? .distantPast) <
                 ($1.missionCompletionTime ?? .distantPast)
@@ -173,14 +173,12 @@ extension User {
             user.progressLogs.append(log)
         }
 
-        // --- Simulate XP & Level ---
         let totalXP = user.progressLogs
             .flatMap { $0.events }
             .reduce(0) { $0 + ($1.missionXP ?? 0) }
 
         user.xp = totalXP / 4
         user.level = 1 + (totalXP / 500)
-
         return user
     }
 }

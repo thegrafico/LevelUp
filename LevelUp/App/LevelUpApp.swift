@@ -4,6 +4,12 @@
 //
 //  Created by Raúl Pichardo Avalo on 9/4/25.
 //
+//
+//  LevelUpApp.swift
+//  LevelUp
+//
+//  Created by Raúl Pichardo Avalo on 9/4/25.
+//
 
 import SwiftUI
 import SwiftData
@@ -11,7 +17,7 @@ import SwiftData
 @main
 struct LevelUpApp: App {
     @StateObject private var userStore = UserStore()
-
+    
     var body: some Scene {
         WindowGroup {
             RootGate()
@@ -30,26 +36,65 @@ struct LevelUpApp: App {
     }
 }
 
-
-
 struct RootGate: View {
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var userStore: UserStore
 
-    var body: some View {
-        Group {
+    @State private var state: LaunchState = .loading
 
-            if let user = userStore.user {
+    var body: some View {
+        ZStack {
+            switch state {
+            case .loading:
+                SplashLoadingView()
+            case .authenticated(let user):
                 ContentView()
                     .environment(\.currentUser, user)
-            } else {
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            case .unauthenticated:
                 AuthView()
-                    .task {
-                        if let user = await DataSeeder.loadUserIfNeeded(into: context) {
-                            userStore.user = user
-                        }
-                    }
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+            }
+            
+            // 👇 overlay global busy splash if any async operation is running
+           if userStore.isBusy {
+               SplashLoadingView(message: userStore.busyMessage)
+                   .transition(.opacity)
+                   .zIndex(1)
+           }
+        }
+        .task { await restoreSession() }
+        .onAppear { userStore.attachContext(context) }
+        .onChange(of: userStore.user) { _, newUser in      // 👈 react to login/logout
+            withAnimation(.spring(duration: 0.35)) {
+                if let u = newUser {
+                    state = .authenticated(u)
+                } else {
+                    state = .unauthenticated
+                }
             }
         }
     }
+
+    @MainActor
+    private func restoreSession() async {
+        state = .loading
+        if let id = userStore.getActiveUserId(),
+           let user = await DataSeeder.loadUserIfNeeded(into: context, activeUserId: id) {
+            userStore.user = user
+            withAnimation(.spring(duration: 0.35)) {
+                state = .authenticated(user)
+            }
+        } else {
+            withAnimation(.spring(duration: 0.35)) {
+                state = .unauthenticated
+            }
+        }
+    }
+}
+
+enum LaunchState {
+    case loading
+    case authenticated(User)
+    case unauthenticated
 }

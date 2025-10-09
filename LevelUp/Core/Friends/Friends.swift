@@ -37,7 +37,7 @@ struct BannerHeader: View {
     var body: some View {
         TopBannerBackground(height: height, radius: radius)
             .overlay(alignment: .bottomLeading) {     // <- text sits ON the banner
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, ) {
                     Text(title)
                         .font(.system(size: 34, weight: .black, design: .rounded))
                         .kerning(1.5)
@@ -121,7 +121,7 @@ struct FriendsView: View {
                 AddFriendsSheet()
                     .presentationDetents([.height(360), .medium])
             }
-            .offset(y: -60)
+            .offset(y: -40)
         }
         .background(theme.background.ignoresSafeArea())
 

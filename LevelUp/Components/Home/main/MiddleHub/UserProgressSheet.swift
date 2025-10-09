@@ -15,13 +15,10 @@ struct UserProgressSheet: View {
     
     @State private var selectedDate: Date = Date()
     @State private var showingCalendarPicker: Bool = false
+    @State private var xpCardIndex: Int = 0
     @State private var graphIndex: Int = 0
-    
-    
     @State private var selectedEvent: ProgressEvent? = nil
-    
     @State private var isChartInteracting = false
-    
     
     private let calendar = Calendar.current
     
@@ -29,7 +26,7 @@ struct UserProgressSheet: View {
     private var events: [ProgressEvent] {
         user.events(on: selectedDate).filter { $0.type == .completedMission }
     }
-    
+
     private var xpForSelectedDay: Double {
         Double(events.reduce(0) { $0 + ($1.missionXP ?? 0) })
     }
@@ -41,8 +38,7 @@ struct UserProgressSheet: View {
             return "Stacks for \(selectedDate.formatted(.dateTime.day().month(.wide)))"
         }
     }
-    
-    
+        
     private var xpForSelectedWeek: Double {
         let weekInterval = calendar.dateInterval(of: .weekOfYear, for: selectedDate)!
         let weekLogs = user.progressLogs.filter { weekInterval.contains($0.date) }
@@ -54,14 +50,12 @@ struct UserProgressSheet: View {
     // MARK: Body
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: 20) {
                 header
                 dateSelector
                     .padding(.bottom, -20)
-                
                 xpSummaryCarousel
                 progressGraphs
-                    
                 activityList
             }
             .padding(.top, 20)
@@ -277,7 +271,6 @@ extension UserProgressSheet {
 // MARK: - MULTI-GRAPH VIEW
 extension UserProgressSheet {
   
-
     private var progressGraphs: some View {
         VStack(spacing: 0) {
             TabView(selection: $graphIndex) {
@@ -304,7 +297,7 @@ extension UserProgressSheet {
                         }
                 }
             }
-            .padding(.top, 8)
+            .padding(.top, 20)
         }
     }
 }
@@ -359,9 +352,9 @@ extension UserProgressSheet {
                     .chartYAxis {
                         AxisMarks(position: .leading)
                     }
-                    .chartPlotStyle { plot in
-                        plot.padding(.horizontal, 20) // ✅ only horizontal
-                    }
+//                    .chartPlotStyle { plot in
+//                        plot.padding(.horizontal, 20) // ✅ only horizontal
+//                    }
                     .chartXScale(domain: paddedDomain(for: sortedEvents))
                     .chartYScale(domain: 0...(Double(sortedEvents.map { $0.missionXP ?? 0 }.max() ?? 10) * 1.1))
                     .frame(height: 200)
@@ -383,7 +376,7 @@ extension UserProgressSheet {
                     Text("Time")
                         .font(.system(size: 8, weight: .semibold))
                         .foregroundStyle(theme.textSecondary.opacity(0.5))
-                        .frame(maxWidth: .infinity, alignment: .bottomTrailing)
+                        .frame(maxWidth: .infinity, alignment: .bottomLeading)
                         .padding(.bottom, 14) // ✅ a bit more distance
                         .padding(.horizontal, 20)
                 }
@@ -616,34 +609,54 @@ extension UserProgressSheet {
 // MARK: - XP CAROUSEL
 extension UserProgressSheet {
     private var xpSummaryCarousel: some View {
-        TabView {
-            // 🟢 XP for Selected Day
-            xpSummaryCard(
-                title: calendar.isDateInToday(selectedDate) ? "XP Today" : "XP on \(selectedDate.formatted(.dateTime.day().month(.abbreviated)))",
-                value: xpForSelectedDay,
-                total: User.LIMIT_POINTS_PER_DAY,
-                subtitle: "\(Int(xpForSelectedDay)) / \(Int(User.LIMIT_POINTS_PER_DAY)) XP"
-            )
+        VStack(spacing: 0) {
+            TabView(selection: $xpCardIndex) {
+                // 🟢 XP for Selected Day
+                xpSummaryCard(
+                    title: calendar.isDateInToday(selectedDate) ? "XP Today" : "XP on \(selectedDate.formatted(.dateTime.day().month(.abbreviated)))",
+                    value: xpForSelectedDay,
+                    total: User.LIMIT_POINTS_PER_DAY,
+                    subtitle: "\(Int(xpForSelectedDay)) / \(Int(User.LIMIT_POINTS_PER_DAY)) XP"
+                )
+                .tag(0)
+                
+                // 🔵 XP for Selected Week
+                xpSummaryCard(
+                    title: "XP This Week",
+                    value: xpForSelectedWeek,
+                    total: User.LIMIT_POINTS_PER_DAY * 7,
+                    subtitle: "\(Int(xpForSelectedWeek)) XP this week"
+                )
+                .tag(1)
+                
+                // 🟣 Total XP Overall
+                xpSummaryCard(
+                    title: "Total XP Earned",
+                    value: user.xpGainedTotal,
+                    total: Double(user.level * 100), // can be arbitrary or tied to your leveling formula
+                    subtitle: "\(Int(user.xpGainedTotal)) total XP"
+                )
+                .tag(2)
+            }
+//            .tabViewStyle(.page)
+//            .indexViewStyle(.page(backgroundDisplayMode: .always))
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+            .frame(height: 160)
             
-            // 🔵 XP for Selected Week
-            xpSummaryCard(
-                title: "XP This Week",
-                value: xpForSelectedWeek,
-                total: User.LIMIT_POINTS_PER_DAY * 7,
-                subtitle: "\(Int(xpForSelectedWeek)) XP this week"
-            )
-            
-            // 🟣 Total XP Overall
-            xpSummaryCard(
-                title: "Total XP Earned",
-                value: user.xpGainedTotal,
-                total: Double(user.level * 100), // can be arbitrary or tied to your leveling formula
-                subtitle: "\(Int(user.xpGainedTotal)) total XP"
-            )
+            // custom dots below
+            HStack(spacing: 8) {
+                ForEach(0..<3) { idx in
+                    Circle()
+                        .fill(xpCardIndex == idx ? theme.primary : theme.textSecondary.opacity(0.4))
+                        .frame(width: 6, height: 6)
+                        .onTapGesture {
+                            withAnimation {
+                                xpCardIndex = idx
+                            }
+                        }
+                }
+            }
         }
-        .tabViewStyle(.page)
-        .indexViewStyle(.page(backgroundDisplayMode: .always))
-        .frame(height: 160)
     }
     
     private func xpSummaryCard(title: String, value: Double, total: Double, subtitle: String) -> some View {
@@ -743,5 +756,5 @@ struct PaginatedListView<Item: Identifiable, Content: View>: View {
     UserProgressSheet()
         .modelContainer(SampleData.shared.modelContainer)
         .environment(BadgeManager())
-        .environment(\.currentUser, User.sampleUserWithLogs())
+        .environment(\.currentUser, User.sampleUserWithLogs(seed: 30))
 }

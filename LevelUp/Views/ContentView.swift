@@ -40,7 +40,6 @@ struct ContentView: View {
                             print("Getting todays log: \(log.date.formatted())")
                             
                             missionController.updateCompleteStatus(for: user.missions)
-
                         }
                      
                         .onChange(of: scenePhase) { _, newPhase in

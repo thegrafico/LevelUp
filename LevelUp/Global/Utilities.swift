@@ -61,28 +61,34 @@ enum DataSeeder {
         return user
     }
     
-    static func loadUserIfNeeded(into context: ModelContext) async -> User? {
+    @MainActor
+    static func loadUserIfNeeded(into context: ModelContext, activeUserId: UUID?) async -> User? {
         do {
-            print("Loading user from swift data...")
+            print("Loading user from SwiftData...")
             let descriptor = FetchDescriptor<User>()
             let users = try context.fetch(descriptor)
 
+            // If we have an active user id saved
+            if let id = activeUserId, let user = users.first(where: { $0.id == id }) {
+                print("✅ Loaded active user: \(user.username)")
+                return user
+            }
+
+            // No active user — fall back to first or sample
             if let first = users.first {
-                print("Found user: \(first.username)")
+                print("✅ Found existing user: \(first.username)")
                 return first
             } else {
-                print("User not found, using sample user.")
-                let newUser = User.sampleUser()
-                context.insert(newUser)
-                
-                try context.save()
-                return newUser
+                print("❌ USER NOT FOUND...")
+//                let newUser = User.sampleUser()
+//                context.insert(newUser)
+//                try context.save()
+                return nil
             }
         } catch {
             print("❌ Failed to load user: \(error)")
+            return nil
         }
-        
-        return nil
     }
     
     

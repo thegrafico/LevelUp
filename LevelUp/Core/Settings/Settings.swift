@@ -9,46 +9,57 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.theme) private var theme
-    @State private var notificationsOn = true
-    @State private var darkModeOn = false
-    
     @Environment(\.modelContext) private var context
     @Environment(\.currentUser) private var user
-    
+    @EnvironmentObject private var userStore: UserStore
+
+    @State private var notificationsOn = true
+    @State private var darkModeOn = false
     @State private var showResetAlert = false
-    @State private var showDeleteAlert = false
-        
+    @State private var showSignOutAlert = false
+
     var body: some View {
         VStack(spacing: 0) {
-            
             ZStack(alignment: .top) {
                 BannerHeader(title: "Settings", subtitle: "Customize your experience")
                     .ignoresSafeArea(edges: .top)
             }
             .frame(height: 140)
-            
-            // Scrollable content below
+
             ScrollView {
                 VStack(spacing: 20) {
+
+                    // MARK: Account
                     SettingsSection(title: "Account") {
                         SettingsRow(icon: "person.crop.circle", title: "Profile")
-                        SettingsRow(icon: "arrow.right.square", title: "Sign Out")
+
+                        Button {
+                            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                            showSignOutAlert = true
+                        } label: {
+                            SettingsRow(icon: "arrow.right.square", title: "Sign Out")
+                        }
+                        .tint(.red)
                     }
-                    
+
+                    // MARK: Notifications
                     SettingsSection(title: "Notifications") {
                         SettingsToggleRow(icon: "bell.fill", title: "Daily Reminders", isOn: $notificationsOn)
                     }
-                    
+
+                    // MARK: Appearance
                     SettingsSection(title: "Appearance") {
                         SettingsToggleRow(icon: "moon.fill", title: "Dark Mode", isOn: $darkModeOn)
                         SettingsRow(icon: "paintpalette.fill", title: "Theme")
                     }
-                    
+
+                    // MARK: About
                     SettingsSection(title: "About") {
                         SettingsRow(icon: "info.circle.fill", title: "App Version 1.0")
                         SettingsRow(icon: "envelope.fill", title: "Feedback")
                     }
-                    
+
+                    // MARK: Danger Zone
                     SettingsSection(title: "Danger Zone") {
                         Button {
                             showResetAlert = true
@@ -57,8 +68,6 @@ struct SettingsView: View {
                         }
                         .tint(.red)
                     }
-                    
-                                        
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
@@ -66,14 +75,26 @@ struct SettingsView: View {
             }
         }
         .alert("Reset Progress?", isPresented: $showResetAlert) {
-                    Button("Cancel", role: .cancel) { }
-                    Button("Reset", role: .destructive) {
-                        user.deleteAllData(context: context)
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
+                user.deleteAllData(context: context)
+            }
+        } message: {
+            Text("This will reset your level, XP, missions, and logs, but keep your account.")
+        }
+        .alert("Sign Out?", isPresented: $showSignOutAlert) {          // 👈 wire the alert to the button above
+            Button("Cancel", role: .cancel) { }
+            Button("Sign Out", role: .destructive) {
+                Task {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        // optional: show some visual cue while signing out
                     }
-                } message: {
-                    Text("This will reset your level, XP, missions, and logs, but keep your account.")
+                    await userStore.logoutAsync()
                 }
-                
+            }
+        } message: {
+            Text("You’ll need to log in again to continue your journey.")
+        }
         .background(theme.background)
     }
 }

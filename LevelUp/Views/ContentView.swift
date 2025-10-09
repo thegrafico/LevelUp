@@ -20,7 +20,6 @@ struct ContentView: View {
         MissionController(context: context, user: user, badgeManager: badgeManager)
     }
 
-
     var body: some View {
         VStack {
             
@@ -32,6 +31,10 @@ struct ContentView: View {
                         .task {
                             // Runs when HomeView appears
                             await DataSeeder.loadGlobalMissions(for: user, in: context)
+                            
+                            await DataSeeder.loadLocalMissions(for: user, in: context)
+                            
+//                            await DataSeeder.addSampleLogs(for: user, in: context)
                             
                             let log = user.log(for: Date())
                             print("Getting todays log: \(log.date.formatted())")

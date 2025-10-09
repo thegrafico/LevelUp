@@ -70,7 +70,7 @@ struct UserLevelXPCard: View {
                 }
                 
                 ProgressView(
-                    value: Double(user.xp),
+                    value: min(max(Double(user.xp), 0), Double(user.requiredXP())) ,
                     total: Double(user.requiredXP()) ) {
                         EmptyView()
                     }

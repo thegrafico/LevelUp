@@ -34,6 +34,28 @@ extension User {
     }
 }
 
+extension User {
+    var globalMissions: [Mission] {
+        missions.filter { $0.isGlobal }
+    }
+    
+    var customMissions: [Mission] {
+        missions.filter { $0.isCustom }
+    }
+    
+    var activeMissions: [Mission] {
+        missions.filter { !$0.isDisabledToday }
+    }
+    
+    var completedMissions: [Mission] {
+        missions.filter { $0.isDisabledToday }
+    }
+    
+    var allMissions: [Mission] {
+        globalMissions + customMissions
+    }
+}
+
 // MARK: LOGS
 extension User {
     /// Get or create a `ProgressLog` for a specific date (normalized to start of day)

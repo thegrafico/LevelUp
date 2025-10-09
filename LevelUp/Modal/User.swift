@@ -24,6 +24,8 @@ final class User: Identifiable {
     
     var lastRefreshTrigger: Date = Date()
 
+    var createdAt: Date = Date()
+
     @Relationship(deleteRule: .cascade)
     var missions: [Mission] = []
     @Relationship(deleteRule: .cascade)
@@ -49,29 +51,6 @@ final class User: Identifiable {
         self.level = level
         self.xp = xp
         self.settings = UserSettings(userId: id)
-    }
-}
-
-
-extension User {
-    var globalMissions: [Mission] {
-        missions.filter { $0.isGlobal }
-    }
-    
-    var customMissions: [Mission] {
-        missions.filter { $0.isCustom }
-    }
-    
-    var activeMissions: [Mission] {
-        missions.filter { !$0.isDisabledToday }
-    }
-    
-    var completedMissions: [Mission] {
-        missions.filter { $0.isDisabledToday }
-    }
-    
-    var allMissions: [Mission] {
-        globalMissions + customMissions
     }
 }
 

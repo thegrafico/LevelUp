@@ -220,8 +220,12 @@ extension UserProgressSheet {
         .sheet(isPresented: $showingCalendarPicker) {
             VStack {
                 
-                
-                DatePicker("Select Date", selection: $selectedDate, displayedComponents: .date)
+                DatePicker(
+                    "Select Date",
+                    selection: $selectedDate,
+                    in: Calendar.current.date(byAdding: .day, value: -30, to: user.createdAt)!...Date(),
+                    displayedComponents: .date
+                )
                     .datePickerStyle(.graphical)
                     .tint(theme.primary)
                     .padding()
@@ -386,7 +390,6 @@ extension UserProgressSheet {
             }
         }
     }
-    
     
     private var missionTypeHistogram: some View {
         VStack(alignment: .leading, spacing: 8) {

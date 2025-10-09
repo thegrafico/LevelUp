@@ -102,6 +102,24 @@ extension Mission {
         .init(title: "Plan Tomorrow", xp: 12, type: .global, icon: "calendar", completed: false),
     ]
     
+    static let SampleLocalMissions: [Mission] = [
+        // Health & Fitness
+        // Core Training (Saitama Routine)
+        .init(title: "100 Push-Ups", xp: 25, type: .custom, icon: "figure.strengthtraining.traditional"),
+        .init(title: "100 Sit-Ups", xp: 25, type: .custom, icon: "figure.core.training"),
+        .init(title: "100 Squats", xp: 25, type: .custom, icon: "figure.strengthtraining.functional"),
+        .init(title: "Run 10 Kilometers", xp: 40, type: .custom, icon: "figure.run"),
+        .init(title: "Cold Shower Training", xp: 20, type: .custom, icon: "snowflake"),
+        .init(title: "No A/C Challenge", xp: 15, type: .custom, icon: "wind"),
+
+        // Solo Leveling Daily Quests
+        .init(title: "Grind a Skill", xp: 25, type: .custom, icon: "brain.head.profile"),
+        .init(title: "Cook a Meal", xp: 18, type: .custom, icon: "fork.knife"),
+        .init(title: "Read 10 Pages", xp: 15, type: .custom, icon: "book.fill"),
+        .init(title: "Help Someone", xp: 20, type: .custom, icon: "hands.sparkles.fill"),
+        .init(title: "Meditation for 10m", xp: 100, type: .custom, icon: "sparkles"),
+    ]
+    
     static let xpValues = [5, 10, 15, 20]
     
     static let availableIcons = [

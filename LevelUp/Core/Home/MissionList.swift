@@ -96,22 +96,24 @@ struct MissionList: View {
                 Spacer()
                 
                 if selectedFilter == .custom {
-                   Button {
-                       showDeleteConfirmation = true
-                   } label: {
-                       Image(systemName: "trash.fill")
-                           .font(.title3)
-                           .symbolRenderingMode(.hierarchical)
-                           .foregroundStyle(theme.primary)
-                       .opacity(!selectedCustomMissions.isEmpty ? 1 : 0.3)
-                           .symbolEffect(.bounce, value: selectedFilter == .custom) // fun pop on appear
-                   }
-                   .disabled(selectedCustomMissions.isEmpty)
-                   .transition(.asymmetric(
-                       insertion: .move(edge: .trailing).combined(with: .opacity),
-                       removal:  .scale(scale: 0.7).combined(with: .opacity)
-                   ))
-                   .id("trash")
+                    Button {
+                        let generator = UIImpactFeedbackGenerator(style: .medium)
+                        generator.impactOccurred() // ✅ vibration feedback
+                        showDeleteConfirmation = true
+                    } label: {
+                        Image(systemName: "trash.fill")
+                            .font(.title3)
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(theme.primary)
+                            .opacity(!selectedCustomMissions.isEmpty ? 1 : 0.3)
+                            .symbolEffect(.bounce, value: selectedFilter == .custom)
+                    }
+                    .disabled(selectedCustomMissions.isEmpty)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal:  .scale(scale: 0.7).combined(with: .opacity)
+                    ))
+                    .id("trash")
                 }
 
                 
@@ -124,7 +126,7 @@ struct MissionList: View {
             
             // MARK: List of missions
             ScrollView {
-                VStack(spacing: 16) {
+                LazyVStack(spacing: 16, pinnedViews: []) {
                     // ✅ Active missions
                     if !filteredMissions.isEmpty {
                         ForEach(filteredMissions, id: \.id) { mission in

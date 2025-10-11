@@ -89,7 +89,7 @@ struct MissionList: View {
                     .onChange(of: selectedFilter) {
                         
                         print("Global Missions: \(globalMissions.count)")
-                        badgeManager?.clear(.filter(selectedFilter))
+                        badgeManager?.clear(.filterMission(selectedFilter))
                         
                     }
                 

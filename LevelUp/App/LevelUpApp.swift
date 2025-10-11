@@ -39,9 +39,9 @@ struct LevelUpApp: App {
 struct RootGate: View {
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var userStore: UserStore
-
+    
     @State private var state: LaunchState = .loading
-
+    
     var body: some View {
         ZStack {
             switch state {
@@ -57,11 +57,11 @@ struct RootGate: View {
             }
             
             // 👇 overlay global busy splash if any async operation is running
-           if userStore.isBusy {
-               SplashLoadingView(message: userStore.busyMessage)
-                   .transition(.opacity)
-                   .zIndex(1)
-           }
+            if userStore.isBusy {
+                SplashLoadingView(message: userStore.busyMessage)
+                    .transition(.opacity)
+                    .zIndex(1)
+            }
         }
         .task { await restoreSession() }
         .onAppear { userStore.attachContext(context) }
@@ -75,7 +75,7 @@ struct RootGate: View {
             }
         }
     }
-
+    
     @MainActor
     private func restoreSession() async {
         state = .loading
@@ -86,6 +86,24 @@ struct RootGate: View {
                 state = .authenticated(user)
             }
         } else {
+            
+            do {
+                try await Task.sleep(nanoseconds: 1_000_000_000 * 2) // 2s
+                
+                let sampleUser = try DataSeeder.insertDummyData(into: context)
+                userStore.setActiveUserId(sampleUser.id)
+                userStore.user = sampleUser
+                withAnimation(.spring(duration: 0.35)) {
+                    state = .authenticated(sampleUser)
+                }
+            } catch {
+                print("❌ Failed to create sample user: \(error)")
+                withAnimation(.spring(duration: 0.35)) {
+                    state = .unauthenticated
+                }
+            }
+            
+            
             withAnimation(.spring(duration: 0.35)) {
                 state = .unauthenticated
             }

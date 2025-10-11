@@ -27,6 +27,7 @@ struct Theme {
     
     // Radii
     let cornerRadiusSmall: CGFloat
+    let cornerRadiusMedium: CGFloat
     let cornerRadiusLarge: CGFloat
     
     // Typography
@@ -54,6 +55,7 @@ extension Theme {
         shadowDark: .black.opacity(0.14),
         
         cornerRadiusSmall: 12,
+        cornerRadiusMedium: 16,
         cornerRadiusLarge: 20,
         
         titleFont: .system(.title2, design: .rounded).weight(.bold),
@@ -78,6 +80,7 @@ extension Theme {
         shadowDark: .black.opacity(0.2),
         
         cornerRadiusSmall: 12,
+        cornerRadiusMedium: 16,
         cornerRadiusLarge: 20,
         
         titleFont: .system(.title2, design: .rounded).weight(.bold),

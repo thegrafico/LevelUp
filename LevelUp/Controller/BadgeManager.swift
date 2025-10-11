@@ -35,14 +35,19 @@ class BadgeManager {
     }
 
     func count(for key: BadgeKey) -> Int {
-        counts[key, default: defaultCount]
+        return counts[key, default: defaultCount]
     }
 }
 
 enum BadgeKey: Hashable {
-    case notifications
+
+    case LeaderboardNotification
+    case HomeNotification
+    case FriendsNotification
+    case SettingsNotification
+    
     case newCustomMission
     case newGlobalMission
-    case filter(MissionType)
     
+    case filterMission(MissionType)
 }

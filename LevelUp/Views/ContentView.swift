@@ -34,39 +34,59 @@ struct ContentView: View {
                             
                             await DataSeeder.loadLocalMissions(for: user, in: context)
                             
-//                            await DataSeeder.addSampleLogs(for: user, in: context)
+                            //                            await DataSeeder.addSampleLogs(for: user, in: context)
                             
                             let log = user.log(for: Date())
-                            print("Getting todays log: \(log.date.formatted())")
+                            print("Getting todays log on change: \(log.date.formatted())")
                             
                             missionController.updateCompleteStatus(for: user.missions)
+                            
+                            badgeManager.clear(.HomeNotification)
+                            
                         }
-                     
                         .onChange(of: scenePhase) { _, newPhase in
                             if newPhase == .active {
-                                
+                                  
                                 let log = user.log(for: Date())
-                                print("Getting todays log: \(log.date.formatted())")
+                                print("Getting todays log from scene change: \(log.date.formatted())")
                                 
                                 missionController.updateCompleteStatus(for: user.missions)
+                                
+                               
                             }
                         }
                 }
+                .badge(badgeManager.count(for: .HomeNotification))
                 
-                if leaderBoardIsAvailable {
-                    Tab("Leaderboard", systemImage: "trophy.fill") {
-                        LeaderboardView()
-                    }
+                
+
+                Tab("Leaderboard", systemImage: "trophy.fill") {
+                    LeaderboardView()
+                        .task {
+                            badgeManager.clear(.LeaderboardNotification)
+                        }
                 }
-                
+                .disabled(!leaderBoardIsAvailable)
+                .badge(badgeManager.count(for: .LeaderboardNotification))
+
+            
                 
                 Tab("Friends", systemImage: "person.3.fill") {
                     FriendsView()
+                    .task {
+                        badgeManager.clear(.FriendsNotification)
+                    }
                 }
+                .badge(badgeManager.count(for: .FriendsNotification))
+
                 
                 Tab("Settings", systemImage: "gear") {
                    SettingsView()
+                    .task {
+                        badgeManager.clear(.SettingsNotification)
+                    }
                 }
+                .badge(badgeManager.count(for: .SettingsNotification))
             }
             .tint(theme.primary)
             .toolbarBackground(theme.cardBackground, for: .tabBar)

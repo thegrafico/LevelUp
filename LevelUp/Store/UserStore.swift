@@ -42,7 +42,7 @@ final class UserStore: ObservableObject {
         busyMessage = "Logging in..."
 
         do {
-//            try await Task.sleep(nanoseconds: 1_000_000_000 * 5) // 5s
+//            try await Task.sleep(nanoseconds: 1_000_000_000 * 2) // 2s
 
             let foundUser = try await controller.authenticate(identifier: identifier, password: password)
             self.user = foundUser
@@ -123,6 +123,10 @@ final class UserStore: ObservableObject {
     func getActiveUserId() -> UUID? {
         guard let idString = activeUserId else { return nil }
         return UUID(uuidString: idString)
+    }
+    
+    func setActiveUserId(_ id: UUID?) {
+        self.activeUserId = id?.uuidString
     }
 }
 

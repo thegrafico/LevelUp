@@ -29,7 +29,7 @@ final class MissionController: ObservableObject {
         
         do {
             try context.save()
-            badgeManager?.increment(.filter(mission.type))
+            badgeManager?.increment(.filterMission(mission.type))
         } catch {
             print("❌ Failed to insert mission: \(error)")
         }
@@ -48,7 +48,7 @@ final class MissionController: ObservableObject {
             print("Deleting mission: \(mission.title)")
             
             if mission.isNew {
-                badgeManager?.increment(.filter(mission.type), by: -1)
+                badgeManager?.increment(.filterMission(mission.type), by: -1)
             }
             
             user.logEvent(.deleteMission, mission: mission)

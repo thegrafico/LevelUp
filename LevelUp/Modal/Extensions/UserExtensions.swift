@@ -65,6 +65,7 @@ extension User {
             return existing
         } else {
             let newLog = ProgressLog(date: key)
+            print("Added new log to the user progress log")
             progressLogs.append(newLog)
             return newLog
         }

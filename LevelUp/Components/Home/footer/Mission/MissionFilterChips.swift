@@ -14,7 +14,7 @@ struct MissionFilterChips: View {
 
     var body: some View {
         HStack{
-            ForEach(MissionType.allCases) { filter in
+            ForEach(MissionType.allCases, id: \.self) { filter in
                 let isSelected = selectedFilter == filter
                 Text(filter.rawValue)
                     .font(.footnote.weight(.semibold))
@@ -32,7 +32,7 @@ struct MissionFilterChips: View {
                     .overlay(alignment: .topTrailing) {
                         if let badgeManager = badgeManager {
                             
-                            let count = badgeManager.count(for: .filter(filter))
+                            let count = badgeManager.count(for: .filterMission(filter))
                             if count > 0 {
                                 BadgeView(count: count, size: 20)
                                     .offset(x: 8, y: -8)

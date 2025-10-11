@@ -18,7 +18,6 @@ struct UserProgressSheet: View {
     @State private var xpCardIndex: Int = 0
     @State private var graphIndex: Int = 0
     @State private var selectedEvent: ProgressEvent? = nil
-    @State private var isChartInteracting = false
     
     private let calendar = Calendar.current
     
@@ -192,11 +191,12 @@ extension UserProgressSheet {
                     .padding(.vertical, 10)
                     .padding(.horizontal, 8)
                 }
-                .task {
+                .onAppear {
                     if let todayMatch = days.first(where: { calendar.isDateInToday($0) }) {
-                        try? await Task.sleep(nanoseconds: 300_000_000)
-                        withAnimation(.easeOut(duration: 0.6)) {
-                            proxy.scrollTo(todayMatch, anchor: .center)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            withAnimation(.easeOut(duration: 0.6)) {
+                                proxy.scrollTo(todayMatch, anchor: .center)
+                            }
                         }
                     }
                 }

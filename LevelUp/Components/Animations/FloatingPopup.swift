@@ -9,17 +9,23 @@ import SwiftUI
 
 struct FloatingPopup: View {
     @State private var show = false
-    @State private var scale: CGFloat = 0.8   // start smaller
+    @State private var scale: CGFloat = 0.8
+    @Environment(\.theme) private var theme
+    
     var duration: Double = 3.0
     var text: String = "+1 Mission"
-    var baseColor: Color = .green   // <-- new parameter
+    var baseColor: Color? = nil
+    
+    var activeColor : Color {
+        baseColor ?? theme.primary
+    }
     
     var body: some View {
         Text(text)
             .font(.system(size: 28, weight: .black, design: .rounded))
             .overlay(
                 LinearGradient(
-                    colors: [baseColor, baseColor.opacity(0.6)], // dynamic gradient
+                    colors: [activeColor, activeColor.opacity(0.8)], // dynamic gradient
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -29,7 +35,7 @@ struct FloatingPopup: View {
                 )
             )
             // dynamic glow
-            .shadow(color: baseColor.opacity(0.8), radius: 12, x: 0, y: 0)
+            .shadow(color: activeColor.opacity(0.8), radius: 12, x: 0, y: 0)
             .shadow(color: .white.opacity(0.6), radius: 4, x: 0, y: 0)
             .opacity(show ? 0 : 1)
             .offset(y: show ? -100 : 0)
@@ -48,10 +54,16 @@ struct FloatingPopup: View {
     }
 }
 #Preview {
-    ZStack {
-        FloatingPopup(duration: 3)
-        FloatingPopup(duration: 5, baseColor: .red)
+    VStack {
+        ZStack {
+            HStack {
+                FloatingPopup(duration: 3)
+                FloatingPopup(duration: 5, baseColor: .red)
+            }
+        }
     }
+    
+    .environment(\.theme, .orange)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .ignoresSafeArea()
 }

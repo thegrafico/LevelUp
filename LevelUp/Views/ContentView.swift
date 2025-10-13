@@ -97,7 +97,7 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(SampleData.shared.modelContainer)
-        .environment(\.theme, .orange)
-        .environment(\.currentUser, User.sampleUserWithLogs())
+            .modelContainer(SampleData.shared.modelContainer)
+            .environment(\.theme, .orange)
+            .environment(\.currentUser, User.sampleUserWithLogs())
 }

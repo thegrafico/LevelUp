@@ -54,7 +54,7 @@ struct UserLevelXPCard: View {
                                 .font(theme.bodyFont)
                                 .foregroundStyle(theme.textSecondary)
                                 .monospaced()
-                            AnimatedNumberText(value: user.requiredXP(), font: theme.bodyFont)
+                            AnimatedNumberText(value: user.stats.requiredXP(), font: theme.bodyFont)
                                 .foregroundStyle(theme.textSecondary)
                             Text(" XP")
                                 .font(theme.bodyFont)
@@ -70,8 +70,8 @@ struct UserLevelXPCard: View {
                 }
                 
                 ProgressView(
-                    value: min(max(Double(user.xp), 0), Double(user.requiredXP())) ,
-                    total: Double(user.requiredXP()) ) {
+                    value: min(max(Double(user.xp), 0), Double(user.stats.requiredXP())) ,
+                    total: Double(user.stats.requiredXP()) ) {
                         EmptyView()
                     }
                     .progressViewStyle(ThickLinearProgressStyle(height: 22))

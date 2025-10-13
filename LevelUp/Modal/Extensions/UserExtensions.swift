@@ -8,54 +8,6 @@
 import Foundation
 import SwiftData
 
-// MARK: USER XP LEVEL
-extension User {
-    /// XP required to reach the next level.
-    func requiredXP() -> Int {
-        let baseXP = 100
-        let increment = 25
-        return baseXP + (level - 1) * increment
-    }
-    
-    /// Adds XP to the user and updates their level if needed.
-    func addXP(_ amount: Int) {
-        xp += amount
-
-        // Loop in case we level up multiple times at once
-        while xp >= requiredXP() {
-            xp -= requiredXP() // carry over extra XP
-            level += 1
-        }
-    }
-    
-    /// XP progress as a percentage toward next level.
-    var progressToNextLevel: Double {
-        Double(xp) / Double(requiredXP())
-    }
-}
-
-extension User {
-    var globalMissions: [Mission] {
-        missions.filter { $0.isGlobal }
-    }
-    
-    var customMissions: [Mission] {
-        missions.filter { $0.isCustom }
-    }
-    
-    var activeMissions: [Mission] {
-        missions.filter { !$0.isDisabledToday }
-    }
-    
-    var completedMissions: [Mission] {
-        missions.filter { $0.isDisabledToday }
-    }
-    
-    var allMissions: [Mission] {
-        globalMissions + customMissions
-    }
-}
-
 // MARK: LOGS
 extension User {
     /// Get or create a `ProgressLog` for a specific date (normalized to start of day)
@@ -102,7 +54,7 @@ extension User {
         return log.events
     }
     
-    func printEvents(on date: Date) {
+    private func printEvents(on date: Date) {
         
         for event in events(on: date) {
             
@@ -161,8 +113,41 @@ extension User {
         }
         return dict
     }
-    
-    
+}
+
+// MARK: XP GAINED
+extension User {
+    /// XP gained in the last 7 days
+    var xpGainedThisWeek: Double {
+        guard let startOfWeek = Calendar.current.date(
+            from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())
+        ) else { return 0 }
+
+        // Filter logs from the last 7 days
+        let recentLogs = progressLogs.filter { $0.date >= startOfWeek }
+
+        // Flatten events and filter completed missions
+        let completedEvents = recentLogs
+            .flatMap { $0.events }
+            .filter { $0.type == .completedMission }
+
+        // Sum XP values
+        let totalXP = completedEvents.reduce(0) { sum, event in
+            sum + (event.missionXP ?? 0)
+        }
+
+        return Double(totalXP)
+    }
+
+    /// Total XP gained overall
+    var xpGainedTotal: Double {
+        let allEvents = progressLogs.flatMap { $0.events }
+        let completed = allEvents.filter { $0.type == .completedMission }
+        let totalXP = completed.reduce(0) { sum, event in
+            sum + (event.missionXP ?? 0)
+        }
+        return Double(totalXP)
+    }
     
     var xpGainedToday: Double {
         let completedEvents = events(on: Date())
@@ -180,41 +165,80 @@ extension User {
     }
 }
 
-// MARK: FOR LOGS TESTING
+// MARK: STREAK
 extension User {
-    
-    enum LogGranularity {
-        case day
-        case minute
-    }
-
-    /// Get or create a `ProgressLog` for a specific date (normalized to start of day)
-    func log(for date: Date = Date(), granularity: LogGranularity) -> ProgressLog {
+    func updateStreakIfNeeded() {
+        let today = Calendar.current.startOfDay(for: Date())
+        
+        // Get all completed missions today
+        let completedToday = events(on: today)
+            .contains { $0.type == .completedMission }
+        
+        guard completedToday else { return } // only update if at least one mission done
+        
         let calendar = Calendar.current
-        let key: Date
-        switch granularity {
-            case .day:
-                key = calendar.startOfDay(for: date)
-            case .minute:
-                key = calendar.date(from: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date))!
-        }
-
-        if let existing = progressLogs.first(where: { calendar.isDate($0.date, equalTo: key, toGranularity: granularity == .day ? .day : .minute) }) {
-            return existing
+        if let lastDate = stats.lastStreakCompletedDate {
+            let lastDay = calendar.startOfDay(for: lastDate)
+            
+            if calendar.isDateInToday(lastDay) {
+                // Already updated today — no change
+                return
+            } else if let diff = calendar.dateComponents([.day], from: lastDay, to: today).day {
+                if diff == 1 {
+                    // Continued streak (yesterday → today)
+                    stats.incrementStreakCount(forDate: today)
+                } else {
+                    // Missed a day → reset
+                    stats.resetStreakCount()
+                }
+            }
         } else {
-            let newLog = ProgressLog(date: key)
-            progressLogs.append(newLog)
-            return newLog
+            // First completion ever
+            stats.incrementStreakCount(forDate: today)
         }
     }
     
-    /// Fetch events for a specific minute (used only in testing)
-    func eventsPerMinute(on date: Date) -> [ProgressEvent] {
+    func rebuildStreakFromLogs() {
         let calendar = Calendar.current
-        let key = calendar.date(from: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date))!
-        return progressLogs
-            .first(where: { calendar.isDate($0.date, equalTo: key, toGranularity: .minute) })?
-            .events ?? []
+
+        // 1️⃣ Sort log dates in ascending order
+        let sortedDates = progressLogs
+            .map { calendar.startOfDay(for: $0.date) }
+            .sorted()
+
+        guard !sortedDates.isEmpty else {
+            stats.resetStreakCount()
+            return
+        }
+
+        var currentStreak = 0
+        var previousDay: Date? = nil
+
+        for day in sortedDates {
+            // Check if this log actually has at least one completed mission
+            let hasCompleted = progressLogs
+                .first(where: { calendar.isDate($0.date, inSameDayAs: day) })?
+                .events
+                .contains(where: { $0.type == .completedMission }) ?? false
+
+            guard hasCompleted else { continue }
+
+            if let prev = previousDay {
+                let diff = calendar.dateComponents([.day], from: prev, to: day).day ?? 0
+
+                if diff == 1 {
+                    currentStreak += 1
+                } else {
+                    currentStreak = 1
+                }
+            } else {
+                currentStreak = 1
+            }
+
+            previousDay = day
+        }
+        
+        self.stats.setStreakCount(currentStreak, forDate: previousDay)
     }
 }
 
@@ -224,8 +248,7 @@ extension User {
     private func resetProgress(context: ModelContext) {
         do {
             print("Resetting user progress...")
-            self.level = 1
-            self.xp = 0
+            self.stats.reset()
             
             for log in progressLogs {
                 context.delete(log)
@@ -264,118 +287,25 @@ extension User {
     
 }
 
-// MARK: XP GAINED
+// MARK: MISSIONS
 extension User {
-    /// XP gained in the last 7 days
-    var xpGainedThisWeek: Double {
-        guard let startOfWeek = Calendar.current.date(
-            from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())
-        ) else { return 0 }
-
-        // Filter logs from the last 7 days
-        let recentLogs = progressLogs.filter { $0.date >= startOfWeek }
-
-        // Flatten events and filter completed missions
-        let completedEvents = recentLogs
-            .flatMap { $0.events }
-            .filter { $0.type == .completedMission }
-
-        // Sum XP values
-        let totalXP = completedEvents.reduce(0) { sum, event in
-            sum + (event.missionXP ?? 0)
-        }
-
-        return Double(totalXP)
-    }
-
-    /// Total XP gained overall
-    var xpGainedTotal: Double {
-        let allEvents = progressLogs.flatMap { $0.events }
-        let completed = allEvents.filter { $0.type == .completedMission }
-        let totalXP = completed.reduce(0) { sum, event in
-            sum + (event.missionXP ?? 0)
-        }
-        return Double(totalXP)
-    }
-}
-
-// MARK: STREAK
-extension User {
-    func updateStreakIfNeeded() {
-        let today = Calendar.current.startOfDay(for: Date())
-
-        // Get all completed missions today
-        let completedToday = events(on: today)
-            .contains { $0.type == .completedMission }
-
-        guard completedToday else { return } // only update if at least one mission done
-
-        let calendar = Calendar.current
-        if let lastDate = lastStreakCompletedDate {
-            let lastDay = calendar.startOfDay(for: lastDate)
-
-            if calendar.isDateInToday(lastDay) {
-                // Already updated today — no change
-                return
-            } else if let diff = calendar.dateComponents([.day], from: lastDay, to: today).day {
-                if diff == 1 {
-                    // Continued streak (yesterday → today)
-                    streakCount += 1
-                } else {
-                    // Missed a day → reset
-                    streakCount = 1
-                }
-            }
-        } else {
-            // First completion ever
-            streakCount = 1
-        }
-
-        lastStreakCompletedDate = today
+    var globalMissions: [Mission] {
+        missions.filter { $0.isGlobal }
     }
     
-    func rebuildStreakFromLogs() {
-        let calendar = Calendar.current
-
-        // 1️⃣ Sort log dates in ascending order
-        let sortedDates = progressLogs
-            .map { calendar.startOfDay(for: $0.date) }
-            .sorted()
-
-        guard !sortedDates.isEmpty else {
-            streakCount = 0
-            lastStreakCompletedDate = nil
-            return
-        }
-
-        var currentStreak = 0
-        var previousDay: Date? = nil
-
-        for day in sortedDates {
-            // Check if this log actually has at least one completed mission
-            let hasCompleted = progressLogs
-                .first(where: { calendar.isDate($0.date, inSameDayAs: day) })?
-                .events
-                .contains(where: { $0.type == .completedMission }) ?? false
-
-            guard hasCompleted else { continue }
-
-            if let prev = previousDay {
-                let diff = calendar.dateComponents([.day], from: prev, to: day).day ?? 0
-
-                if diff == 1 {
-                    currentStreak += 1
-                } else {
-                    currentStreak = 1
-                }
-            } else {
-                currentStreak = 1
-            }
-
-            previousDay = day
-        }
-
-        streakCount = currentStreak
-        lastStreakCompletedDate = previousDay
+    var customMissions: [Mission] {
+        missions.filter { $0.isCustom }
+    }
+    
+    var activeMissions: [Mission] {
+        missions.filter { !$0.isDisabledToday }
+    }
+    
+    var completedMissions: [Mission] {
+        missions.filter { $0.isDisabledToday }
+    }
+    
+    var allMissions: [Mission] {
+        globalMissions + customMissions
     }
 }

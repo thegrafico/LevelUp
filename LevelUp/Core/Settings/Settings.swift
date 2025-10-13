@@ -21,7 +21,7 @@ struct SettingsView: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack(alignment: .top) {
-                BannerHeader(title: "Settings", subtitle: "Customize your experience")
+                AppTopBanner(title: "Settings", subtitle: "Customize your experience")
                     .ignoresSafeArea(edges: .top)
             }
             .frame(height: 140)

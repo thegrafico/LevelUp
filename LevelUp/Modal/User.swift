@@ -15,17 +15,11 @@ final class User: Identifiable {
     var username: String
     var passwordHash: String
     var email: String
-
-    var level: Int
-    var xp: Int
-    var avatar: String?
-    
-    var streakCount: Int = 0
-    var lastStreakCompletedDate: Date? = nil
-    
-    var lastRefreshTrigger: Date = Date()
-
     var createdAt: Date = Date()
+    var avatar: String?
+        
+    // MARK: FOR UI REFRESH
+    var lastRefreshTrigger: Date = Date()
 
     @Relationship(deleteRule: .cascade)
     var missions: [Mission] = []
@@ -35,6 +29,10 @@ final class User: Identifiable {
     var progressLogs: [ProgressLog] = []
     @Relationship(deleteRule: .cascade)
     var settings: UserSettings
+
+    @Relationship(deleteRule: .cascade)
+    var stats: UserStats
+    
     init(
         username: String,
         passwordHash: String,
@@ -49,9 +47,21 @@ final class User: Identifiable {
         self.passwordHash = passwordHash
         self.email = email
         self.avatar = avatar
-        self.level = level
-        self.xp = xp
         self.settings = UserSettings(userId: id)
+        
+        self.stats = .init(level: 0, xp: 0)
+    }
+    
+    var level: Int {
+        stats.level
+    }
+    
+    var xp: Int {
+        stats.xp
+    }
+    
+    var streakCount: Int {
+        stats.streakCount
     }
 }
 
@@ -67,9 +77,7 @@ extension User {
         let user = User(
             username: "TestUser",
             passwordHash: "hash123",
-            email: "test@demo.com",
-            level: 1,
-            xp: 10,
+            email: "test@demo.com"
         )
         user.missions = []
         user.friends = []
@@ -81,8 +89,6 @@ extension User {
             username: "TestUser",
             passwordHash: "hash123",
             email: "test@demo.com",
-            level: 1,
-            xp: 10,
         )
         user.missions = [
             Mission(title: "Morning Run", xp: 30, type: .global, icon: "figure.run"),
@@ -106,8 +112,6 @@ extension User {
             username: "RaúlTest",
             passwordHash: "hash123",
             email: "raul@test.com",
-            level: 4,
-            xp: 60
         )
 
         let baseMissions: [Mission] = [
@@ -158,7 +162,7 @@ extension User {
                     missionXP: xp,
                     missionType: mission.type,
                     missionCompletionTime: completionDate,
-                    userLevel: user.level,
+                    userLevel: user.stats.level,
                     details: "Completed successfully"
                 )
 
@@ -177,8 +181,8 @@ extension User {
             .flatMap { $0.events }
             .reduce(0) { $0 + ($1.missionXP ?? 0) }
 
-        user.xp = totalXP / 4
-        user.level = 1 + (totalXP / 500)
+        user.stats.setXP(totalXP / 4)
+        user.stats.setLevel(1 + (totalXP / 500))
         return user
     }
 }

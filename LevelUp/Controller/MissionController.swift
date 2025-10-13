@@ -68,14 +68,15 @@ final class MissionController: ObservableObject {
 
         for mission in missions {
             mission.markCompleted()
-            user.addXP(mission.xp)
+            user.stats.addXP(mission.xp)
             user.logEvent(.completedMission, mission: mission)
         }
 
         do {
             try context.save()
-            user.updateStreakIfNeeded()  // ✅ move here, after the save
-            try context.save()           // save again if streak updated
+            
+            user.updateStreakIfNeeded()
+            try context.save()
         } catch {
             print("❌ Failed to mark mission as complete: \(error)")
         }

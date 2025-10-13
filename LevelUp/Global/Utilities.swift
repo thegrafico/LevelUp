@@ -181,7 +181,7 @@ enum DataSeeder {
                     missionXP: mission.xp + Int.random(in: -5...10),
                     missionType: mission.type,
                     missionCompletionTime: completionDate,
-                    userLevel: user.level,
+                    userLevel: user.stats.level,
                     details: "Completed mission: \(mission.title)"
                 )
 
@@ -202,12 +202,12 @@ enum DataSeeder {
             .flatMap { $0.events }
             .reduce(0) { $0 + ($1.missionXP ?? 0) }
 
-        user.xp = totalXP / 4
-        user.level = 1 + (totalXP / 500)
+        user.stats.setXP( totalXP / 4)
+        user.stats.setLevel( 1 + (totalXP / 500))
 
         do {
             try context.save()
-            print("📊 Added sample logs for user \(user.username). XP: \(user.xp), Level: \(user.level)")
+            print("📊 Added sample logs for user \(user.username). XP: \(user.stats.xp), Level: \(user.stats.level)")
         } catch {
             print("❌ Failed to add logs: \(error)")
         }

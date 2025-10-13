@@ -22,11 +22,11 @@ final class UserController {
     func createUser(username: String, email: String, password: String) throws -> User {
         // Check if user already exists by email
         let descriptor = FetchDescriptor<User>(
-            predicate: #Predicate { $0.email == email }
+            predicate: #Predicate { $0.email == email || $0.username == username}
         )
         let existing = try context.fetch(descriptor)
         if !existing.isEmpty {
-            throw UserError.emailTaken
+            throw UserError.usernameOrEmailTaken
         }
 
         // Hash the password (you can replace with proper cryptographic hash later)
@@ -63,7 +63,31 @@ final class UserController {
 
         return user
     }
+    
+    func searchUsers(byUsername query: String) async throws -> [User] {
+           let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+           guard !trimmed.isEmpty else { return [] }
 
+           let descriptor = FetchDescriptor<User>(
+               predicate: #Predicate { user in
+                   user.username.localizedStandardContains(trimmed)
+               },
+               sortBy: [SortDescriptor(\.username)]
+           )
+
+           return try context.fetch(descriptor)
+       }
+
+    
+    /// Fake hash for now — replace with CryptoKit later.
+    private func hash(_ string: String) -> String {
+        return String(string.reversed()) + "_hash"
+    }
+
+   
+}
+
+extension UserController {
     enum AuthError: LocalizedError {
         case userNotFound
         case invalidPassword
@@ -75,13 +99,10 @@ final class UserController {
             }
         }
     }
-
-    /// Fake hash for now — replace with CryptoKit later.
-    private func hash(_ string: String) -> String {
-        return String(string.reversed()) + "_hash"
-    }
-
+    
     enum UserError: LocalizedError {
+        case usernameOrEmailTaken
+        case usernameTaken
         case emailTaken
         case invalidInput
 
@@ -89,6 +110,9 @@ final class UserController {
             switch self {
             case .emailTaken: return "This email is already registered."
             case .invalidInput: return "Invalid user information."
+            case .usernameOrEmailTaken: return "This username or email is already registered."
+            case .usernameTaken: return "This username is already registered."
+            
             }
         }
     }

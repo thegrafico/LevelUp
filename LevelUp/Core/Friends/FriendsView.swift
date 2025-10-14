@@ -6,24 +6,7 @@
 //
 
 import SwiftUI
-
-// MARK: - UI Model (demo)
-struct UIFriend: Identifiable {
-    let id = UUID()
-    var name: String
-    var username: String
-    var avatar: String   // SF Symbol
-    var isOnline: Bool
-}
-
-
-
-private let demoFriends: [Friend] = [
-    .init(username: "Alex", stats: .init(level: 20, topMission: "Drink Water", challengeWonCount: 10)),
-    .init(username: "Raul", stats: .init(level: 25, topMission: "Golf", challengeWonCount: 10)),
-    
-]
-
+import SwiftData
 
 
 // MARK: - Friends View
@@ -33,10 +16,48 @@ struct FriendsView: View {
     @State private var userQuery: String = ""
     @State private var showAddSheet = false
     @State private var showNotificationsSheet = false
-    
     @State private var selectedFriend: Friend? = nil
+    @State private var friendRequests: [FriendRequest] = []
     
-    @State private var friends: [Friend] = demoFriends
+    @Environment(\.modelContext) private var context
+    @Environment(\.currentUser) private var user
+    
+    private var userController: UserController {
+        UserController(context: context )
+    }
+    
+    private func loadPendingRequests() async {
+        do {
+            print("Loading Pending request")
+            friendRequests = try await userController.fetchPendingFriendRequests(for: user)
+            print("Loaded requests: \(friendRequests.count)")
+            
+            for request in friendRequests {
+                print("Sender \(request.from.friendId) | Receiver \(request.to)")
+            }
+        } catch {
+            print("❌ Failed to fetch pending requests: \(error)")
+            friendRequests = []
+        }
+    }
+
+    var friends: [Friend]  {
+        user.friends
+    }
+    
+//    let pending: String = friendRequestStatus.pending.rawValue
+//    @Query(filter: #Predicate<FriendRequest> {
+//        $0.statusRaw == pending
+//    },
+//    sort: [SortDescriptor(\.createdAt, order: .reverse)]
+//    )
+//    private var allPendingRequests: [FriendRequest]
+//
+//    var pendingRequests: [FriendRequest] {
+//        allPendingRequests.filter { $0.from.friendId == user.id }
+//    }
+    
+    var hasFriends: Bool { !friends.isEmpty  || !friendRequests.isEmpty}
     
     var filtered: [Friend] {
         let q = userQuery.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -83,7 +104,7 @@ struct FriendsView: View {
                 .shadow(color: theme.shadowLight, radius: 6, y: 3)
                 .padding(.horizontal, 20)
                 
-                if friends.isEmpty {
+                if !hasFriends {
                     EmptyFriendsView(onAddPressed: {
                         showAddSheet.toggle()
                     })
@@ -104,9 +125,31 @@ struct FriendsView: View {
                             }
                         }
                         .padding(.vertical, 8)
+                        
+                        // NEW SECTION ↓
+                        if !friendRequests.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Pending Requests")
+                                    .font(.headline.weight(.semibold))
+                                    .foregroundStyle(theme.textPrimary)
+                                    .padding(.horizontal, 20)
+                                    .padding(.top, 16)
+
+                                LazyVStack(spacing: 12) {
+                                    ForEach(friendRequests) { request in
+                                        FriendRow(friend: request.from, onPressLabel: "Pending")
+                                            .disabled(true)
+                                            .opacity(0.5)
+                                            .padding(.horizontal, 20)
+                                    }
+                                }
+                            }
+                        }
                     }
                     .scrollIndicators(.hidden)
                 }
+                
+                
                 
                 Spacer(minLength: 0)
             }
@@ -123,6 +166,12 @@ struct FriendsView: View {
                 FriendPreviewCard(friend: friend)
                     .presentationDetents([.medium])
             }
+            .onAppear {
+                Task {
+//                   try await userController.deleteAllFriendRequest(for: user)
+                    await loadPendingRequests()
+                }
+            }
             
             .offset(y: -40)
         }
@@ -135,5 +184,7 @@ struct FriendsView: View {
 
 #Preview {
     FriendsView()
+        .modelContainer(SampleData.shared.modelContainer)
+        .environment(\.currentUser, User.sampleUserWithLogs())
         .environment(\.theme, .orange)
 }

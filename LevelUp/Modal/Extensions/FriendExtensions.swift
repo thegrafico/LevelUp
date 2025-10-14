@@ -11,7 +11,7 @@ import Foundation
 // MARK: - Sample Friends
 extension Friend {
     static let sampleFriends: [Friend] = [
-        .init(username: "Raúl", stats: .init(level: 20, bestStreakCount: 20, topMission: "Swimming")),
-        .init(username: "Raúl", stats: .init(level: 30, bestStreakCount: 10, topMission: "Running")),
+        .init(username: "Raúl", stats: .init(level: 20, bestStreakCount: 20, topMission: "Swimming"), friendId: UUID()),
+        .init(username: "Raúl", stats: .init(level: 30, bestStreakCount: 10, topMission: "Running"), friendId: UUID()),
     ]
 }

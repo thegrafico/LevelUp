@@ -7,39 +7,6 @@
 
 import SwiftUI
 
-struct AppNotification: Identifiable {
-    
-    enum Kind: String, CaseIterable {
-        case friendRequest = "Friend Requests"
-        case challenge = "Challenges"
-        case system = "System"
-    }
-
-    var id: UUID = UUID()
-    var title: String {
-        kind.rawValue
-    }
-    var kind: Kind
-    var message: String?
-    var sender: Friend?
-    var isRead: Bool = false
-    
-    var payload: Any?
-//    private var payloadId: UUID {
-//        switch kind {
-//        case .friendRequest(let request): return request.id
-//        case .challenge(let challenge): return challenge.id
-//        }
-//    }
-//    
-//    private var payload: Any {
-//        switch kind {
-//            case .friendRequest(let request): return request
-//            case .challenge(let challenge): return challenge
-//        }
-//    }
-}
-
 struct NotificationRow: View {
     @Environment(\.theme) private var theme
     var notification: AppNotification
@@ -71,7 +38,7 @@ struct NotificationRow: View {
             Button {
                 onViewTap(notification)
             } label: {
-                Text(notification.kind == .friendRequest ? "Request" : "Challenge")
+                Text(notification.kind == .friendRequest ? "View" : "Challenge")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(theme.textInverse)
                     .padding(.horizontal, 12)
@@ -81,6 +48,8 @@ struct NotificationRow: View {
                     )
             }
             .buttonStyle(.plain)
+            .disabled(notification.sender == nil)
+            .opacity(notification.sender != nil ? 1 : 0.8)
         }
         .padding(10)
         .background(theme.cardBackground)
@@ -90,6 +59,6 @@ struct NotificationRow: View {
 }
 
 #Preview {
-    NotificationRow(notification: AppNotification(kind: .friendRequest, message: "Watns to connect"), onViewTap: {_ in})
+    NotificationRow(notification: AppNotification(kind: .friendRequest, message: "Watns to connect", sender: Friend(username: "thegraifco", stats: .init())), onViewTap: {_ in})
     NotificationRow(notification: AppNotification(kind: .challenge, message: "challenges you"), onViewTap: {_ in})
 }

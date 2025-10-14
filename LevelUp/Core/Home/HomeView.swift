@@ -4,8 +4,6 @@ import SwiftData
 struct HomeView: View {
     
     // MARK: Getting User Custom Missions
-    @Query private var customMissions: [Mission]
-    @Query private var globalMissions: [Mission]
     @State private var animateBounce = false
     
     @Environment(\.currentUser) private var user

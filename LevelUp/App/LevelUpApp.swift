@@ -86,23 +86,23 @@ struct RootGate: View {
                 state = .authenticated(user)
             }
         } else {
-            
-            do {
-                try await Task.sleep(nanoseconds: 1_000_000_000 * 2) // 2s
-                
-                let sampleUser = try DataSeeder.insertDummyData(into: context)
-                
-                userStore.setUser(sampleUser)
-                
-                withAnimation(.spring(duration: 0.35)) {
-                    state = .authenticated(sampleUser)
-                }
-                return
-                
-            } catch {
-                print("❌ Failed to create sample user: \(error)")
-            }
-            
+//            
+//            do {
+//                try await Task.sleep(nanoseconds: 1_000_000_000 * 2) // 2s
+//                
+//                let sampleUser = try DataSeeder.insertDummyData(into: context)
+//                
+//                userStore.setUser(sampleUser)
+//                
+//                withAnimation(.spring(duration: 0.35)) {
+//                    state = .authenticated(sampleUser)
+//                }
+//                return
+//                
+//            } catch {
+//                print("❌ Failed to create sample user: \(error)")
+//            }
+//            
             
             withAnimation(.spring(duration: 0.35)) {
                 state = .unauthenticated

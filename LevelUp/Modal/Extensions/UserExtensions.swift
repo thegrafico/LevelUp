@@ -115,6 +115,17 @@ extension User {
     }
 }
 
+extension User {
+    func asFriend() -> Friend {
+        return Friend(
+            username: username,
+            stats: stats,
+            friendId: id,
+            avatar: avatar ?? "person.fill"
+        )
+    }
+}
+
 // MARK: XP GAINED
 extension User {
     /// XP gained in the last 7 days

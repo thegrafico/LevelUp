@@ -98,8 +98,14 @@ extension User {
             username: "RaúlTest",
             passwordHash: "hash123",
             email: "raul@test.com",
+            id: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
         )
-
+        
+        user.friends = [
+            .init(username: "Alex", stats: .init(level: 20, topMission: "Drink Water", challengeWonCount: 10)),
+            .init(username: "Raul", stats: .init(level: 25, topMission: "Golf", challengeWonCount: 10)),
+        ]
+        
         let baseMissions: [Mission] = [
             Mission(title: "Morning Run", xp: 30, type: .global, icon: "figure.run"),
             Mission(title: "Read a Chapter", xp: 20, type: .global, icon: "book.fill"),

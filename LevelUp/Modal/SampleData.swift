@@ -48,42 +48,90 @@ class SampleData {
     }
     
     func insertSampleUsers() {
-           print("📦 Inserting sample users with missions and progress...")
-           
-           let missions = Mission.sampleData
-           let stats = UserStats(level: 3, xp: 240)
-           
-           // 👤 Create 2 demo users
-           let user1 = User(
-               username: "Raul",
-               passwordHash: "hash1",
-               email: "raul@demo.com",
-               stats: stats
-           )
-           
-           let user2 = User(
-               username: "SwiftMaster",
-               passwordHash: "hash2",
-               email: "swift@demo.com",
-               stats: UserStats(level: 2, xp: 120)
-           )
-           
-           // ✅ Assign some missions
-           user1.missions = Array(missions.prefix(3))
-           user2.missions = Array(missions.suffix(3))
-           
-           // ✅ Connect them as friends
-           let friend1 = Friend(username: user2.username, stats: user2.stats)
-           let friend2 = Friend(username: user1.username, stats: user1.stats)
-           user1.friends = [friend1]
-           user2.friends = [friend2]
-           
-           // ✅ Insert into context
-           context.insert(user1)
-           context.insert(user2)
-           
-           print("✅ Inserted users: \(user1.username), \(user2.username)")
-       }
+        print("📦 Inserting sample users with missions, progress, and friend requests...")
+        
+        let missions = Mission.sampleData
+        let stats = UserStats(level: 3, xp: 240)
+        
+        // 👤 Create 2 demo users
+        
+        let user1 = User(
+            username: "RaúlTest",
+            passwordHash: "hash123",
+            email: "raul@test.com",
+            stats: stats,
+            id: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
+        )
+        
+        let user2 = User(
+            username: "SwiftMaster",
+            passwordHash: "hash2",
+            email: "swift@demo.com",
+            stats: UserStats(level: 2, xp: 120)
+        )
+        
+        let user3 = User(
+            username: "test3",
+            passwordHash: "hash2",
+            email: "swift2@demo.com",
+            stats: UserStats(level: 50, xp: 120)
+        )
+        
+        let user4 = User(
+            username: "test4",
+            passwordHash: "hash2",
+            email: "swift2@demo.com",
+            stats: UserStats(level: 50, xp: 120)
+        )
+        
+        // ✅ Assign some missions
+        user1.missions = Array(missions.prefix(3))
+        user2.missions = Array(missions.suffix(3))
+        
+        // ✅ Connect them as friends
+        let friend1 = user1.asFriend()
+        let friend2 = user2.asFriend()
+        let friend3 = user3.asFriend()
+        let friend4 = user4.asFriend()
+        
+        user1.friends = [friend2]
+        user2.friends = [friend1]
+        
+        // ✅ Insert users into context first
+        context.insert(user1)
+        context.insert(user2)
+        context.insert(user3)
+        context.insert(user4)
+        
+        // ✅ Add a pending friend request (example)
+        let pendingRequest = FriendRequest(
+            from: friend3,
+            to: friend1.id,
+            status: .pending
+        )
+        
+        // ✅ Add an accepted request (example)
+        let acceptedRequest = FriendRequest(
+            from: friend4,
+            to: friend1.id,
+            status: .pending
+        )
+        
+        // ✅ Insert into context
+        context.insert(pendingRequest)
+        context.insert(acceptedRequest)
+        
+        print("""
+        ✅ Inserted users:
+            - \(user1.username): id: \(user1.id)
+            - \(user2.username): id: \(user2.id)
+            - \(user3.username): id: \(user3.id)
+            - \(user4.username): id: \(user4.id)
+        ✅ Inserted friend requests:
+            - Pending: from \(friend3.username) → \(user1.username)
+            - Pending: from \(friend4.username) → \(user1.username)
+        """)
+    }
     
     private func insertSampleMissions() {
         // Insert sample missions

@@ -28,12 +28,12 @@ struct FriendsNotifications: View {
         .init(
             kind: .challenge,
             message: "challenged you to a 5K run!",
-              sender: .init(username: "Thegrafico",
+            sender: .init(username: "Thegrafico",
                             stats: UserStats(level: 10,
                                                topMission: "10K",
                                                challengeWonCount: 5,
                                               ),
-                           )
+                         )
         ),
         
         .init(kind: .friendRequest, message: "wants to connect with you.")
@@ -100,14 +100,15 @@ struct FriendsNotifications: View {
         }
 
         
-        .sheet(item: $selectedNotification) {
-            if let friend = $0.sender {
-                
-                FriendPreviewCard(friend: friend)
+        .sheet(item: $selectedNotification) { notification in
+            if let friend = notification.sender {
+            
+                FriendPreviewCard(friend: friend, actionTitle: notification.actionTitle)
                     .presentationDetents([.medium])
             }
             
         }
+        
         .interactiveDismissDisabled(true)
         .presentationDetents([.fraction(1.0)])  // full height
         .presentationDragIndicator(.hidden)

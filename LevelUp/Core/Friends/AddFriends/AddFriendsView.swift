@@ -7,16 +7,10 @@
 
 import SwiftUI
 
-private let demoUsers: [Friend] = [
-    .init(username: "Thegrafico", stats: .init(level: 22, topMission: "Drink Water")),
-    .init(username: "SwiftMaster", stats: .init(level: 14, topMission: "Daily Run")),
-    .init(username: "CodeNinja", stats: .init(level: 18, topMission: "Read Books")),
-    .init(username: "UIQueen", stats: .init(level: 25, topMission: "Design Sprint")),
-]
-
 struct AddFriendsView: View {
     @Environment(\.theme) private var theme
     @Environment(\.modelContext) private var context
+    @Environment(\.currentUser) private var user
     @Environment(\.dismiss) private var dismiss
     
     private var userController: UserController {
@@ -93,8 +87,10 @@ struct AddFriendsView: View {
                             else {
                                 ScrollView {
                                     LazyVStack(spacing: 12) {
-                                        ForEach(searchResults) { user in
-                                            FriendRow(friend: user, onPressLabel: "Add") { friend in
+                                        ForEach(searchResults) { foundUser in
+                                            FriendRow(friend: foundUser, onPressLabel: "Add") { friend in
+                                                
+                                                try await userController.sendFriendRequest(from: user, to: friend.friendId)
                                             }
                                         }
                                     }
@@ -151,11 +147,11 @@ struct AddFriendsView: View {
                 try await Task.sleep(nanoseconds: 1_000_000_000 ) // 2s
                 
                 
-                let users: [User] = try await userController.searchUsers(byUsername: query)
+                let users: [User] = try await userController.searchUsers(byUsername: query, ignoredIDs: [user.id] )
                 await MainActor.run {
                     hasSearched = true
                     searchResults = users.map { user in
-                        Friend(username: user.username, stats: user.stats)
+                        user.asFriend()
                     }
                     isLoading = false
                 }

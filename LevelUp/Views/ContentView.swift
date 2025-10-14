@@ -34,8 +34,6 @@ struct ContentView: View {
                             
                             await DataSeeder.loadLocalMissions(for: user, in: context)
                             
-                            //                            await DataSeeder.addSampleLogs(for: user, in: context)
-                            
                             let log = user.log(for: Date())
                             print("Getting todays log on change: \(log.date.formatted())")
                             
@@ -51,15 +49,12 @@ struct ContentView: View {
                                 print("Getting todays log from scene change: \(log.date.formatted())")
                                 
                                 missionController.updateCompleteStatus(for: user.missions)
-                                
-                               
                             }
                         }
                 }
                 .badge(badgeManager.count(for: .HomeNotification))
                 
                 
-
                 Tab("Leaderboard", systemImage: "trophy.fill") {
                     LeaderboardView()
                         .task {

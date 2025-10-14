@@ -91,16 +91,16 @@ struct RootGate: View {
                 try await Task.sleep(nanoseconds: 1_000_000_000 * 2) // 2s
                 
                 let sampleUser = try DataSeeder.insertDummyData(into: context)
-                userStore.setActiveUserId(sampleUser.id)
-                userStore.user = sampleUser
+                
+                userStore.setUser(sampleUser)
+                
                 withAnimation(.spring(duration: 0.35)) {
                     state = .authenticated(sampleUser)
                 }
+                return
+                
             } catch {
                 print("❌ Failed to create sample user: \(error)")
-                withAnimation(.spring(duration: 0.35)) {
-                    state = .unauthenticated
-                }
             }
             
             

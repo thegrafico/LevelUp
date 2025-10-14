@@ -192,6 +192,7 @@ extension UserProgressSheet {
                     .padding(.horizontal, 8)
                 }
                 .onAppear {
+                    print("Scrooling to todays cell")
                     if let todayMatch = days.first(where: { calendar.isDateInToday($0) }) {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                             withAnimation(.easeOut(duration: 0.6)) {
@@ -633,7 +634,7 @@ extension UserProgressSheet {
                 xpSummaryCard(
                     title: "Total XP Earned",
                     value: user.xpGainedTotal,
-                    total: Double(user.level * 100), // can be arbitrary or tied to your leveling formula
+                    total: Double(user.stats.level * 100), // can be arbitrary or tied to your leveling formula
                     subtitle: "\(Int(user.xpGainedTotal)) total XP"
                 )
                 .tag(2)

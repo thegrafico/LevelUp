@@ -130,14 +130,14 @@ extension UserStats {
         // Loop in case we level up multiple times at once
         while xp >= requiredXP() {
             xp -= requiredXP() // carry over extra XP
-            level += 1
+            self.level += 1
         }
     }
     
     func requiredXP() -> Int {
         let baseXP = 100
         let increment = 25
-        return baseXP + (level - 1) * increment
+        return baseXP + (self.level - 1) * increment
     }
 }
 

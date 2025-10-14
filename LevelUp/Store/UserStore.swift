@@ -85,6 +85,11 @@ final class UserStore: ObservableObject {
         isBusy = false
         busyMessage = nil
     }
+    
+    func setUser(_ user: User) {
+        self.user = user
+        activeUserId = user.id.uuidString
+    }
 
     // MARK: - Logout (local)
     func logout() {

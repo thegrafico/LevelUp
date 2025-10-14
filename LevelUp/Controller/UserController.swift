@@ -36,8 +36,6 @@ final class UserController {
             username: username,
             passwordHash: passwordHash,
             email: email,
-            level: 1,
-            xp: 0
         )
 
         context.insert(user)

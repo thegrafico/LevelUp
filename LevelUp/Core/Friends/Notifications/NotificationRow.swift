@@ -7,30 +7,43 @@
 
 import SwiftUI
 
-struct UserNotification: Identifiable {
-    enum NotificationType: String, CaseIterable {
+struct AppNotification: Identifiable {
+    
+    enum Kind: String, CaseIterable {
         case friendRequest = "Friend Requests"
         case challenge = "Challenges"
+        case system = "System"
     }
-    
-    // required
-    var type: NotificationType
-    var message: String
-    
-    // sender/receiver
+
+    var id: UUID = UUID()
+    var title: String {
+        kind.rawValue
+    }
+    var kind: Kind
+    var message: String?
     var sender: Friend?
-    var receiverId: UUID?
+    var isRead: Bool = false
     
-    // defautls
-    var date: Date = .now
-    var id = UUID()
- 
+    var payload: Any?
+//    private var payloadId: UUID {
+//        switch kind {
+//        case .friendRequest(let request): return request.id
+//        case .challenge(let challenge): return challenge.id
+//        }
+//    }
+//    
+//    private var payload: Any {
+//        switch kind {
+//            case .friendRequest(let request): return request
+//            case .challenge(let challenge): return challenge
+//        }
+//    }
 }
 
 struct NotificationRow: View {
     @Environment(\.theme) private var theme
-    var notification: UserNotification
-    var onViewTap: (UserNotification) -> Void
+    var notification: AppNotification
+    var onViewTap: (AppNotification) -> Void
     
     var body: some View {
         HStack(spacing: 14) {
@@ -47,7 +60,7 @@ struct NotificationRow: View {
                 Text(notification.sender?.username ?? "Unknown")
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(theme.textPrimary)
-                Text(notification.message)
+                Text(notification.message ?? "")
                     .font(.subheadline)
                     .foregroundStyle(theme.textSecondary)
                     .lineLimit(2)
@@ -58,7 +71,7 @@ struct NotificationRow: View {
             Button {
                 onViewTap(notification)
             } label: {
-                Text(notification.type == .friendRequest ? "Request" : "Challenge")
+                Text(notification.kind == .friendRequest ? "Request" : "Challenge")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(theme.textInverse)
                     .padding(.horizontal, 12)
@@ -77,6 +90,6 @@ struct NotificationRow: View {
 }
 
 #Preview {
-    NotificationRow(notification: UserNotification(type: .friendRequest, message: "Watns to connect"), onViewTap: {_ in})
-    NotificationRow(notification: UserNotification(type: .challenge, message: "challenges you"), onViewTap: {_ in})
+    NotificationRow(notification: AppNotification(kind: .friendRequest, message: "Watns to connect"), onViewTap: {_ in})
+    NotificationRow(notification: AppNotification(kind: .challenge, message: "challenges you"), onViewTap: {_ in})
 }

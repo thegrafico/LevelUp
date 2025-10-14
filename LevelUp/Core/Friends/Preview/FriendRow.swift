@@ -11,7 +11,9 @@ struct FriendRow: View {
     @Environment(\.theme) private var theme
     var friend: Friend
     
+    var onPressLabel: String = "Challenge"
     var onPress: ((Friend) -> Void)? = nil
+    
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
@@ -42,7 +44,7 @@ struct FriendRow: View {
             Button {
                 onPress?(friend)
             } label: {
-                Text("Challenge")
+                Text(onPressLabel)
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(theme.primary)
                     .padding(.horizontal, 10).padding(.vertical, 8)

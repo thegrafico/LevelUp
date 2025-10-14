@@ -27,7 +27,7 @@ struct QuickActionsView: View {
                         .foregroundStyle(theme.textPrimary)
                 }
 
-                Text("Streak \(user.streakCount) day\(user.streakCount == 1 ? "" : "s")")
+                Text("Streak \(user.stats.streakCount) day\(user.stats.streakCount == 1 ? "" : "s")")
                     .font(.footnote)
                     .foregroundStyle(theme.textSecondary)
             }
@@ -36,7 +36,7 @@ struct QuickActionsView: View {
         .buttonStyle(.plain)
         .onAppear {
             // Only rebuild once if the streak hasn't been calculated yet
-            if user.streakCount == 0 {
+            if user.stats.streakCount == 0 {
                 user.rebuildStreakFromLogs()
             }
         }

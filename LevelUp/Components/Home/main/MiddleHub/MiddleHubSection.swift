@@ -43,7 +43,10 @@ struct MiddleHubSection: View {
         .sheet(isPresented: $showUserProgress) {
             UserProgressSheet()
                 .presentationDetents([.large])
-                .background(theme.background.ignoresSafeArea())
+                       .presentationDragIndicator(.visible)
+                       .presentationBackgroundInteraction(.enabled(upThrough: .large))
+                       .scrollBounceBehavior(.basedOnSize) // 👈 new in iOS 17+
+                       .background(theme.background.ignoresSafeArea())
         }
         .padding(.horizontal, 30)
         .padding(.bottom, 12)

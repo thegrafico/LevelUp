@@ -8,12 +8,23 @@
 import SwiftUI
 
 struct NotificationSection: View {
+    @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
     @Environment(\.theme) private var theme
+    
     var title: String
-    var notifications: [UserNotification]
+    var notifications: [AppNotification]
     var isExpanded: Bool
     var onToggle: () -> Void
-    var onViewTap: (UserNotification) -> Void
+    var onViewTap: (AppNotification) -> Void
+    
+    var notificationBadgeType: AppNotification.Kind {
+        
+        if let firtsElementKind = notifications.first?.kind {
+            return firtsElementKind
+        }
+        
+        return .system
+    }
     
     var body: some View {
         VStack(spacing: 8) {
@@ -21,6 +32,18 @@ struct NotificationSection: View {
                 Text(title)
                     .font(.headline.weight(.bold))
                     .foregroundStyle(theme.textPrimary)
+                    .overlay(alignment: .topTrailing) {
+                        if let badgeManager = badgeManager {
+                            
+                            let count = badgeManager.count(for: .AppNotification(notificationBadgeType))
+                            if count > 0 {
+                                BadgeView(count: count, size: 20)
+                                    .offset(x: 14, y: -14)
+                            } else {
+                                EmptyView()
+                            }
+                        }
+                    }
                 Spacer()
                 Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                     .foregroundStyle(theme.textSecondary)
@@ -49,5 +72,7 @@ struct NotificationSection: View {
 }
 
 #Preview {
-    NotificationSection(title: "None", notifications: [], isExpanded: true, onToggle: {}, onViewTap: {_ in})
+    NotificationSection(title: "Challenge", notifications: [], isExpanded: true, onToggle: {}, onViewTap: {_ in})
+        .environment(BadgeManager(defaultCount: 2)) // 👈 inject preview manager
+
 }

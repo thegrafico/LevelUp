@@ -10,6 +10,8 @@ import SwiftUI
 
 
 struct Header: View {
+    @Environment(\.currentUser) private var user
+
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -18,7 +20,7 @@ struct Header: View {
 
             VStack(spacing: 0) {
                 BannerTitle()
-                UserLevelXPCard()
+                UserLevelXPCard(stats: user.stats)
             }
             .padding(.horizontal, 12)
         }
@@ -27,4 +29,6 @@ struct Header: View {
 
 #Preview {
     Header()
+        .environment(\.currentUser, User.sampleUser())
+
 }

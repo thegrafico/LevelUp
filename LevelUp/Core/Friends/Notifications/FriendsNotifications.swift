@@ -10,13 +10,15 @@ import SwiftUI
 struct FriendsNotifications: View {
     @Environment(\.theme) private var theme
     @Environment(\.dismiss) private var dismiss
+    @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
     
-    @State private var expandedSections: Set<UserNotification.NotificationType> = [.friendRequest, .challenge]
-    @State private var selectedFriend: UserNotification? = nil
+    @State private var expandedSections: Set<AppNotification.Kind> = [.friendRequest]
     
-    private let notifications: [UserNotification] = [
+    @State private var selectedNotification: AppNotification? = nil
+    
+    private let notifications: [AppNotification] = [
         .init(
-            type: .friendRequest,
+            kind: .friendRequest,
             message: "sent you a friend request.",
             sender: .init(username: "Thegrafico",
                           stats: UserStats(level: 10)
@@ -24,7 +26,7 @@ struct FriendsNotifications: View {
         ),
         
         .init(
-            type: .challenge,
+            kind: .challenge,
             message: "challenged you to a 5K run!",
               sender: .init(username: "Thegrafico",
                             stats: UserStats(level: 10,
@@ -34,11 +36,11 @@ struct FriendsNotifications: View {
                            )
         ),
         
-        .init(type: .friendRequest, message: "wants to connect with you.")
+        .init(kind: .friendRequest, message: "wants to connect with you.")
     ]
     
-    var groupedNotifications: [UserNotification.NotificationType: [UserNotification]] {
-        Dictionary(grouping: notifications, by: { $0.type })
+    var groupedNotifications: [AppNotification.Kind: [AppNotification]] {
+        Dictionary(grouping: notifications, by: { $0.kind })
     }
     
     var body: some View {
@@ -47,7 +49,7 @@ struct FriendsNotifications: View {
                 // Scrollable content
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 20) {
-                        ForEach(UserNotification.NotificationType.allCases, id: \.self) { type in
+                        ForEach(AppNotification.Kind.allCases, id: \.self) { type in
                             let items = groupedNotifications[type] ?? []
                             if !items.isEmpty {
                                 NotificationSection(
@@ -64,9 +66,10 @@ struct FriendsNotifications: View {
                                         }
                                     },
                                     onViewTap: { notification in
-                                        selectedFriend = notification
+                                        selectedNotification = notification
                                     }
                                 )
+                                
                             }
                         }
                     }
@@ -97,7 +100,7 @@ struct FriendsNotifications: View {
         }
 
         
-        .sheet(item: $selectedFriend) {
+        .sheet(item: $selectedNotification) {
             if let friend = $0.sender {
                 
                 FriendPreviewCard(friend: friend)
@@ -113,4 +116,6 @@ struct FriendsNotifications: View {
 
 #Preview {
     FriendsNotifications()
+        .environment(BadgeManager(defaultCount: 2)) // 👈 inject preview manager
+
 }

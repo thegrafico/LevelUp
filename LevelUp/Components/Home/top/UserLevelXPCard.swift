@@ -7,54 +7,36 @@
 
 import SwiftUI
 
-struct AnimatedNumberText: View {
-    var value: Int
-    var font: Font = .body
-    var style: Font.TextStyle? = nil
-    
-    @State private var displayedValue: Int = 0
-    
-    var body: some View {
-        Text("\(displayedValue)")
-            .font(font)
-            .monospaced()
-            .onChange(of: value) { old, new in
-                withAnimation(.easeOut(duration: 0.6)) {
-                    displayedValue = new
-                }
-            }
-            .onAppear {
-                displayedValue = value
-            }
-    }
-}
-
 struct UserLevelXPCard: View {
     @Environment(\.theme) private var theme
-    @Environment(\.currentUser) private var user
+    
+    @Bindable var stats: UserStats
     
     var onTap: () -> Void = {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
     }
     
     var body: some View {
-        Button(action: onTap) {
+        Button {
+            onTap()
+        } label: {
+            
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Level \(user.level)")
+                        Text("Level \(stats.level)")
                             .font(.title2.weight(.bold))
                             .foregroundStyle(theme.textPrimary)
                             .monospaced()
                         
                         HStack(spacing: 0) {
-                            AnimatedNumberText(value: user.xp, font: theme.bodyFont)
+                            AnimatedNumberText(value: stats.xp, font: theme.bodyFont)
                                 .foregroundStyle(theme.textSecondary)
                             Text(" / ")
                                 .font(theme.bodyFont)
                                 .foregroundStyle(theme.textSecondary)
                                 .monospaced()
-                            AnimatedNumberText(value: user.stats.requiredXP(), font: theme.bodyFont)
+                            AnimatedNumberText(value: stats.requiredXP(), font: theme.bodyFont)
                                 .foregroundStyle(theme.textSecondary)
                             Text(" XP")
                                 .font(theme.bodyFont)
@@ -70,12 +52,12 @@ struct UserLevelXPCard: View {
                 }
                 
                 ProgressView(
-                    value: min(max(Double(user.xp), 0), Double(user.stats.requiredXP())) ,
-                    total: Double(user.stats.requiredXP()) ) {
+                    value: min(max(Double(stats.xp), 0), Double(stats.requiredXP())) ,
+                    total: Double(stats.requiredXP()) ) {
                         EmptyView()
                     }
                     .progressViewStyle(ThickLinearProgressStyle(height: 22))
-                    .animation(.easeOut(duration: 0.6), value: user.xp) // smooth fill animation
+                    .animation(.easeOut(duration: 0.6), value: stats.xp)
 
             }
             .padding(20)
@@ -103,27 +85,30 @@ struct PressableCardStyleThemed: ButtonStyle {
             .animation(.spring(duration: 0.25, bounce: 0.25), value: configuration.isPressed)
     }
 }
-struct TapBounceStyle: ButtonStyle {
-    @State private var tapped = false
 
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.92 : (tapped ? 0.96 : 1.0))
-            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
-            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: tapped)
-            .onChange(of: configuration.isPressed) { _, isPressed in
-                if !isPressed {
-                    // simulate a bounce after tap release
-                    tapped = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-                        tapped = false
-                    }
+struct AnimatedNumberText: View {
+    var value: Int
+    var font: Font = .body
+    var style: Font.TextStyle? = nil
+    
+    @State private var displayedValue: Int = 0
+    
+    var body: some View {
+        Text("\(displayedValue)")
+            .font(font)
+            .monospaced()
+            .onChange(of: value) { old, new in
+                withAnimation(.easeOut(duration: 0.6)) {
+                    displayedValue = new
                 }
+            }
+            .onAppear {
+                displayedValue = value
             }
     }
 }
 
+
 #Preview {
-    UserLevelXPCard()
-        .environment(\.currentUser, User.sampleUser())
+    UserLevelXPCard(stats: UserStats())
 }

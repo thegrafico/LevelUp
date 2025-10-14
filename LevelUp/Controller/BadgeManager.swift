@@ -49,5 +49,6 @@ enum BadgeKey: Hashable {
     case newCustomMission
     case newGlobalMission
     
+    case AppNotification(AppNotification.Kind)
     case filterMission(MissionType)
 }

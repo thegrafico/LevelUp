@@ -36,7 +36,7 @@ struct FriendsView: View {
     
     @State private var selectedFriend: Friend? = nil
     
-    @State private var friends: [Friend] = []
+    @State private var friends: [Friend] = demoFriends
     
     var filtered: [Friend] {
         let q = userQuery.trimmingCharacters(in: .whitespacesAndNewlines)

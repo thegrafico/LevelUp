@@ -38,8 +38,7 @@ final class User: Identifiable {
         passwordHash: String,
         email: String,
         avatar: String = "person.fill",
-        level: Int = 1,
-        xp: Int = 0,
+        stats: UserStats = .init(level: 0, xp: 0),
         id: UUID = UUID()
     ) {
         self.id = id
@@ -48,20 +47,7 @@ final class User: Identifiable {
         self.email = email
         self.avatar = avatar
         self.settings = UserSettings(userId: id)
-        
-        self.stats = .init(level: 0, xp: 0)
-    }
-    
-    var level: Int {
-        stats.level
-    }
-    
-    var xp: Int {
-        stats.xp
-    }
-    
-    var streakCount: Int {
-        stats.streakCount
+        self.stats = stats
     }
 }
 

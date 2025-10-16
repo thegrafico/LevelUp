@@ -49,6 +49,20 @@ enum BadgeKey: Hashable {
     case newCustomMission
     case newGlobalMission
     
+    case tabBarOption(TabBarNotificationType)
+    
     case AppNotification(AppNotification.Kind)
     case filterMission(MissionType)
+}
+
+enum TabBarNotificationType: String, CaseIterable, Identifiable {
+    case Home
+    case Leadboard
+    case Friends
+    case Settings
+    
+    var id: UUID {
+        UUID()
+    }
+    
 }

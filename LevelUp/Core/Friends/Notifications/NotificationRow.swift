@@ -9,6 +9,7 @@ import SwiftUI
 
 struct NotificationRow: View {
     @Environment(\.theme) private var theme
+    
     var notification: AppNotification
     var onViewTap: (AppNotification) -> Void
     
@@ -36,6 +37,9 @@ struct NotificationRow: View {
             Spacer()
             
             Button {
+                print("Updating notification is read: \(notification.isRead)")
+                notification.isRead.toggle()
+                print("Updating notification is read: \(notification.isRead)")
                 onViewTap(notification)
             } label: {
                 Text(notification.kind == .friendRequest ? "View" : "Challenge")
@@ -59,6 +63,6 @@ struct NotificationRow: View {
 }
 
 #Preview {
-    NotificationRow(notification: AppNotification(kind: .friendRequest, message: "Watns to connect", sender: Friend(username: "thegraifco", stats: .init())), onViewTap: {_ in})
+    NotificationRow(notification: AppNotification(kind: .friendRequest,  sender: Friend(username: "thegraifco", stats: .init()), message: "Watns to connect"), onViewTap: {_ in})
     NotificationRow(notification: AppNotification(kind: .challenge, message: "challenges you"), onViewTap: {_ in})
 }

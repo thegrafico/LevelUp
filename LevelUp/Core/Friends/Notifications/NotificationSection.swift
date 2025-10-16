@@ -26,6 +26,12 @@ struct NotificationSection: View {
         return .system
     }
     
+    // MARK: NEW NOTIFICATIONS COUNTER
+    var newNotificationsCount: Int {
+        notifications.filter({!$0.isRead}).count
+//        notifications.count
+    }
+    
     var body: some View {
         VStack(spacing: 8) {
             HStack {
@@ -51,7 +57,10 @@ struct NotificationSection: View {
             }
             .padding(.horizontal, 8)
             .contentShape(Rectangle())
-            .onTapGesture(perform: onToggle)
+            .onTapGesture() {
+                badgeManager?.clear(.AppNotification(notificationBadgeType))
+                onToggle()
+            }
             .padding(.bottom, 4)
             
             if isExpanded {
@@ -68,11 +77,21 @@ struct NotificationSection: View {
         .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadiusLarge))
         .shadow(color: theme.shadowLight, radius: 8, y: 4)
         .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isExpanded)
+        .onAppear() {
+            incrementBadgeCount()
+        }
+    }
+}
+
+extension NotificationSection {
+    func incrementBadgeCount() {
+        print("Checking badge count: \(newNotificationsCount)")
+        badgeManager?.set(.AppNotification(notificationBadgeType), to: newNotificationsCount)
     }
 }
 
 #Preview {
-    NotificationSection(title: "Challenge", notifications: [], isExpanded: true, onToggle: {}, onViewTap: {_ in})
-        .environment(BadgeManager(defaultCount: 2)) // 👈 inject preview manager
+    NotificationSection(title: "Challenge", notifications: SampleData.sampleAppNotifications, isExpanded: true, onToggle: {}, onViewTap: {_ in})
+        .environment(BadgeManager()) // 👈 inject preview manager
 
 }

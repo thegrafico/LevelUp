@@ -19,7 +19,7 @@ struct Header: View {
                 .ignoresSafeArea(edges: .top)
 
             VStack(spacing: 0) {
-                BannerTitle()
+                BannerTitle(username: user.username)
                 UserLevelXPCard(stats: user.stats)
             }
             .padding(.horizontal, 12)

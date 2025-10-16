@@ -6,29 +6,65 @@
 //
 
 import Foundation
+import SwiftData
 
-struct AppNotification: Identifiable {
-    
-    enum Kind: String, CaseIterable {
-        case friendRequest = "Friend Requests"
-        case challenge = "Challenges"
-        case system = "System"
-    }
 
+@Model
+final class AppNotification: Identifiable {
     var id: UUID = UUID()
-    var title: String {
-        kind.rawValue
-    }
-    var kind: Kind
-    var message: String?
-    var sender: Friend?
-    var isRead: Bool = false
     
-    var payload: Any?
+    var kind: Kind
+    var sender: Friend?
+    var receiverId: UUID?
+    var payloadId: UUID?
+    
+    var status: StatusNotification
+    var statusRaw: String
+    
+    var message: String?
+    var isRead: Bool
+    
+    var lastTimeUpdated: Date = Date()
+    var createdAt: Date = Date()
+    
+    init(kind: Kind, sender:  Friend? = nil, receiverId: UUID? = nil, status: StatusNotification = .pending, message: String? = nil, isRead: Bool = false, payloadId: UUID? = nil) {
+        self.kind = kind
+        self.sender = sender
+        self.message = message
+        self.status = status
+        self.isRead = isRead
+        self.payloadId = payloadId
+        self.statusRaw = status.rawValue
+        self.receiverId = receiverId
+    }
 }
 
 // MARK: ACTIONS
 extension AppNotification {
+    
+    enum Kind: String, Codable, Identifiable, CaseIterable {
+        var id: UUID {
+            UUID()
+        }
+        
+        case friendRequest = "Friend Requests"
+        case challenge = "Challenges"
+        case system = "System"
+    }
+    
+    enum StatusNotification: String, Codable, Identifiable, CaseIterable {
+        
+        var id: UUID {
+            UUID()
+        }
+        
+        case pending, accepted, declined, dismissed, expired
+    }
+
+    
+    var title: String {
+        kind.rawValue
+    }
     
     var actionTitle: String {
         switch self.kind {

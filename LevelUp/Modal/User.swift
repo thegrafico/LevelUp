@@ -29,7 +29,6 @@ final class User: Identifiable {
     var progressLogs: [ProgressLog] = []
     @Relationship(deleteRule: .cascade)
     var settings: UserSettings
-
     @Relationship(deleteRule: .cascade)
     var stats: UserStats
     
@@ -54,6 +53,7 @@ final class User: Identifiable {
 // MARK: STATIC VARS
 extension User {
     static var LIMIT_POINTS_PER_DAY : Double = 100
+
 }
 
 // MARK: - Sample Data for Testing

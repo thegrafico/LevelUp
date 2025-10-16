@@ -24,8 +24,8 @@ struct UserLevelXPCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Level \(stats.level)")
-                            .font(.title2.weight(.bold))
+                        Text("Lv. \(stats.level)")
+                            .font(.title3.weight(.bold))
                             .foregroundStyle(theme.textPrimary)
                             .monospaced()
                         

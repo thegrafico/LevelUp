@@ -19,6 +19,10 @@ struct ContentView: View {
     private var missionController: MissionController {
         MissionController(context: context, user: user, badgeManager: badgeManager)
     }
+    
+    var userId: UUID {
+        user.id
+    }
 
     var body: some View {
         VStack {
@@ -39,8 +43,8 @@ struct ContentView: View {
                             
                             missionController.updateCompleteStatus(for: user.missions)
                             
-                            badgeManager.clear(.HomeNotification)
-                            
+                            badgeManager.clear(.tabBarOption(.Home))
+
                         }
                         .onChange(of: scenePhase) { _, newPhase in
                             if newPhase == .active {
@@ -52,36 +56,38 @@ struct ContentView: View {
                             }
                         }
                 }
-                .badge(badgeManager.count(for: .HomeNotification))
+                .badge(badgeManager.count(for: .tabBarOption(.Home)))
                 
                 
                 Tab("Leaderboard", systemImage: "trophy.fill") {
                     LeaderboardView()
                         .task {
-                            badgeManager.clear(.LeaderboardNotification)
+                            badgeManager.clear(.tabBarOption(.Leadboard))
                         }
                 }
                 .disabled(!leaderBoardIsAvailable)
-                .badge(badgeManager.count(for: .LeaderboardNotification))
+                .badge(badgeManager.count(for: .tabBarOption(.Leadboard)))
 
             
                 
                 Tab("Friends", systemImage: "person.3.fill") {
-                    FriendsView()
+                    FriendsView(userId: userId)
+                        .environment(badgeManager)
+
                     .task {
-                        badgeManager.clear(.FriendsNotification)
+                        badgeManager.clear(.tabBarOption(.Friends))
                     }
                 }
-                .badge(badgeManager.count(for: .FriendsNotification))
+                .badge(badgeManager.count(for: .tabBarOption(.Friends)))
 
                 
                 Tab("Settings", systemImage: "gear") {
                    SettingsView()
                     .task {
-                        badgeManager.clear(.SettingsNotification)
+                        badgeManager.clear(.tabBarOption(.Settings))
                     }
                 }
-                .badge(badgeManager.count(for: .SettingsNotification))
+                .badge(badgeManager.count(for: .tabBarOption(.Settings)))
             }
             .tint(theme.primary)
             .toolbarBackground(theme.cardBackground, for: .tabBar)

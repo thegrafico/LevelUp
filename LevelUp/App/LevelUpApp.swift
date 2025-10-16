@@ -22,12 +22,14 @@ struct LevelUpApp: App {
         WindowGroup {
             RootGate()
                 .modelContainer(for: [
-                    User.self,
-                    Mission.self,
+                    AppNotification.self,
                     Friend.self,
                     FriendRequest.self,
+                    Mission.self,
                     ProgressLog.self,
-                    UserSettings.self
+                    User.self,
+                    UserSettings.self,
+                    UserStats.self
                 ])
                 .preferredColorScheme(.light)
                 .environment(\.theme, .orange)

@@ -8,183 +8,175 @@
 import SwiftUI
 import SwiftData
 
-
 // MARK: - Friends View
 struct FriendsView: View {
-    
+
+    // MARK: Environment
     @Environment(\.theme) private var theme
+    @Environment(\.modelContext) private var context
+    @Environment(\.currentUser) private var user
+    @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
+
+    // MARK: State
     @State private var userQuery: String = ""
     @State private var showAddSheet = false
     @State private var showNotificationsSheet = false
     @State private var selectedFriend: Friend? = nil
-    @State private var friendRequests: [FriendRequest] = []
-    
-    @Environment(\.modelContext) private var context
-    @Environment(\.currentUser) private var user
-    
-    private var userController: UserController {
-        UserController(context: context )
-    }
-    
-    private func loadPendingRequests() async {
-        do {
-            print("Loading Pending request")
-            friendRequests = try await userController.fetchPendingFriendRequests(for: user)
-            print("Loaded requests: \(friendRequests.count)")
-            
-            for request in friendRequests {
-                print("Sender \(request.from.friendId) | Receiver \(request.to)")
-            }
-        } catch {
-            print("❌ Failed to fetch pending requests: \(error)")
-            friendRequests = []
-        }
+    @State private var userController: UserController? = nil
+    @State private var initialized = false
+
+    // MARK: Queries
+    @Query private var friendRequests: [FriendRequest]
+    @Query private var userNotifications: [AppNotification]
+
+    // MARK: Init — define static predicates (not dynamic environment-dependent)
+    init(userId: UUID) {
+        let pendingStatus = friendRequestStatus.pending.rawValue
+
+        
+        _friendRequests = Query(
+            filter: #Predicate<FriendRequest> {
+                $0.statusRaw == pendingStatus
+                && $0.from.friendId == userId
+            },
+            sort: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        
+        // MARK: User notifications
+        let pendingStatusNotification = AppNotification.StatusNotification.pending.rawValue
+        _userNotifications = Query(
+            filter: #Predicate<AppNotification> {
+                $0.statusRaw == pendingStatusNotification
+                && $0.receiverId == userId
+            },
+            sort: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
     }
 
-    var friends: [Friend]  {
-        user.friends
-    }
-    
-//    let pending: String = friendRequestStatus.pending.rawValue
-//    @Query(filter: #Predicate<FriendRequest> {
-//        $0.statusRaw == pending
-//    },
-//    sort: [SortDescriptor(\.createdAt, order: .reverse)]
-//    )
-//    private var allPendingRequests: [FriendRequest]
-//
-//    var pendingRequests: [FriendRequest] {
-//        allPendingRequests.filter { $0.from.friendId == user.id }
-//    }
-    
-    var hasFriends: Bool { !friends.isEmpty  || !friendRequests.isEmpty}
-    
-    var filtered: [Friend] {
-        let q = userQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !q.isEmpty else { return friends }
-        return friends.filter { String($0.stats.level).localizedCaseInsensitiveContains(q) || $0.username.localizedCaseInsensitiveContains(q) }
-    }
-    
+    // MARK: Body
     var body: some View {
         VStack(spacing: 16) {
-            
-            // Banner header with title on top of gradient
+
+            // MARK: BANNER
             AppTopBanner(
                 title: "Friends",
                 subtitle: "Find and add friends",
                 onNotificationTap: { showNotificationsSheet = true }
             )
-            
-            VStack {
-                
-                // Search
-                HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass").foregroundStyle(theme.textSecondary)
-                    TextField("Search friends", text: $userQuery)
-                        .textInputAutocapitalization(.never)
-                        .disableAutocorrection(true)
-                    
-                    Button { showAddSheet = true } label: {
-                        Label("Add", systemImage: "person.badge.plus")
-                            .labelStyle(.iconOnly)
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(theme.primary)
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(cornerRadius: theme.cornerRadiusSmall)
-                                    .fill(theme.primary.opacity(0.12))
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(theme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadiusLarge, style: .continuous))
-                .shadow(color: theme.shadowLight, radius: 6, y: 3)
-                .padding(.horizontal, 20)
-                
-                if !hasFriends {
-                    EmptyFriendsView(onAddPressed: {
-                        showAddSheet.toggle()
-                    })
-                } else {
-                
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            ForEach(filtered) { friend in
-                                FriendRow(friend: friend, onPress: { friend in
-                                    selectedFriend = friend
-                                } )
-                                .onTapGesture {
-                                    selectedFriend = friend
-                                }
-                                    .tapBounce()
-                                    
-                                    .padding(.horizontal, 20)
-                            }
-                        }
-                        .padding(.vertical, 8)
-                        
-                        // NEW SECTION ↓
-                        if !friendRequests.isEmpty {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("Pending Requests")
-                                    .font(.headline.weight(.semibold))
-                                    .foregroundStyle(theme.textPrimary)
-                                    .padding(.horizontal, 20)
-                                    .padding(.top, 16)
 
-                                LazyVStack(spacing: 12) {
-                                    ForEach(friendRequests) { request in
-                                        FriendRow(friend: request.from, onPressLabel: "Pending")
-                                            .disabled(true)
-                                            .opacity(0.5)
-                                            .padding(.horizontal, 20)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .scrollIndicators(.hidden)
+            VStack {
+                Text("Notifications: \(userNotifications.count)")
+                Text("Pending Requests: \(friendRequests.count)")
+
+                // MARK: USER SEARCH QUERY
+                searchFieldWithIconEvent(userQuery: $userQuery, toggleSheet: $showAddSheet)
+
+                // MARK: EMPTY VIEW
+                if !hasFriends {
+                    EmptyFriendsView(onAddPressed: { showAddSheet.toggle() })
+                } else {
+                    friendsScrollView
                 }
-                
-                
-                
+
                 Spacer(minLength: 0)
             }
             .frame(maxHeight: .infinity, alignment: .top)
             .sheet(isPresented: $showAddSheet) {
-                AddFriendsView()
-                    .presentationDetents([.medium, .large])
+                AddFriendsView().presentationDetents([.medium, .large])
             }
             .sheet(isPresented: $showNotificationsSheet) {
-                FriendsNotifications()
+                FriendsNotifications(notifications: userNotifications)
                     .presentationDetents([.large])
             }
             .sheet(item: $selectedFriend) { friend in
                 FriendPreviewCard(friend: friend)
                     .presentationDetents([.medium])
             }
-            .onAppear {
-                Task {
-//                   try await userController.deleteAllFriendRequest(for: user)
-                    await loadPendingRequests()
-                }
-            }
-            
+            .onAppear(perform: setupView)
             .offset(y: -40)
         }
         .background(theme.background.ignoresSafeArea())
-        
+        .onChange(of: userNotifications.count) { _,newValue in
+            print("📬 userNotifications count updated → \(newValue)")
+        }
+    }
+
+    // MARK: Subviews
+    private var friendsScrollView: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(filteredFriends) { friend in
+                    FriendRow(friend: friend, onPress: { f in
+                        selectedFriend = f })
+                        .onTapGesture {
+                            selectedFriend = friend
+                            badgeManager?.increment(.FriendsNotification)
+                        }
+                        .tapBounce()
+                        .padding(.horizontal, 20)
+                }
+
+                if !friendRequests.isEmpty {
+                    PendingFriendRequestView(friendRequests: friendRequests)
+                }
+            }
+            .padding(.vertical, 9)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    // MARK: Setup
+    private func setupView() {
+        guard !initialized else { return }
+        initialized = true
+
+        // Now environments exist → safe to build the controller
+        userController = UserController(context: context, user: user, badgeManager: badgeManager)
+
+        Task {
+            await loadFriendsNotifications()
+            
+//            try await userController?.deleteAllFriendRequest()
+//            try await userController?.deleteAllNotifications()
+
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            print("=============")
+            print("Friend Requests: \(friendRequests.count)")
+            print("Notifications: \(userNotifications.count)")
+            print("=============")
+        }
+    }
+
+    // MARK: Logic
+    private func loadFriendsNotifications() async {
+        guard let userController else { return }
+        do {
+            try await userController.loadNotifications()
+        } catch {
+            print("❌ Failed to load friend notifications: \(error)")
+        }
+    }
+
+    // MARK: Helpers
+    private var hasFriends: Bool {
+        !user.friends.isEmpty || !friendRequests.isEmpty
+    }
+
+    private var filteredFriends: [Friend] {
+        let q = userQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else { return user.friends }
+        return user.friends.filter {
+            String($0.stats.level).localizedCaseInsensitiveContains(q)
+                || $0.username.localizedCaseInsensitiveContains(q)
+        }
     }
 }
 
-
-
+// MARK: - Preview
 #Preview {
-    FriendsView()
+    FriendsView(userId: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!)
         .modelContainer(SampleData.shared.modelContainer)
         .environment(\.currentUser, User.sampleUserWithLogs())
         .environment(\.theme, .orange)
+        .environment(BadgeManager()) // 👈 inject preview manager
 }

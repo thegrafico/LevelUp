@@ -13,10 +13,7 @@ import SwiftData
 final class FriendRequest: Identifiable {
     
     var from: Friend
-    var to: UUID
-    
-    var fromRaw: String
-    var receiverIdRaw: String
+    var to: Friend
     
     var status: friendRequestStatus // "pending", "accepted"
     var createdAt: Date?
@@ -29,20 +26,49 @@ final class FriendRequest: Identifiable {
 
     var id: UUID
     
-    init(from: Friend, to: UUID, status: friendRequestStatus, createdAt: Date? = .now, id: UUID = UUID()) {
+    init(from: Friend, to: Friend, status: friendRequestStatus, createdAt: Date? = .now, id: UUID = UUID()) {
         self.from = from
         self.to = to
         self.status = status
         self.createdAt = createdAt
         self.id = id
         self.statusRaw = status.rawValue
-        self.fromRaw = from.id.uuidString
-        self.receiverIdRaw = to.uuidString
     }
 }
 
 enum friendRequestStatus: String, Codable {
     case pending
     case accepted
+}
+
+extension FriendRequest {
+    
+    func asNotification() -> AppNotification {
+            // Custom, related messages for friend requests
+            let messages = [
+                "sent you a friend request!",
+                "wants to connect with you.",
+                "thinks you’d make a great teammate!",
+                "believes you can compete together.",
+                "just discovered your profile 👀",
+                "challenged you to become friends!"
+            ]
+            
+            let randomMessage = messages.randomElement() ?? "sent you a friend request!"
+            
+            return AppNotification(
+                kind: .friendRequest,
+                sender: from,
+                receiverId: to.friendId,
+                message: randomMessage,
+                payloadId: id
+            )
+        }
+}
+
+extension Sequence where Element == FriendRequest {
+    func asNotifications() -> [AppNotification] {
+        map { $0.asNotification() }
+    }
 }
 

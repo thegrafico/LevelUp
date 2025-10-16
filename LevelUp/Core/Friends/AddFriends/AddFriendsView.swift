@@ -90,7 +90,7 @@ struct AddFriendsView: View {
                                         ForEach(searchResults) { foundUser in
                                             FriendRow(friend: foundUser, onPressLabel: "Add") { friend in
                                                 
-                                                try await userController.sendFriendRequest(from: user, to: friend.friendId)
+                                                try await userController.sendFriendRequest(from: user, to: friend)
                                             }
                                         }
                                     }

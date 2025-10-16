@@ -9,7 +9,9 @@ import SwiftUI
 
 
 struct AppTopBanner: View {
-    @Environment(\.theme) private var theme
+    @Environment(\.theme) private var theme    
+    @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
+
     var title: String
     var subtitle: String
     var onNotificationTap: (() -> Void)? = nil // 👈 callback
@@ -35,7 +37,7 @@ struct AppTopBanner: View {
                     
                     Button {
                         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                        
+                        badgeManager?.clear(.FriendsNotification)
                         onNotificationTap?()
                     } label: {
                         Image(systemName: "bell.badge.fill")
@@ -47,7 +49,19 @@ struct AppTopBanner: View {
                                     .fill(theme.textInverse.opacity(0.1))
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.plain)    
+                    .overlay(alignment: .topTrailing) {
+                        if let badgeManager = badgeManager {
+                            
+                            let count = badgeManager.count(for: .FriendsNotification)
+                            if count > 0 {
+                                BadgeView(count: count, size: 30)
+                                    .offset(x: 6, y: -14)
+                            } else {
+                                EmptyView()
+                            }
+                        }
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 14)
@@ -59,4 +73,6 @@ struct AppTopBanner: View {
 
 #Preview {
     AppTopBanner(title: "Friends", subtitle: "Add or challenge them!")
+        .environment(BadgeManager()) // 👈 inject preview manager
+
 }

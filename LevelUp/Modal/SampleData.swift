@@ -20,12 +20,14 @@ class SampleData {
     
     private init() {
         let schema = Schema([
-            User.self,
-            Mission.self,
+            AppNotification.self,
             Friend.self,
             FriendRequest.self,
+            Mission.self,
             ProgressLog.self,
-            UserSettings.self
+            User.self,
+            UserSettings.self,
+            UserStats.self
         ])
         
         let configuration = ModelConfiguration(
@@ -106,20 +108,41 @@ class SampleData {
         // ✅ Add a pending friend request (example)
         let pendingRequest = FriendRequest(
             from: friend3,
-            to: friend1.id,
+            to: friend1,
             status: .pending
         )
         
         // ✅ Add an accepted request (example)
         let acceptedRequest = FriendRequest(
             from: friend4,
-            to: friend1.id,
+            to: friend1,
             status: .pending
         )
         
         // ✅ Insert into context
         context.insert(pendingRequest)
         context.insert(acceptedRequest)
+        
+        // ✅ Insert sample notifications for testing
+        let notif1 = AppNotification(
+            kind: .friendRequest,
+            sender: friend3,
+            message: "sent you a friend request!",
+            isRead: false
+        )
+
+        let notif2 = AppNotification(
+            kind: .challenge,
+            sender: friend4,
+            message: "challenged you to a 5K run!",
+            isRead: false
+        )
+
+        // 👇 Insert them before saving so they exist when the query runs
+//        context.insert(notif1)
+//        context.insert(notif2)
+
+        print("✅ Inserted sample AppNotifications: \(notif1.title), \(notif2.title)")
         
         print("""
         ✅ Inserted users:
@@ -143,6 +166,39 @@ class SampleData {
         print("Done.")
 
     }
+}
+
+extension SampleData {
+    static var sampleFriend1: Friend = Friend(username: "thegraficoTest", stats: UserStats(level: 10, xp: 20, bestStreakCount: 2))
+    static var sampleFriend2: Friend = Friend(username: "masterTest", stats: UserStats(level: 15, xp: 100, bestStreakCount: 20))
+    static var sampleFriend3: Friend = Friend(username: "masterTestadsd", stats: UserStats(level: 15, xp: 100, bestStreakCount: 20))
+    
+    static var sampleFriendRequest1: FriendRequest = .init(from: sampleFriend1, to: sampleFriend2, status: .pending)
+    static var sampleFriendRequest2: FriendRequest = .init(from: sampleFriend3, to: sampleFriend1, status: .pending)
+    
+    static var sampleAppNotifications: [AppNotification] = [
+        .init(
+            kind: .friendRequest,
+            sender: .init(username: "Thegrafico",
+                          stats: UserStats(level: 10)
+                         ),
+            message: "sent you a friend request.",
+            isRead: false
+        ),
+
+        .init(
+            kind: .challenge,
+            sender: .init(username: "Thegrafico",
+                            stats: UserStats(level: 10,
+                                               topMission: "10K",
+                                               challengeWonCount: 5,
+                                              ),
+                         ),
+            message: "challenged you to a 5K run!"
+        ),
+
+        .init(kind: .friendRequest, message: "wants to connect with you.")
+    ]
 }
 
 

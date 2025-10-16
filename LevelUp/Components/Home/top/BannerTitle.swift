@@ -9,7 +9,8 @@ import SwiftUI
 
 struct BannerTitle: View {
     @Environment(\.theme) private var theme
-
+    
+    var username: String
     var body: some View {
         HStack {
             
@@ -18,9 +19,10 @@ struct BannerTitle: View {
                 .frame(width: 64, height: 64)
                 .fontWeight(.bold)
             
-            Text("LEVEL UP")
-                .font(.system(size: 42, weight: .black, design: .rounded))
+            Text("\(username)")
+                .font(.system(size: 24, weight: .black, design: .rounded))
                 .kerning(2)
+                .lineLimit(1)
                 
             
             Spacer()
@@ -31,7 +33,7 @@ struct BannerTitle: View {
 }
 
 #Preview {
-    BannerTitle()
+    BannerTitle(username: "TheMonsterIsHereas")
         .padding(20)
         .background(Color.black)
     

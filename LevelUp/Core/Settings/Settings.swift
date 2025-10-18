@@ -12,90 +12,116 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.currentUser) private var user
     @EnvironmentObject private var userStore: UserStore
-
+    
+    @State private var activeModal: ConfirmationModalModel<AnyHashable>? = nil
+    
     @State private var notificationsOn = true
     @State private var darkModeOn = false
     @State private var showResetAlert = false
     @State private var showSignOutAlert = false
-
+    
     var body: some View {
-        VStack(spacing: 0) {
-            ZStack(alignment: .top) {
-                AppTopBanner(title: "Settings", subtitle: "Customize your experience")
-                    .ignoresSafeArea(edges: .top)
-            }
-            .frame(height: 140)
-
-            ScrollView {
-                VStack(spacing: 20) {
-
-                    // MARK: Account
-                    SettingsSection(title: "Account") {
-                        SettingsRow(icon: "person.crop.circle", title: "Profile")
-
-                        Button {
-                            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                            showSignOutAlert = true
-                        } label: {
-                            SettingsRow(icon: "arrow.right.square", title: "Sign Out")
-                        }
-                        .tint(.red)
-                    }
-
-                    // MARK: Notifications
-                    SettingsSection(title: "Notifications") {
-                        SettingsToggleRow(icon: "bell.fill", title: "Daily Reminders", isOn: $notificationsOn)
-                    }
-
-                    // MARK: Appearance
-                    SettingsSection(title: "Appearance") {
-                        SettingsToggleRow(icon: "moon.fill", title: "Dark Mode", isOn: $darkModeOn)
-                        SettingsRow(icon: "paintpalette.fill", title: "Theme")
-                    }
-
-                    // MARK: About
-                    SettingsSection(title: "About") {
-                        SettingsRow(icon: "info.circle.fill", title: "App Version 1.0")
-                        SettingsRow(icon: "envelope.fill", title: "Feedback")
-                    }
-
-                    // MARK: Danger Zone
-                    SettingsSection(title: "Danger Zone") {
-                        Button {
-                            showResetAlert = true
-                        } label: {
-                            SettingsRow(icon: "arrow.counterclockwise", title: "Reset Progress")
-                        }
-                        .tint(.red)
-                    }
+        
+        ZStack {
+            
+            VStack(spacing: 0) {
+                ZStack(alignment: .top) {
+                    AppTopBanner(title: "Settings", subtitle: "Customize your experience")
+                        .ignoresSafeArea(edges: .top)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 40)
-            }
-        }
-        .alert("Reset Progress?", isPresented: $showResetAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Reset", role: .destructive) {
-                user.deleteAllData(context: context)
-            }
-        } message: {
-            Text("This will reset your level, XP, missions, and logs, but keep your account.")
-        }
-        .alert("Sign Out?", isPresented: $showSignOutAlert) {          // 👈 wire the alert to the button above
-            Button("Cancel", role: .cancel) { }
-            Button("Sign Out", role: .destructive) {
-                Task {
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        // optional: show some visual cue while signing out
+                .frame(height: 140)
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        
+                        // MARK: Account
+                        SettingsSection(title: "Account") {
+                            SettingsRow(icon: "person.crop.circle", title: "Profile")
+                            
+                            Button {
+                                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                                activeModal = ConfirmationModalModel(
+                                    title: "Sign Out?",
+                                    message: "You’ll need to log in again to continue your journey.",
+                                    confirmButtonTitle: "Sign Out",
+                                    cancelButtonTitle: "Cancel",
+                                    data: "signout",
+                                    confirmAction: { _ in
+                                        await userStore.logoutAsync()
+                                    }
+                                )
+                            } label: {
+                                SettingsRow(icon: "arrow.right.square", title: "Sign Out")
+                            }
+                            .tint(.red)
+                        }
+                        
+                        // MARK: Notifications
+                        SettingsSection(title: "Notifications") {
+                            SettingsToggleRow(icon: "bell.fill", title: "Daily Reminders", isOn: $notificationsOn)
+                        }
+                        
+                        // MARK: Appearance
+                        SettingsSection(title: "Appearance") {
+                            SettingsToggleRow(icon: "moon.fill", title: "Dark Mode", isOn: $darkModeOn)
+                            SettingsRow(icon: "paintpalette.fill", title: "Theme")
+                        }
+                        
+                        // MARK: About
+                        SettingsSection(title: "About") {
+                            SettingsRow(icon: "info.circle.fill", title: "App Version 1.0")
+                            SettingsRow(icon: "envelope.fill", title: "Feedback")
+                        }
+                        
+                        // MARK: Danger Zone
+                        SettingsSection(title: "Danger Zone") {
+                            Button {
+                                activeModal = ConfirmationModalModel(
+                                    title: "Reset Progress?",
+                                    message: "This will reset your level, XP, missions, and logs, but keep your account.",
+                                    confirmButtonTitle: "Reset",
+                                    cancelButtonTitle: "Cancel",
+                                    data: "reset",
+                                    confirmAction: { _ in
+                                        withAnimation(.easeInOut(duration: 0.3)) {
+                                            user.deleteAllData(context: context)
+                                        }
+                                    }
+                                )
+                            } label: {
+                                SettingsRow(icon: "arrow.counterclockwise", title: "Reset Progress")
+                            }
+                            .tint(.red)
+                        }
                     }
-                    await userStore.logoutAsync()
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    .padding(.bottom, 40)
                 }
             }
-        } message: {
-            Text("You’ll need to log in again to continue your journey.")
-        }
-        .background(theme.background)
+            .background(theme.background)
+            
+            // MARK: - Confirmation Modal
+            if let modal = activeModal {
+                AsyncConfirmationModal(
+                    isPresented: Binding(
+                        get: { activeModal != nil },
+                        set: { if !$0 { activeModal = nil } }
+                    ),
+                    title: modal.title,
+                    message: modal.message,
+                    confirmButtonTitle: modal.confirmButtonTitle,
+                    cancelButtonTitle: modal.cancelButtonTitle,
+                    confirmAction: { _ in
+                        try await modal.confirmAction(modal.data)
+                    },
+                    data: modal.data
+                )
+                .environment(\.theme, theme)
+                .transition(.scale(scale: 0.9).combined(with: .opacity))
+                .zIndex(100)
+            }
+        }.animation(.spring(response: 0.45, dampingFraction: 0.8), value: activeModal)
     }
 }
 

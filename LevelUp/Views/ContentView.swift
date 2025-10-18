@@ -10,7 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @Environment(\.theme) private var theme
     @State private var badgeManager = BadgeManager()
-    @State private var leaderBoardIsAvailable: Bool = true
+    @State private var leaderBoardIsAvailable: Bool = false
     @Environment(\.modelContext) private var context
     @Environment(\.currentUser) private var user
     @Environment(\.scenePhase) private var scenePhase
@@ -59,15 +59,16 @@ struct ContentView: View {
                 .badge(badgeManager.count(for: .tabBarOption(.Home)))
                 
                 
-                Tab("Leaderboard", systemImage: "trophy.fill") {
-                    LeaderboardView()
-                        .task {
-                            badgeManager.clear(.tabBarOption(.Leadboard))
-                        }
+                if leaderBoardIsAvailable {
+                    Tab("Leaderboard", systemImage: "trophy.fill") {
+                        LeaderboardView()
+                            .task {
+                                badgeManager.clear(.tabBarOption(.Leadboard))
+                            }
+                    }
+                    .badge(badgeManager.count(for: .tabBarOption(.Leadboard)))
                 }
-                .disabled(!leaderBoardIsAvailable)
-                .badge(badgeManager.count(for: .tabBarOption(.Leadboard)))
-
+                
             
                 
                 Tab("Friends", systemImage: "person.3.fill") {

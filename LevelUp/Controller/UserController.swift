@@ -181,15 +181,31 @@ extension UserController {
         let senderId = sender.id
         
         let queryToGetFriendRequestBySender = FetchDescriptor<FriendRequest>(
-            predicate: #Predicate { $0.from.friendId == senderId && $0.to.friendId == friendId}
+            predicate: #Predicate {
+                $0.from.friendId == senderId
+                && $0.to.friendId == friendId
+             },sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
         
         let existingFriendRequest = try context.fetch(queryToGetFriendRequestBySender)
         
-        if !existingFriendRequest.isEmpty {
+        if let active = existingFriendRequest.first(where: { $0.status == .pending }) {
+            print("❌ A pending request already exists: \(active.id)")
             throw UserError.friendAlreadySent
         }
+
         
+        if let reusable = existingFriendRequest.first(where: { friendRequest in
+            friendRequest.status == .canceled
+            || friendRequest.status == .declined
+        }) {
+            print("Reusing friend request")
+            reusable.updateStatus(to: .pending)
+            try context.save()
+            return
+        }
+        
+        print("Creating a new Request...")
         let request = FriendRequest(
             from: sender.asFriend(),
             to: friend,

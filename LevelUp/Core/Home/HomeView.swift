@@ -33,7 +33,6 @@ struct HomeView: View {
             MissionList(user.customMissions, user.globalMissions)
 
         }
-        
         .background(Color(.systemGroupedBackground))
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 12) {

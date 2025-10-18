@@ -32,7 +32,7 @@ struct FriendRow: View {
     var friend: Friend
     var onPressLabel: String = "Challenge"
     var onPress: ((Friend) async throws -> Void)? = nil
-    var updateLabelOnComplete: Bool = true
+    var updateLabelOnComplete: Bool = false
 
     @State private var isLoading = false
     @State private var isSent = false

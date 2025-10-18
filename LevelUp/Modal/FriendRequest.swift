@@ -22,14 +22,17 @@ final class FriendRequest: Identifiable {
     }
     
     var createdAt: Date?
+    var lastTimeUpdated: Date?
     var id: UUID
     
-    init(from: Friend, to: Friend, status: AppNotification.StatusNotification, createdAt: Date? = .now, id: UUID = UUID()) {
+    init(from: Friend, to: Friend, status: AppNotification.StatusNotification, id: UUID = UUID()) {
         self.from = from
         self.to = to
-        self.createdAt = createdAt
         self.id = id
         self.statusRaw = status.rawValue
+        
+        self.createdAt = Date()
+        self.lastTimeUpdated = Date()
     }
 }
 
@@ -60,6 +63,7 @@ extension FriendRequest {
     
     func updateStatus(to: AppNotification.StatusNotification) {
         self.statusRaw = to.rawValue
+        self.lastTimeUpdated = .now
     }
 }
 

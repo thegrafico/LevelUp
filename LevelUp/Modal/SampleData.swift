@@ -141,8 +141,8 @@ class SampleData {
         )
 
         // 👇 Insert them before saving so they exist when the query runs
-//        context.insert(notif1)
-//        context.insert(notif2)
+        context.insert(notif1)
+        context.insert(notif2)
 
         print("✅ Inserted sample AppNotifications: \(notif1.title), \(notif2.title)")
         

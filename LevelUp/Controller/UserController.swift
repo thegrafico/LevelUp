@@ -106,39 +106,48 @@ extension UserController {
     }
     
     enum UserError: LocalizedError {
+        
+        // MARK: - General / User-related
         case usernameOrEmailTaken
         case usernameTaken
         case emailTaken
         case invalidInput
-        
+        case authenticationFailed(message: String)
+        case invalidUser(message: String = "Invalid user.")
+
+        // MARK: - Friend Request
+        case friendAlreadySent
+        case friendInvalidTarget
+        case friendGeneral(message: String = "Something went wrong. Try again later.")
+
+        // MARK: - Computed descriptions
         var errorDescription: String? {
             switch self {
-            case .emailTaken: return "This email is already registered."
-            case .invalidInput: return "Invalid user information."
-            case .usernameOrEmailTaken: return "This username or email is already registered."
-            case .usernameTaken: return "This username is already registered."
-                
+            // MARK: General / User errors
+            case .emailTaken:
+                return "This email is already registered."
+            case .invalidInput:
+                return "Invalid user information."
+            case .usernameOrEmailTaken:
+                return "This username or email is already registered."
+            case .usernameTaken:
+                return "This username is already registered."
+            case .authenticationFailed(let message):
+                return message
+            case .invalidUser(let message):
+                return message
+
+            // MARK: Friend request errors
+            case .friendAlreadySent:
+                return "You’ve already sent this friend request."
+            case .friendInvalidTarget:
+                return "This user cannot receive friend requests."
+            case .friendGeneral(let message):
+                return message
             }
         }
     }
-    
-    enum FriendRequestError: LocalizedError {
-        case alreadySent
-        case invalidTarget
-        case generalError
-        
-        var errorDescription: String? {
-            switch self {
-            case .alreadySent:
-                return "Friend request already sent."
-            case .invalidTarget:
-                return "Invalid friend target."
-                
-            case .generalError:
-                return "Oops, Something went wrong. Try again later."
-            }
-        }
-    }
+
     
 }
 
@@ -148,7 +157,7 @@ extension UserController {
     
     func fetchPendingFriendRequests(for user: User) async throws -> [FriendRequest] {
         print("Fetching friend request sent by me...")
-        let pendingStatus: String = friendRequestStatus.pending.rawValue
+        let pendingStatus: String = AppNotification.StatusNotification.pending.rawValue
         let userId: UUID = user.id
         print("User: \(user.username), id: \(userId)")
         let descriptor = FetchDescriptor<FriendRequest>(
@@ -178,7 +187,7 @@ extension UserController {
         let existingFriendRequest = try context.fetch(queryToGetFriendRequestBySender)
         
         if !existingFriendRequest.isEmpty {
-            throw FriendRequestError.alreadySent
+            throw UserError.friendAlreadySent
         }
         
         let request = FriendRequest(
@@ -192,7 +201,7 @@ extension UserController {
             print("Friend Request sent sucessfully!: From: \(request.from.friendId) to: \(request.to)")
         }catch {
             print("There was an error: \(error)")
-            throw FriendRequestError.generalError
+            throw UserError.friendGeneral(message: "There was an error sending the friend request")
         }
         
     }
@@ -204,6 +213,59 @@ extension UserController {
         
         try context.save()
     }
+    
+    func cancelFriendRequest(_ friendRequest: FriendRequest) async throws -> Void {
+        guard let userId = user?.id else {
+            print("Invalid user for cancelling friend request")
+            throw UserError.invalidUser(message: "Invalid user. Log in again")
+        }
+        
+        if friendRequest.from.friendId != userId {
+            print("This is not your friend request to cancel")
+            throw UserError.authenticationFailed(message: "You cannot cancel another user's friend request.")
+        }
+        
+        // Notifications stores friend request by saving the id into a PayloadId
+        let payloadId = friendRequest.id
+        
+        // MARK: cancel notifications
+        try? await updateNotificationStatus(payloadId: payloadId, to: .canceled)
+        
+        // MARK: Update friend request status
+        friendRequest.updateStatus(to: .canceled)
+        
+        try context.save()
+        
+    }
+    
+    private func updateNotificationStatus(payloadId: UUID, to newStatus: AppNotification.StatusNotification) async throws {
+        // 1️⃣ Query all notifications matching the payloadId
+        let descriptor = FetchDescriptor<AppNotification>(
+            predicate: #Predicate { $0.payloadId == payloadId }
+        )
+
+        let notifications = try context.fetch(descriptor)
+
+        guard !notifications.isEmpty else {
+            print("No notification found for this request.")
+            return
+        }
+
+        // 2️⃣ Update all matching notifications
+        for notification in notifications {
+            notification.updateStatus(to: newStatus)
+        }
+
+        // 3️⃣ Save the context
+        try context.save()
+
+        print("✅ Updated \(notifications.count) notification(s) to status '\(newStatus.rawValue)' for payloadId: \(payloadId)")
+    }
+    
+}
+
+// MARK: NOTIFICATIONS
+extension UserController {
     
     func deleteAllNotifications() async throws -> Void {
         guard user != nil else { return }
@@ -266,7 +328,7 @@ extension UserController {
         
         print("Loading Friend Request as notifications...")
 
-        let pendingStatus: String = friendRequestStatus.pending.rawValue
+        let pendingStatus: String = AppNotification.StatusNotification.pending.rawValue
         
         let queryToGetMyFriendRequest = FetchDescriptor<FriendRequest> (
             predicate: #Predicate { friendRequest in
@@ -280,7 +342,7 @@ extension UserController {
         return friendRequest.asNotifications()
     }
     
-    func getNotifications() async throws -> [AppNotification] {
+    func getNotifications(withStatus: AppNotification.StatusNotification = .pending) async throws -> [AppNotification] {
         
         guard let userId = user?.id else {
             print("Invalid user for loading All notifications")
@@ -290,27 +352,26 @@ extension UserController {
         print()
         print("Getting All notifications...")
         
-//        let friendRequestType: AppNotification.Kind = .friendRequest
-        
-        // MARK: GET EXISTING NOTIFICATIONS
+        // MARK: QUERY
+        let notificationStatus: String = withStatus.rawValue
         let queryToGetexistingNotifications = FetchDescriptor<AppNotification>(
             predicate: #Predicate { notification in
                 notification.receiverId == userId
-//                && notification.kind == friendRequestType
+                && notification.statusRaw == notificationStatus
             }
         )
         
+        // MARK: FETCH
         let notifications = try context.fetch(queryToGetexistingNotifications)
         print("Found \(notifications.count) existing notifications for user ID: \(userId)")
         
-        for notification in notifications {
-            print("RECEIVER: \(String(describing: notification.receiverId))")
-            print("PAYLOAD: \(String(describing: notification.payloadId))")
-        }
+//        for notification in notifications {
+//            print("RECEIVER: \(String(describing: notification.receiverId))")
+//            print("PAYLOAD: \(String(describing: notification.payloadId))")
+//        }
         
         print()
         
         return notifications
     }
-    
 }

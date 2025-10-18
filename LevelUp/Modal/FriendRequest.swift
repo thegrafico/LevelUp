@@ -15,31 +15,24 @@ final class FriendRequest: Identifiable {
     var from: Friend
     var to: Friend
     
-    var status: friendRequestStatus // "pending", "accepted"
-    var createdAt: Date?
-    
     var statusRaw: String
-    var type: friendRequestStatus {
-        get { friendRequestStatus(rawValue: statusRaw) ?? .pending }
+    var status: AppNotification.StatusNotification {
+        get { AppNotification.StatusNotification(rawValue: statusRaw) ?? .pending}
         set { statusRaw = newValue.rawValue }
     }
-
+    
+    var createdAt: Date?
     var id: UUID
     
-    init(from: Friend, to: Friend, status: friendRequestStatus, createdAt: Date? = .now, id: UUID = UUID()) {
+    init(from: Friend, to: Friend, status: AppNotification.StatusNotification, createdAt: Date? = .now, id: UUID = UUID()) {
         self.from = from
         self.to = to
-        self.status = status
         self.createdAt = createdAt
         self.id = id
         self.statusRaw = status.rawValue
     }
 }
 
-enum friendRequestStatus: String, Codable {
-    case pending
-    case accepted
-}
 
 extension FriendRequest {
     
@@ -64,6 +57,10 @@ extension FriendRequest {
                 payloadId: id
             )
         }
+    
+    func updateStatus(to: AppNotification.StatusNotification) {
+        self.statusRaw = to.rawValue
+    }
 }
 
 extension Sequence where Element == FriendRequest {

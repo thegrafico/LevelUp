@@ -37,8 +37,7 @@ struct NotificationRow: View {
             Spacer()
             
             Button {
-                print("Updating notification is read: \(notification.isRead)")
-                notification.isRead.toggle()
+                notification.isRead = true
                 print("Updating notification is read: \(notification.isRead)")
                 onViewTap(notification)
             } label: {

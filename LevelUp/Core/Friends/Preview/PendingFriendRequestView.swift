@@ -1,15 +1,10 @@
-//
-//  PendingFriendRequestView.swift
-//  LevelUp
-//
-//  Created by Raúl Pichardo Avalo on 10/15/25.
-//
-
 import SwiftUI
 
 struct PendingFriendRequestView: View {
     @Environment(\.theme) private var theme
+
     var friendRequests: [FriendRequest]
+    var onCancelRequest: ((FriendRequest) -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -21,10 +16,11 @@ struct PendingFriendRequestView: View {
 
             LazyVStack(spacing: 12) {
                 ForEach(friendRequests) { request in
-                    FriendRow(friend: request.to, onPressLabel: "Pending")
-                        .disabled(true)
-                        .opacity(0.5)
-                        .padding(.horizontal, 20)
+                    FriendRow(friend: request.to, onPressLabel: "Cancel", onPress: { _ in
+                        onCancelRequest?(request)
+                    }, updateLabelOnComplete: false)
+                    .opacity(0.6)
+                    .padding(.horizontal, 20)
                 }
             }
         }
@@ -33,4 +29,6 @@ struct PendingFriendRequestView: View {
 
 #Preview {
     PendingFriendRequestView(friendRequests: [SampleData.sampleFriendRequest1])
+        .modelContainer(SampleData.shared.modelContainer)
+        .environment(\.theme, .orange)
 }

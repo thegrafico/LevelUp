@@ -107,15 +107,15 @@ class SampleData {
         
         // ✅ Add a pending friend request (example)
         let pendingRequest = FriendRequest(
-            from: friend3,
-            to: friend1,
+            from: friend1,
+            to: friend3,
             status: .pending
         )
         
         // ✅ Add an accepted request (example)
         let acceptedRequest = FriendRequest(
-            from: friend4,
-            to: friend1,
+            from: friend1,
+            to: friend4,
             status: .pending
         )
         
@@ -127,6 +127,7 @@ class SampleData {
         let notif1 = AppNotification(
             kind: .friendRequest,
             sender: friend3,
+            receiverId: user1.id,
             message: "sent you a friend request!",
             isRead: false
         )
@@ -134,6 +135,7 @@ class SampleData {
         let notif2 = AppNotification(
             kind: .challenge,
             sender: friend4,
+            receiverId: user1.id,
             message: "challenged you to a 5K run!",
             isRead: false
         )

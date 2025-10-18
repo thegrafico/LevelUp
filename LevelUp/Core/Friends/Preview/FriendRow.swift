@@ -32,6 +32,7 @@ struct FriendRow: View {
     var friend: Friend
     var onPressLabel: String = "Challenge"
     var onPress: ((Friend) async throws -> Void)? = nil
+    var updateLabelOnComplete: Bool = true
 
     @State private var isLoading = false
     @State private var isSent = false
@@ -74,7 +75,8 @@ struct FriendRow: View {
                             .progressViewStyle(.circular)
                             .tint(theme.primary)
                             .frame(width: 16, height: 16)
-                    } else if isSent {
+                    } else if isSent && updateLabelOnComplete {
+                        
                         Text("Sent ✓")
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(theme.textSecondary)
@@ -88,7 +90,7 @@ struct FriendRow: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .disabled(isLoading || isSent)
+                .disabled(isLoading || (isSent && updateLabelOnComplete))
             }
             .padding(12)
             .background(theme.cardBackground)

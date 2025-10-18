@@ -58,7 +58,7 @@ extension AppNotification {
             UUID()
         }
         
-        case pending, accepted, declined, dismissed, expired
+        case pending, accepted, canceled, declined, expired
     }
 
     
@@ -75,5 +75,13 @@ extension AppNotification {
             case .system:
                 return "Open"
         }
+    }
+}
+
+extension AppNotification {
+    func updateStatus(to newStatus: StatusNotification) {
+        self.status = newStatus
+        self.statusRaw = newStatus.rawValue
+        self.lastTimeUpdated = .now
     }
 }

@@ -116,13 +116,25 @@ extension User {
 }
 
 extension User {
-    func asFriend() -> Friend {
+    func asFriend(relationshipId: UUID? = nil) -> Friend {
         return Friend(
             username: username,
             stats: stats,
             friendId: id,
-            avatar: avatar ?? "person.fill"
+            relationshipFriendId: relationshipId,
+            avatar: avatar ?? "person.fill",
         )
+    }
+    
+    func addFriend(user friend: User) {
+        if self.hasFriend(withId: friend.id) {
+            print("Friend already added")
+            return
+        }
+        
+        let newFriend = friend.asFriend(relationshipId: self.id)
+        
+        self.friends.append(newFriend)
     }
 }
 

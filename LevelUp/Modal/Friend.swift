@@ -11,10 +11,10 @@ import SwiftData
 @Model
 final class Friend: Identifiable {
     var id: UUID
-    var friendId: UUID
+    var friendId: UUID // id of the friend
+    var relationshipFriendId: UUID? // id of the other friend
     var username: String
     var avatar: String
-    var relationship: FriendConnection?   // 👈 new addition
     
     @Relationship(deleteRule: .cascade)
     var stats: UserStats
@@ -23,30 +23,15 @@ final class Friend: Identifiable {
         username: String,
         stats: UserStats,
         friendId: UUID = UUID(),
+        relationshipFriendId: UUID? = nil,
         avatar: String = "person.fill",
-        id: UUID = UUID()
+        id: UUID = UUID(),
     ) {
         self.friendId = friendId
         self.username = username
         self.avatar = avatar
         self.id = id
         self.stats = stats
-    }
-}
-
-struct FriendConnection: Codable {
-    var senderId: UUID
-    var receiverId: UUID
-}
-
-extension FriendConnection: Hashable {
-    func hash(into hasher: inout Hasher) {
-        let orderedPair = [senderId, receiverId].sorted { $0.uuidString < $1.uuidString }
-        hasher.combine(orderedPair[0])
-        hasher.combine(orderedPair[1])
-    }
-
-    static func ==(lhs: Self, rhs: Self) -> Bool {
-        Set([lhs.senderId, lhs.receiverId]) == Set([rhs.senderId, rhs.receiverId])
+        self.relationshipFriendId = relationshipFriendId
     }
 }

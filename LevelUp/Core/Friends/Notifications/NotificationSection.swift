@@ -16,7 +16,7 @@ struct NotificationSection: View {
     var isExpanded: Bool
     var onToggle: () -> Void
     var onViewTap: (AppNotification) -> Void
-    
+        
     var notificationBadgeType: AppNotification.Kind {
         
         if let firtsElementKind = notifications.first?.kind {
@@ -67,8 +67,12 @@ struct NotificationSection: View {
                 VStack(spacing: 12) {
                     ForEach(notifications) { note in
                         NotificationRow(notification: note, onViewTap: onViewTap)
+                            .transition(.fadeRightToLeft)
                     }
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: notifications)
+                    
                 }
+            
                 .transition(.opacity.combined(with: .slide))
             }
         }
@@ -85,13 +89,28 @@ struct NotificationSection: View {
 
 extension NotificationSection {
     func incrementBadgeCount() {
-        print("Checking badge count: \(newNotificationsCount)")
+//        print("Checking badge count: \(newNotificationsCount)")
         badgeManager?.set(.AppNotification(notificationBadgeType), to: newNotificationsCount)
     }
 }
 
+struct StatefulPreviewWrapper<Value, Content: View>: View {
+    @State private var value: Value
+    var content: (Binding<Value>) -> Content
+
+    init(_ value: Value, @ViewBuilder content: @escaping (Binding<Value>) -> Content) {
+        _value = State(initialValue: value)
+        self.content = content
+    }
+
+    var body: some View {
+        content($value)
+    }
+}
+
 #Preview {
-    NotificationSection(title: "Challenge", notifications: SampleData.sampleAppNotifications, isExpanded: true, onToggle: {}, onViewTap: {_ in})
+    NotificationSection(title: "Notificqtions", notifications: SampleData.sampleAppNotifications, isExpanded: true, onToggle: {}, onViewTap: {_ in})
+        
         .environment(BadgeManager()) // 👈 inject preview manager
 
 }

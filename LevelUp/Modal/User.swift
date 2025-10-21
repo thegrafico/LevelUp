@@ -53,7 +53,10 @@ final class User: Identifiable {
 // MARK: STATIC VARS
 extension User {
     static var LIMIT_POINTS_PER_DAY : Double = 100
-
+    
+    func hasFriend(withId id: UUID) -> Bool {
+        friends.contains { $0.friendId == id }
+    }
 }
 
 // MARK: - Sample Data for Testing

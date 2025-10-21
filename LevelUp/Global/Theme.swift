@@ -37,6 +37,9 @@ struct Theme {
     // 🎯 Brand / Icon Colors
     let brandGradient: [Color]
     let brandStroke: [Color]
+    
+    let destructive: Color
+    let destructiveBackground: Color
 }
 
 extension Theme {
@@ -62,7 +65,10 @@ extension Theme {
         bodyFont: .system(.body, design: .rounded),
 
         brandGradient: [Color.orange, Color(red: 1.0, green: 0.5, blue: 0.0)],
-        brandStroke: [Color.white.opacity(0.9), Color.yellow.opacity(0.9)]
+        brandStroke: [Color.white.opacity(0.9), Color.yellow.opacity(0.9)],
+        
+        destructive: Color(red: 1.0, green: 0.3, blue: 0.2), // reddish-orange
+        destructiveBackground: Color(red: 1.0, green: 0.3, blue: 0.2).opacity(0.15),
     )
 
     static let blue = Theme(
@@ -87,7 +93,10 @@ extension Theme {
         bodyFont: .system(.body, design: .rounded),
 
         brandGradient: [Color.blue, Color.purple],
-        brandStroke: [Color.white.opacity(0.9), Color.cyan.opacity(0.9)]
+        brandStroke: [Color.white.opacity(0.9), Color.cyan.opacity(0.9)],
+        
+        destructive: Color(red: 0.95, green: 0.2, blue: 0.3),
+        destructiveBackground: Color(red: 0.95, green: 0.2, blue: 0.3).opacity(0.15),
     )
     
     static let dark = Theme(
@@ -123,7 +132,9 @@ extension Theme {
                 Color.white.opacity(0.85),
                 Color.orange.opacity(0.8),
                 Color.pink.opacity(0.7)
-            ]
+            ],
+            destructive: Color(red: 1.0, green: 0.35, blue: 0.3),
+            destructiveBackground: Color(red: 1.0, green: 0.35, blue: 0.3).opacity(0.2),
         )
 }
 

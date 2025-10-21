@@ -50,6 +50,7 @@ extension AppNotification {
         case friendRequest = "Friend Requests"
         case challenge = "Challenges"
         case system = "System"
+        case preview = "Preview"
     }
     
     enum StatusNotification: String, Codable, Identifiable, CaseIterable {
@@ -72,7 +73,7 @@ extension AppNotification {
                 return "Accept"
             case .challenge:
                 return "Challenge"
-            case .system:
+        case .system, .preview:
                 return "Open"
         }
     }

@@ -16,7 +16,7 @@ struct ConfirmationModalModel<DataType>: Identifiable, Equatable {
     let cancelButtonTitle: String
     let data: DataType
     let confirmAction: (DataType) async throws -> Void
-
+    
     static func == (lhs: ConfirmationModalModel<DataType>, rhs: ConfirmationModalModel<DataType>) -> Bool {
         lhs.id == rhs.id
     }
@@ -63,7 +63,7 @@ struct FriendsView: View {
         )
         
         // MARK: User notifications
-        let pendingStatusNotification = AppNotification.StatusNotification.pending.rawValue
+        let pendingStatusNotification: String = AppNotification.StatusNotification.pending.rawValue
         _userNotifications = Query(
             filter: #Predicate<AppNotification> {
                 $0.statusRaw == pendingStatusNotification
@@ -88,7 +88,7 @@ struct FriendsView: View {
                 )
                 
                 VStack {
-        
+                    
                     // MARK: USER SEARCH QUERY
                     searchFieldWithIconEvent(userQuery: $userQuery, toggleSheet: $showAddSheet)
                     
@@ -98,16 +98,23 @@ struct FriendsView: View {
                     } else {
                         friendsScrollView
                     }
-                    
                     Spacer(minLength: 0)
                 }
                 .frame(maxHeight: .infinity, alignment: .top)
                 .sheet(isPresented: $showAddSheet) {
                     AddFriendsView().presentationDetents([.medium, .large])
                 }
-                .sheet(isPresented: $showNotificationsSheet) {
-                    FriendsNotifications(notifications: userNotifications)
+                .sheet(isPresented: Binding(
+                    get: { showNotificationsSheet && userController != nil },
+                    set: { showNotificationsSheet = $0 }
+                )) {
+                    if let controller = userController {
+                        FriendsNotifications(
+                            notifications: userNotifications,
+                            userController: controller
+                        )
                         .presentationDetents([.large])
+                    }
                 }
                 .sheet(item: $selectedFriend) { friend in
                     FriendPreviewCard(friend: friend)
@@ -118,29 +125,28 @@ struct FriendsView: View {
             }
             .background(theme.background.ignoresSafeArea())
             
-    
             // MARK: Confirmation Modal ASYNC
             if let modal = activeModal {
-                    AsyncConfirmationModal(
-                        isPresented: Binding(
-                            get: { activeModal != nil },
-                            set: { if !$0 { activeModal = nil } }
-                        ),
-                        title: modal.title,
-                        message: modal.message,
-                        confirmButtonTitle: modal.confirmButtonTitle,
-                        cancelButtonTitle: modal.cancelButtonTitle,
-                        confirmAction: { _ in
-                            try await modal.confirmAction(modal.data)
-                        },
-                        data: modal.data
-                    )
-                    .environment(\.theme, theme)
-                    .transition(.scale(scale: 0.9).combined(with: .opacity))
-                    .zIndex(100)
-                }
+                AsyncConfirmationModal(
+                    isPresented: Binding(
+                        get: { activeModal != nil },
+                        set: { if !$0 { activeModal = nil } }
+                    ),
+                    title: modal.title,
+                    message: modal.message,
+                    confirmButtonTitle: modal.confirmButtonTitle,
+                    cancelButtonTitle: modal.cancelButtonTitle,
+                    confirmAction: { _ in
+                        try await modal.confirmAction(modal.data)
+                    },
+                    data: modal.data
+                )
+                .environment(\.theme, theme)
+                .transition(.scale(scale: 0.9).combined(with: .opacity))
+                .zIndex(100)
             }
-            .animation(.spring(response: 0.45, dampingFraction: 0.8), value: activeModal)
+        }
+        .animation(.spring(response: 0.45, dampingFraction: 0.8), value: activeModal)
     }
     
     // MARK: Subviews
@@ -156,7 +162,7 @@ struct FriendsView: View {
                     .tapBounce()
                     .padding(.horizontal, 20)
                 }
-            
+                
                 if !friendRequests.isEmpty {
                     PendingFriendRequestView(
                         friendRequests: friendRequests,
@@ -227,6 +233,7 @@ struct FriendsView: View {
         }
     }
 }
+
 
 // MARK: - Preview
 #Preview {

@@ -11,9 +11,10 @@ struct FriendsNotifications: View {
     @Environment(\.theme) private var theme
     @Environment(\.dismiss) private var dismiss
     
-    @State private var expandedSections: Set<AppNotification.Kind> = [.friendRequest]
+    @State private var expandedSections: Set<AppNotification.Kind> = [.friendRequest, .challenge]
     
     var notifications: [AppNotification]
+    @State private var localNotifications: [AppNotification] = []
     @State private var selectedNotification: AppNotification? = nil
     
     
@@ -21,18 +22,17 @@ struct FriendsNotifications: View {
         Dictionary(grouping: notifications, by: { $0.kind })
     }
     
+    var userController: UserController? = nil
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                if notifications.isEmpty {
-                    EmptyNotificationsView()
-                } else {
-                    // 👇 Your existing content
+                ZStack {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 20) {
                             ForEach(AppNotification.Kind.allCases, id: \.self) { type in
                                 let items = groupedNotifications[type] ?? []
-                                
+
                                 if !items.isEmpty {
                                     NotificationSection(
                                         title: type.rawValue,
@@ -51,18 +51,28 @@ struct FriendsNotifications: View {
                                             selectedNotification = notification
                                         }
                                     )
+                                    .transition(.asymmetric(
+                                        insertion: .opacity.combined(with: .scale),
+                                        removal: .opacity.combined(with: .scale)
+                                    ))
                                 }
                             }
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 20)
                     }
-                    .background(theme.background.ignoresSafeArea())
+
+                    if notifications.isEmpty {
+                        EmptyNotificationsView()
+                            .transition(.opacity.combined(with: .scale))
+                    }
                 }
+                .animation(.easeInOut(duration: 0.4), value: notifications.count)
             }
             .navigationTitle("Notifications")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         dismiss()
@@ -78,31 +88,68 @@ struct FriendsNotifications: View {
             .background(theme.background.ignoresSafeArea())
         }
         .sheet(item: $selectedNotification) { notification in
+            
             if let friend = notification.sender {
-                FriendPreviewCard(friend: friend, actionTitle: notification.actionTitle)
-                    .presentationDetents([.medium])
+                FriendPreviewCard(
+                    friend: friend,
+                    type: notification.kind,
+                    onAction: { _ in
+                        await acceptNotification(notification)
+                    },
+                    onCancel: { _ in
+                        await declinedNotification(notification)
+                    }
+                )
+                .presentationDetents([.medium])
             }
         }
-        .interactiveDismissDisabled(true)
-        .presentationDetents([.fraction(1.0)])
-        .presentationDragIndicator(.hidden)
-
-        
-        .sheet(item: $selectedNotification) { notification in
-            if let friend = notification.sender {
-            
-                FriendPreviewCard(friend: friend, actionTitle: notification.actionTitle)
-                    .presentationDetents([.medium])
-            }
-            
+        .onAppear {
+            print("Controller: \(String(describing: userController))")
         }
-        
         .interactiveDismissDisabled(true)
         .presentationDetents([.fraction(1.0)])  // full height
         .presentationDragIndicator(.hidden)
-        .onAppear {
-            print("List of Notifications Count:  \(self.notifications.count)")
+    }
+    
+    private func acceptNotification(_ notification: AppNotification) async {
+        print("Accepting notification")
+        
+        guard let controller = userController else {
+            print("Controller not found")
+            return
         }
+       
+        await MainActor.run {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                selectedNotification = nil
+            }
+        }
+        
+        print("accepting now...")
+        try? await controller.acceptNotification(notification)
+
+    }
+    
+    
+    private func declinedNotification(_ notification: AppNotification) async {
+        print("Declining notification…")
+        
+        guard let controller = userController else {
+            print("Controller not found")
+            return
+        }
+        
+        await MainActor.run {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                selectedNotification = nil
+            }
+        }
+        
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        
+        print("Declining now...")
+        try? await controller.declineNotification(notification)
+        
     }
 }
 

@@ -1,0 +1,183 @@
+//
+//  UserControllerFriendRequest.swift
+//  LevelUp
+//
+//  Created by Raúl Pichardo Avalo on 10/20/25.
+//
+
+import Foundation
+import SwiftData
+
+// MARK: FRIEND REQUEST HELPERS
+extension UserController {
+    
+    func fetchPendingFriendRequests(for user: User) async throws -> [FriendRequest] {
+        print("Fetching friend request sent by me...")
+        let pendingStatus: String = AppNotification.StatusNotification.pending.rawValue
+        let userId: UUID = user.id
+        print("User: \(user.username), id: \(userId)")
+        let descriptor = FetchDescriptor<FriendRequest>(
+            predicate: #Predicate { request in
+                request.statusRaw == pendingStatus
+                && request.from.friendId == userId
+            },
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        
+        return try context.fetch(descriptor)
+    }
+    
+    func sendFriendRequest(from sender: User, to friend: Friend) async throws -> Void {
+        print("Sending request...")
+        
+        // TODO: remove on production. just for testing purpouse
+        try await Task.sleep(nanoseconds: 1_000_000_000) // 2s
+        
+        let friendId = friend.friendId
+        let senderId = sender.id
+        
+        let queryToGetFriendRequestBySender = FetchDescriptor<FriendRequest>(
+            predicate: #Predicate {
+                $0.from.friendId == senderId
+                && $0.to.friendId == friendId
+             },sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        
+        let existingFriendRequest = try context.fetch(queryToGetFriendRequestBySender)
+        
+        if let active = existingFriendRequest.first(where: { $0.status == .pending }) {
+            print("❌ A pending request already exists: \(active.id)")
+            throw UserError.friendAlreadySent
+        }
+
+        
+        if let reusable = existingFriendRequest.first(where: { friendRequest in
+            friendRequest.status == .canceled
+            || friendRequest.status == .declined
+        }) {
+            print("Reusing friend request")
+            reusable.updateStatus(to: .pending)
+            try context.save()
+            return
+        }
+        
+        print("Creating a new Request...")
+        let request = FriendRequest(
+            from: sender.asFriend(),
+            to: friend,
+            status: .pending
+        )
+        do {
+            context.insert(request)
+            try context.save()
+            print("Friend Request sent sucessfully!: From: \(request.from.friendId) to: \(request.to)")
+        }catch {
+            print("There was an error: \(error)")
+            throw UserError.friendGeneral(message: "There was an error sending the friend request")
+        }
+        
+    }
+    
+    func deleteAllFriendRequest() async throws -> Void {
+        guard user != nil else { return }
+        
+        try context.delete(model: FriendRequest.self, where: #Predicate<FriendRequest> { _ in true })
+        
+        try context.save()
+    }
+    
+    func cancelFriendRequest(_ friendRequest: FriendRequest) async throws -> Void {
+        guard let userId = user?.id else {
+            print("Invalid user for cancelling friend request")
+            throw UserError.invalidUser(message: "Invalid user. Log in again")
+        }
+        
+        if friendRequest.from.friendId != userId {
+            print("This is not your friend request to cancel")
+            throw UserError.authenticationFailed(message: "You cannot cancel another user's friend request.")
+        }
+        
+        // Notifications stores friend request by saving the id into a PayloadId
+        let payloadId = friendRequest.id
+        
+        // MARK: cancel notifications
+        try? await updateNotificationStatus(payloadId: payloadId, to: .canceled)
+        
+        // MARK: Update friend request status
+        friendRequest.updateStatus(to: .canceled)
+        
+        try context.save()
+        
+    }
+    
+    func acceptFriendRequest(with id: UUID) async throws {
+        
+        guard let myUserId = user?.id else {
+            throw UserError.invalidUser(message: "User is not logged in or cannot find user in session")
+        }
+        
+        // get friend request
+        let friendRequest = try await fetchFriendRequest(withId: id)
+        
+        // am I the receiver?
+        if myUserId != friendRequest.to.friendId {
+            throw UserError.friendGeneral(message: "Cannot accept a friend request that doest not belong to you.")
+        }
+        
+        // get users involved
+        let senderUser = try await fetchUser(withId: friendRequest.from.friendId)
+        let receiverUser = try await fetchUser(withId: friendRequest.to.friendId)
+        
+        // update friend relationship for each friend
+        senderUser.addFriend(user: receiverUser)
+        receiverUser.addFriend(user: senderUser)
+        
+        // upadte friend request status 
+        friendRequest.updateStatus(to: .accepted)
+        
+        try context.save()
+    }
+    
+    func fetchFriendRequest(withId id: UUID) async throws -> FriendRequest {
+        
+        let descriptor = FetchDescriptor<FriendRequest>(
+            predicate: #Predicate { $0.id == id }
+        )
+        
+        guard let request = try context.fetch(descriptor).first else {
+            print("⚠️ No FriendRequest found with id: \(id)")
+            throw UserError.notFound
+        }
+        
+        return request
+    }
+    
+    func declineFriendRequest(with id: UUID) async throws {
+        try await updateFriendRequestStatus(withId: id, to: .declined)
+    }
+    
+    @discardableResult
+    private func updateFriendRequestStatus(withId id: UUID, to status: AppNotification.StatusNotification)
+    async throws -> FriendRequest {
+        
+        let friendRequest = try await fetchFriendRequest(withId: id)
+        
+        print("🫂 Updating Friend Request \(id) with status: \(status.rawValue)")
+        
+        friendRequest.updateStatus(to: status)
+        
+        try context.save()
+        
+        return friendRequest
+    }
+    
+    private func fetchUser(withId id: UUID) async throws -> User {
+        let descriptor = FetchDescriptor<User>(
+            predicate: #Predicate { $0.id == id }
+        )
+        guard let user = try context.fetch(descriptor).first else {
+            throw UserError.notFound
+        }
+        return user
+    }
+}

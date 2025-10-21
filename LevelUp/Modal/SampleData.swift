@@ -113,7 +113,7 @@ class SampleData {
         )
         
         // ✅ Add an accepted request (example)
-        let acceptedRequest = FriendRequest(
+        let pendingRequest2 = FriendRequest(
             from: friend1,
             to: friend4,
             status: .pending
@@ -121,7 +121,7 @@ class SampleData {
         
         // ✅ Insert into context
         context.insert(pendingRequest)
-        context.insert(acceptedRequest)
+        context.insert(pendingRequest2)
         
         // ✅ Insert sample notifications for testing
         let notif1 = AppNotification(
@@ -129,15 +129,17 @@ class SampleData {
             sender: friend3,
             receiverId: user1.id,
             message: "sent you a friend request!",
-            isRead: false
+            isRead: false,
+            payloadId: pendingRequest.id
         )
 
         let notif2 = AppNotification(
-            kind: .challenge,
+            kind: .friendRequest,
             sender: friend4,
             receiverId: user1.id,
             message: "challenged you to a 5K run!",
-            isRead: false
+            isRead: false,
+            payloadId: pendingRequest2.id
         )
 
         // 👇 Insert them before saving so they exist when the query runs
@@ -185,7 +187,8 @@ extension SampleData {
                           stats: UserStats(level: 10)
                          ),
             message: "sent you a friend request.",
-            isRead: false
+            isRead: false,
+            payloadId: UUID()
         ),
 
         .init(
@@ -196,7 +199,8 @@ extension SampleData {
                                                challengeWonCount: 5,
                                               ),
                          ),
-            message: "challenged you to a 5K run!"
+            message: "challenged you to a 5K run!",
+            payloadId: UUID()
         ),
 
         .init(kind: .friendRequest, message: "wants to connect with you.")

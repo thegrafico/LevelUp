@@ -29,9 +29,14 @@ extension UserController {
     
     func sendFriendRequest(from sender: User, to friend: Friend) async throws -> Void {
         print("Sending request...")
+        try await Task.sleep(nanoseconds: 600_000_000)
+
+        if sender.hasFriend(withId: friend.friendId) {
+            print("Already part of your friends.")
+            throw UserError.friendGeneral(message: "Is already my friend.")
+        }
         
         // TODO: remove on production. just for testing purpouse
-        try await Task.sleep(nanoseconds: 1_000_000_000) // 2s
         
         let friendId = friend.friendId
         let senderId = sender.id

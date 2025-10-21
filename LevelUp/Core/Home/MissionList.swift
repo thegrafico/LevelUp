@@ -21,6 +21,9 @@ struct MissionList: View {
     init(_ customMissions: [Mission], _ globalMissions: [Mission]) {
         self.customMissions = customMissions
         self.globalMissions = globalMissions
+        
+        print("Custon Missions found: \(customMissions.count)")
+        print("Global Missions found: \(globalMissions.count)")
     }
     
     // MARK: Filters
@@ -87,10 +90,9 @@ struct MissionList: View {
                 
                 MissionFilterChips(selectedFilter: $selectedFilter)
                     .onChange(of: selectedFilter) {
-                        
-                        print("Global Missions: \(globalMissions.count)")
-                        badgeManager?.clear(.filterMission(selectedFilter))
-                        
+                        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                            badgeManager?.clear(.filterMission(selectedFilter))
+                        }
                     }
                 
                 Spacer()
@@ -121,7 +123,12 @@ struct MissionList: View {
                 MissionSortMenu(selectedSort: $selectedSort)
                     
                 
-            }.animation(.spring(response: 0.35, dampingFraction: 0.82), value: selectedFilter)
+            }.animation(
+                .spring(
+                    response: 0.35,
+                    dampingFraction: 0.82),
+                value: selectedFilter
+            )
             .padding(.horizontal, 20)
             
             // MARK: List of missions
@@ -143,10 +150,15 @@ struct MissionList: View {
                                 .fontWeight(.semibold)
                                 .opacity(0.5)
                                 .padding(.top, 30)
+                                .transition(.fadeRightToLeft)
+                
                         } else {
-                            EmptyView()
+                            ContentUnavailableView("Cannot find missions at this moment", systemImage: "list.bullet.circle.fill")
+                                .fontWeight(.semibold)
+                                .opacity(0.5)
+                                .padding(.top, 30)
+                                .transition(.explosion)
                         }
-                        
                     }
 
                     // ✅ Completed missions section (only if non-empty)
@@ -171,6 +183,7 @@ struct MissionList: View {
                     }
                     
                 }.animation(.spring(response: 0.6, dampingFraction: 0.8), value: completedMissions)
+                
                 .padding(.top, 16)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
@@ -198,7 +211,7 @@ struct MissionListPreviewWrapper: View {
     private var customMissions: [Mission]
 
 //    @Query(filter: #Predicate<Mission> { $0.typeRaw == MissionType.global.rawValue })
-    private var globalMissions: [Mission] = Mission.sampleGlobalMissions
+    private var globalMissions: [Mission] = [] //Mission.sampleGlobalMissions
 
     var body: some View {
         MissionList(customMissions, globalMissions)
@@ -208,7 +221,7 @@ struct MissionListPreviewWrapper: View {
 
 #Preview {
     MissionListPreviewWrapper()
-        .modelContainer(SampleData.shared.modelContainer)
+//        .modelContainer(SampleData.shared.modelContainer)
         .environment(BadgeManager())
 }
 

@@ -71,9 +71,9 @@ extension Mission {
 
 extension Mission {
     static let sampleData: [Mission] = [
-        .init(title: "Run",           xp: 1, icon: "figure.run", ),
-        .init(title: "Go to the Gym", xp: 1, icon: "dumbbell.fill"),
-        .init(title: "Read",          xp: 1, icon: "book.fill"   ),
+        .init(title: "Run",           xp: 1, type: .custom, icon: "figure.run" ),
+        .init(title: "Go to the Gym", xp: 1, type: .custom, icon: "dumbbell.fill"),
+        .init(title: "Read",          xp: 1, type: .custom, icon: "book.fill"   ),
     ]
     
     static let sampleGlobalMissions: [Mission] = [

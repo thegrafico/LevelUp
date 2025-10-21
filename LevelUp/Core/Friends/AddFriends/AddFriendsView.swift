@@ -147,7 +147,7 @@ struct AddFriendsView: View {
                 try await Task.sleep(nanoseconds: 1_000_000_000 ) // 2s
                 
                 
-                let users: [User] = try await userController.searchUsers(byUsername: query, ignoredIDs: [user.id] )
+                let users: [User] = try await userController.searchUsers(byUsername: query, ignoredIDs: [user.id ] + user.friends.map{ $0.friendId } )
                 await MainActor.run {
                     hasSearched = true
                     searchResults = users.map { user in

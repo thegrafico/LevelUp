@@ -72,7 +72,7 @@ extension UserStats {
         }
     }
     
-    func setStreakCount(_ count: Int, forDate: Date? = nil) {
+    func setStreakCount(to count: Int, forDate: Date? = nil) {
         self.streakCount = count
         
         if let forDate = forDate {
@@ -116,3 +116,81 @@ extension UserStats {
     }
 }
 
+extension User {
+    
+    func updateStreakIfNeeded() {
+        print("Updating streak if needed")
+        let today = Calendar.current.startOfDay(for: Date())
+        
+        // Get all completed missions today
+        let completedToday = events(on: today)
+            .contains { $0.type == .completedMission }
+        
+        guard completedToday else { return } // only update if at least one mission done
+        
+        print("Incrementing...")
+        let calendar = Calendar.current
+        if let lastDate = stats.lastStreakCompletedDate {
+            let lastDay = calendar.startOfDay(for: lastDate)
+            
+            if calendar.isDateInToday(lastDay) {
+                // Already updated today — no change
+                return
+            } else if let diff = calendar.dateComponents([.day], from: lastDay, to: today).day {
+                if diff == 1 {
+                    // Continued streak (yesterday → today)
+                    stats.incrementStreakCount(forDate: today)
+                } else {
+                    // Missed a day → reset
+                    stats.setStreakCount(to: 1, forDate: today)
+                }
+            }
+        } else {
+            // First completion ever
+            stats.incrementStreakCount(forDate: today)
+        }
+    }
+    
+    func rebuildStreakFromLogs() {
+        let calendar = Calendar.current
+
+        // 1️⃣ Sort log dates in ascending order
+        let sortedDates = progressLogs
+            .map { calendar.startOfDay(for: $0.date) }
+            .sorted()
+
+        guard !sortedDates.isEmpty else {
+            stats.setStreakCount(to: 0)
+            return
+        }
+
+        var currentStreak = 0
+        var previousDay: Date? = nil
+
+        for day in sortedDates {
+            // Check if this log actually has at least one completed mission
+            let hasCompleted = progressLogs
+                .first(where: { calendar.isDate($0.date, inSameDayAs: day) })?
+                .events
+                .contains(where: { $0.type == .completedMission }) ?? false
+
+            guard hasCompleted else { continue }
+
+            if let prev = previousDay {
+                let diff = calendar.dateComponents([.day], from: prev, to: day).day ?? 0
+
+                if diff == 1 {
+                    currentStreak += 1
+                } else {
+                    currentStreak = 1
+                }
+            } else {
+                currentStreak = 1
+            }
+
+            previousDay = day
+        }
+        
+        self.stats.setStreakCount(to: currentStreak, forDate: previousDay)
+    }
+}

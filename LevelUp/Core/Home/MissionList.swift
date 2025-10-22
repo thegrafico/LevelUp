@@ -8,6 +8,8 @@ struct MissionList: View {
     @Environment(\.modelContext) private var context
     @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
     @Environment(\.currentUser) private var user
+    @EnvironmentObject private var modalManager: ModalManager
+
 
 
     private var missionController: MissionController {
@@ -101,7 +103,21 @@ struct MissionList: View {
                     Button {
                         let generator = UIImpactFeedbackGenerator(style: .medium)
                         generator.impactOccurred() // ✅ vibration feedback
-                        showDeleteConfirmation = true
+                        
+                        modalManager.presentModal(
+                                ConfirmationModalData(
+                                    title: "Delete Selected Missions?",
+                                    message: "You are about to delete \(selectedCustomMissions.count) mission(s). This action cannot be undone.",
+                                    confirmButtonTitle: "Delete",
+                                    cancelButtonTitle: "Cancel",
+                                    confirmAction: {
+                                        withAnimation {
+                                            missionController.deleteMissions(selectedCustomMissions)
+                                        }
+                                    }
+                                )
+                            )
+                        
                     } label: {
                         Image(systemName: "trash.fill")
                             .font(.title3)
@@ -189,18 +205,6 @@ struct MissionList: View {
                 .padding(.bottom, 20)
             }
         }
-        .alert("Delete Selected Missions?",
-               isPresented: $showDeleteConfirmation) {
-            Button("Cancel", role: .cancel) {}
-            Button("Delete", role: .destructive) {
-                print("Deleting missions...")
-                withAnimation {
-                    missionController.deleteMissions(selectedCustomMissions)
-                }
-            }
-        } message: {
-            Text("You are about to delete \(selectedCustomMissions.count) mission(s). This action cannot be undone.")
-        }
     }
 }
 
@@ -211,7 +215,7 @@ struct MissionListPreviewWrapper: View {
     private var customMissions: [Mission]
 
 //    @Query(filter: #Predicate<Mission> { $0.typeRaw == MissionType.global.rawValue })
-    private var globalMissions: [Mission] = [] //Mission.sampleGlobalMissions
+    private var globalMissions: [Mission] = Mission.sampleGlobalMissions
 
     var body: some View {
         MissionList(customMissions, globalMissions)
@@ -221,21 +225,8 @@ struct MissionListPreviewWrapper: View {
 
 #Preview {
     MissionListPreviewWrapper()
-//        .modelContainer(SampleData.shared.modelContainer)
+        .modelContainer(SampleData.shared.modelContainer)
         .environment(BadgeManager())
-}
+        .environmentObject(ModalManager()) // 👈 Inject for all child views
 
-//
-//#Preview {
-//    let context = SampleData.shared.modelContainer.mainContext
-//    // Fetch missions manually
-//    let fetchDescriptor = FetchDescriptor<Mission>()
-//    let missions = try? context.fetch(fetchDescriptor)
-//    
-//    return MissionList(
-//        missions?.filter { $0.type == .custom } ?? [],
-//        missions?.filter { $0.type == .global } ?? []
-//    )
-//    .modelContainer(SampleData.shared.modelContainer)
-//
-//}
+}

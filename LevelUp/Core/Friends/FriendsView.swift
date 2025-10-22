@@ -8,20 +8,6 @@
 import SwiftUI
 import SwiftData
 
-struct ConfirmationModalModel<DataType>: Identifiable, Equatable {
-    let id = UUID()
-    let title: String
-    let message: String?
-    let confirmButtonTitle: String
-    let cancelButtonTitle: String
-    let data: DataType
-    let confirmAction: (DataType) async throws -> Void
-    
-    static func == (lhs: ConfirmationModalModel<DataType>, rhs: ConfirmationModalModel<DataType>) -> Bool {
-        lhs.id == rhs.id
-    }
-}
-
 
 // MARK: - Friends View
 struct FriendsView: View {
@@ -31,7 +17,7 @@ struct FriendsView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.currentUser) private var user
     @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
-    
+    @EnvironmentObject private var modalManager: ModalManager
     
     // MARK: State
     @State private var userQuery: String = ""
@@ -42,8 +28,6 @@ struct FriendsView: View {
     @State private var showAddSheet = false
     @State private var showNotificationsSheet = false
     @State private var showConfirmationModal: Bool = false
-    
-    @State private var activeModal: ConfirmationModalModel<AnyHashable>? = nil
     
     // MARK: Queries
     @Query private var friendRequests: [FriendRequest]
@@ -75,78 +59,52 @@ struct FriendsView: View {
     
     // MARK: Body
     var body: some View {
-        
-        ZStack {
+        VStack(spacing: 16) {
             
-            VStack(spacing: 16) {
-                
-                // MARK: BANNER
-                AppTopBanner(
-                    title: "Friends",
-                    subtitle: "Find and add friends",
-                    onNotificationTap: { showNotificationsSheet = true }
-                )
-                
-                VStack {
-                    
-                    // MARK: USER SEARCH QUERY
-                    searchFieldWithIconEvent(userQuery: $userQuery, toggleSheet: $showAddSheet)
-                    
-                    // MARK: EMPTY VIEW
-                    if !hasFriends {
-                        EmptyFriendsView(onAddPressed: { showAddSheet.toggle() })
-                    } else {
-                        friendsScrollView
-                    }
-                    Spacer(minLength: 0)
-                }
-                .frame(maxHeight: .infinity, alignment: .top)
-                .sheet(isPresented: $showAddSheet) {
-                    AddFriendsView().presentationDetents([.medium, .large])
-                }
-                .sheet(isPresented: Binding(
-                    get: { showNotificationsSheet && userController != nil },
-                    set: { showNotificationsSheet = $0 }
-                )) {
-                    if let controller = userController {
-                        FriendsNotifications(
-                            notifications: userNotifications,
-                            userController: controller
-                        )
-                        .presentationDetents([.large])
-                    }
-                }
-                .sheet(item: $selectedFriend) { friend in
-                    FriendPreviewCard(friend: friend)
-                        .presentationDetents([.medium])
-                }
-                .onAppear(perform: setupView)
-                .offset(y: -40)
-            }
-            .background(theme.background.ignoresSafeArea())
+            // MARK: BANNER
+            AppTopBanner(
+                title: "Friends",
+                subtitle: "Find and add friends",
+                onNotificationTap: { showNotificationsSheet = true }
+            )
             
-            // MARK: Confirmation Modal ASYNC
-            if let modal = activeModal {
-                AsyncConfirmationModal(
-                    isPresented: Binding(
-                        get: { activeModal != nil },
-                        set: { if !$0 { activeModal = nil } }
-                    ),
-                    title: modal.title,
-                    message: modal.message,
-                    confirmButtonTitle: modal.confirmButtonTitle,
-                    cancelButtonTitle: modal.cancelButtonTitle,
-                    confirmAction: { _ in
-                        try await modal.confirmAction(modal.data)
-                    },
-                    data: modal.data
-                )
-                .environment(\.theme, theme)
-                .transition(.scale(scale: 0.9).combined(with: .opacity))
-                .zIndex(100)
+            VStack {
+                
+                // MARK: USER SEARCH QUERY
+                searchFieldWithIconEvent(userQuery: $userQuery, toggleSheet: $showAddSheet)
+                
+                // MARK: EMPTY VIEW
+                if !hasFriends {
+                    EmptyFriendsView(onAddPressed: { showAddSheet.toggle() })
+                } else {
+                    friendsScrollView
+                }
+                Spacer(minLength: 0)
             }
+            .frame(maxHeight: .infinity, alignment: .top)
+            .sheet(isPresented: $showAddSheet) {
+                AddFriendsView().presentationDetents([.medium, .large])
+            }
+            .sheet(isPresented: Binding(
+                get: { showNotificationsSheet && userController != nil },
+                set: { showNotificationsSheet = $0 }
+            )) {
+                if let controller = userController {
+                    FriendsNotifications(
+                        notifications: userNotifications,
+                        userController: controller
+                    )
+                    .presentationDetents([.large])
+                }
+            }
+            .sheet(item: $selectedFriend) { friend in
+                FriendPreviewCard(friend: friend)
+                    .presentationDetents([.medium])
+            }
+            .onAppear(perform: setupView)
+            .offset(y: -40)
         }
-        .animation(.spring(response: 0.45, dampingFraction: 0.8), value: activeModal)
+        .background(theme.background.ignoresSafeArea())
     }
     
     // MARK: Subviews
@@ -167,16 +125,17 @@ struct FriendsView: View {
                     PendingFriendRequestView(
                         friendRequests: friendRequests,
                         onCancelRequest: { friendRequest in
-                            activeModal = ConfirmationModalModel(
+                            
+                            let cancelFriendRequestModal = ConfirmationModalData(
                                 title: "Cancel Friend Request?",
                                 message: "Are you sure you want to cancel your request to \(friendRequest.to.username)?",
                                 confirmButtonTitle: "Yes, Cancel",
                                 cancelButtonTitle: "No",
-                                data: friendRequest,
-                                confirmAction: { _ in
+                                confirmAction: {
                                     try await userController?.cancelFriendRequest(friendRequest)
                                 }
                             )
+                            modalManager.presentModal(cancelFriendRequestModal)
                         }
                     )
                 }
@@ -242,4 +201,6 @@ struct FriendsView: View {
         .environment(\.currentUser, User.sampleUserWithLogs())
         .environment(\.theme, .orange)
         .environment(BadgeManager()) // 👈 inject preview manager
+        .environmentObject(ModalManager()) // 👈 Inject for all child views
+    
 }

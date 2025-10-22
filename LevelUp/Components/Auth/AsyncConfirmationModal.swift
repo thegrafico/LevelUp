@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct AsyncConfirmationModal<ConfirmData>: View {
+struct AsyncConfirmationModal: View {
     @Environment(\.theme) private var theme
     
     @Binding var isPresented: Bool
@@ -9,8 +9,7 @@ struct AsyncConfirmationModal<ConfirmData>: View {
     var message: String?
     var confirmButtonTitle: String = "Confirm"
     var cancelButtonTitle: String = "Cancel"
-    var confirmAction: (ConfirmData) async throws -> Void
-    var data: ConfirmData
+    var confirmAction: () async throws -> Void
     var closeOnTapOutside: Bool = false
     
     @State private var isLoading = false
@@ -130,7 +129,7 @@ struct AsyncConfirmationModal<ConfirmData>: View {
         errorMessage = nil
         
         do {
-            try await confirmAction(data)
+            try await confirmAction()
             withAnimation(.spring) {
                 didSucceed = true
                 isPresented = false
@@ -147,17 +146,16 @@ struct AsyncConfirmationModal<ConfirmData>: View {
 }
 
 #Preview {
-    AsyncConfirmationModal<String>(
+    AsyncConfirmationModal(
         isPresented: .constant(true),
         title: "Cancel Friend Request?",
         message: "Are you sure you want to cancel your request to John?",
         confirmButtonTitle: "Yes, Cancel",
         cancelButtonTitle: "No",
-        confirmAction: { _ in
+        confirmAction: {
             try? await Task.sleep(nanoseconds: 1_000_000_000)
             
         },
-        data: "Sample Data"
     )
     .environment(\.theme, .blue)
     //    .preferredColorScheme(.dark)

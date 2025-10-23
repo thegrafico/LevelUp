@@ -15,28 +15,36 @@ final class Mission: Identifiable {
     var title: String
     var xp: Int
     var icon: String
-    
     var completed: Bool
-    var completionDate: Date?  = nil // ✅ when it was completed
+    var completionDate: Date?  = nil
     var isSelected: Bool = false
-
     var reminderDate: Date?
-    
-    // MARK: track when task was created
-    var createdAt: Date
-    var id: UUID
-
-    // MARK: For filtering mostly
     var typeRaw: String
     var type: MissionType {
         get { MissionType(rawValue: typeRaw) ?? .custom }
         set { typeRaw = newValue.rawValue }
     }
+    
+    // enconde it as json so swift data can handle it
+    private var categoryData: Data?
+    var category: MissionCategory {
+        get {
+            guard let data = categoryData else { return .general }
+            return (try? JSONDecoder().decode(MissionCategory.self, from: data)) ?? .general
+        }
+        set {
+            categoryData = try? JSONEncoder().encode(newValue)
+        }
+    }
+    
+    var createdAt: Date
+    var id: UUID
 
     init(
         title: String,
         xp: Int,
         type: MissionType = .custom,
+        category: MissionCategory = .general,
         icon: String,
         reminderDate: Date? = nil,
         completed: Bool = false,
@@ -50,6 +58,7 @@ final class Mission: Identifiable {
         self.completed = completed
         self.createdAt = Date()
         self.typeRaw = type.rawValue
+        self.category = category
     }
 }
 
@@ -71,15 +80,14 @@ enum MissionSort: String, CaseIterable, Identifiable {
 }
 
 extension Mission {
-    
-    func printMission()  {
+    func printMission() {
         print("------")
         print("Mission: \(title)")
         print("XP: \(xp)")
         print("Type: \(type)")
+        print("Category: \(category.name)")
         print("Completed: \(completed)")
         print("CompletedAt: \(String(describing: completionDate))")
         print("------")
     }
 }
-

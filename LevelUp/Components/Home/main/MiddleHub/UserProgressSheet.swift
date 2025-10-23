@@ -32,9 +32,9 @@ struct UserProgressSheet: View {
     
     private var labelForSelectedDate: String {
         if Calendar.current.isDateInToday(selectedDate) {
-            return "Stacks for Today"
+            return "Stats for Today"
         } else {
-            return "Stacks for \(selectedDate.formatted(.dateTime.day().month(.wide)))"
+            return "Stats for \(selectedDate.formatted(.dateTime.day().month(.wide)))"
         }
     }
         
@@ -82,7 +82,7 @@ extension UserProgressSheet {
             Text("Your Daily Progress")
                 .font(.title2.weight(.bold))
                 .foregroundStyle(theme.textPrimary)
-            Text("See how your XP stacks up this week")
+            Text("See how your XP stats up this week")
                 .font(.subheadline)
                 .foregroundStyle(theme.textSecondary)
         }

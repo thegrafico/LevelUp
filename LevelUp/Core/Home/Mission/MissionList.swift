@@ -10,7 +10,10 @@ struct MissionList: View {
     @Environment(\.currentUser) private var user
     @EnvironmentObject private var modalManager: ModalManager
     
-    
+    @State private var selectedFilter: MissionType = .custom
+    @State private var selectedSort: MissionSort = .name
+    @State private var showDeleteConfirmation = false
+    @State private var expandedCategories: Set<String> = ["General"]
     
     private var missionController: MissionController {
         MissionController(context: context, user: user, badgeManager: badgeManager)
@@ -26,12 +29,11 @@ struct MissionList: View {
         
         print("Custon Missions found: \(customMissions.count)")
         print("Global Missions found: \(globalMissions.count)")
+        
+        for mission in globalMissions {
+            mission.printMission()
+        }
     }
-    
-    // MARK: Filters
-    @State private var selectedFilter: MissionType = .custom
-    @State private var selectedSort: MissionSort = .name
-    @State private var showDeleteConfirmation = false
     
     // MARK: Active missions (filtered + sorted)
     private var filteredMissions: [Mission] {
@@ -78,6 +80,13 @@ struct MissionList: View {
         customMissions.filter { $0.isSelected }
     }
     
+    private var groupedMissions: [(key: String, missions: [Mission])] {
+        let grouped = Dictionary(grouping: filteredMissions, by: { $0.category.name })
+        return grouped
+            .map { (key: $0.key, missions: $0.value) } // ✅ rename .value → .missions
+            .sorted { $0.key.localizedCaseInsensitiveCompare($1.key) == .orderedAscending }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // MARK: Header Row
@@ -100,38 +109,12 @@ struct MissionList: View {
                 Spacer()
                 
                 if selectedFilter == .custom {
-                    Button {
-                        let generator = UIImpactFeedbackGenerator(style: .medium)
-                        generator.impactOccurred() // ✅ vibration feedback
-                        
-                        modalManager.presentModal(
-                            ConfirmationModalData(
-                                title: "Delete Selected Missions?",
-                                message: "You are about to delete \(selectedCustomMissions.count) mission(s). This action cannot be undone.",
-                                confirmButtonTitle: "Delete",
-                                cancelButtonTitle: "Cancel",
-                                confirmAction: {
-                                    withAnimation {
-                                        missionController.deleteMissions(selectedCustomMissions)
-                                    }
-                                }
-                            )
-                        )
-                        
-                    } label: {
-                        Image(systemName: "trash.fill")
-                            .font(.title3)
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(theme.primary)
-                            .opacity(!selectedCustomMissions.isEmpty ? 1 : 0.3)
-                            .symbolEffect(.bounce, value: selectedFilter == .custom)
-                    }
-                    .disabled(selectedCustomMissions.isEmpty)
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal:  .scale(scale: 0.7).combined(with: .opacity)
-                    ))
-                    .id("trash")
+                    MissionDeleteButton(
+                           selectedMissions: selectedCustomMissions
+                       ) {
+                           missionController.deleteMissions(selectedCustomMissions)
+                       }
+                       .id("trash")
                 }
                 
                 
@@ -152,13 +135,60 @@ struct MissionList: View {
                 LazyVStack(spacing: 16, pinnedViews: []) {
                     // ✅ Active missions
                     if !filteredMissions.isEmpty {
-                        ForEach(filteredMissions, id: \.id) { mission in
-                            MissionRow(mission: mission)
-                                .tapBounce()
-                                .id(mission.id)
-                                .transition(.fadeRightToLeft)
+                        ForEach(groupedMissions, id: \.key) { category, missions in
+                            VStack(alignment: .leading, spacing: 8) {
+                                // MARK: Section Header
+                                Button {
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                        if expandedCategories.contains(category) {
+                                            expandedCategories.remove(category)
+                                        } else {
+                                            expandedCategories.insert(category)
+                                        }
+                                    }
+                                } label: {
+                                    HStack {
+                                        
+                                        Text(category)
+                                            .font(.footnote.weight(.semibold))
+                                            .foregroundStyle(.secondary)
+                                            .padding(.top, 8)
+                                        
+                                        Spacer()
+                                        
+                                        if expandedCategories.contains(category) {
+                                            Image(systemName:"chevron.down")
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+                                        } else {
+                                            Text("\(missions.count)")
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+
+                                // MARK: Collapsible Content
+                                if expandedCategories.contains(category) {
+                                    VStack(spacing: 16) {
+                                        ForEach(missions, id: \.id) { mission in
+                                            MissionRow(mission: mission)
+                                                .tapBounce()
+                                                .id(mission.id)
+                                                .transition(.opacity.combined(with: .slide))
+                                        }
+                                    }
+                                    .padding(.top, 4)
+                                    .transition(.asymmetric(
+                                        insertion: .opacity.combined(with: .move(edge: .top)),
+                                        removal: .opacity.combined(with: .move(edge: .top))
+                                    ))
+                                }
+                            }
+                            .padding(.bottom, 8)
                         }
-                        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: filteredMissions)
                     } else {
                         
                         if selectedFilter == .custom {
@@ -204,6 +234,7 @@ struct MissionList: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 20)
             }
+            .padding(.horizontal, 6)
         }
     }
 }
@@ -227,6 +258,7 @@ struct MissionListPreviewWrapper: View {
     MissionListPreviewWrapper()
         .modelContainer(SampleData.shared.modelContainer)
         .environment(BadgeManager())
+        .frame(maxWidth: .infinity, maxHeight: .infinity) // ✅ allow scroll & fill space
         .environmentObject(ModalManager()) // 👈 Inject for all child views
     
 }

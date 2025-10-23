@@ -39,9 +39,9 @@ struct ContentView: View {
                             .task {
                                 // Runs when HomeView appears
                                 await DataSeeder.loadGlobalMissions(for: user, in: context)
-                                
-                                await DataSeeder.loadLocalMissions(for: user, in: context)
-                                
+//                                
+//                                await DataSeeder.loadLocalMissions(for: user, in: context)
+//                                
                                 let log = user.log(for: Date())
                                 print("Getting todays log on change: \(log.date.formatted())")
                                 

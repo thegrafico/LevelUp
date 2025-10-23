@@ -70,37 +70,187 @@ extension Mission {
 }
 
 extension Mission {
+    
     static let sampleData: [Mission] = [
-        .init(title: "Run",           xp: 1, type: .custom, icon: "figure.run" ),
-        .init(title: "Go to the Gym", xp: 1, type: .custom, icon: "dumbbell.fill"),
-        .init(title: "Read",          xp: 1, type: .custom, icon: "book.fill"   ),
+        // Default custom missions (each with custom categories)
+        .init(
+            title: "Run",
+            xp: 10,
+            type: .custom,
+            category: .custom(.init(name: "Fitness", colorHex: "#FF6B6B")),
+            icon: "figure.run",
+            completed: false,
+            
+        ),
+        .init(
+            title: "Go to the Gym",
+            xp: 12,
+            type: .custom,
+            category: .custom(.init(name: "Fitness", colorHex: "#FF6B6B")),
+            icon: "dumbbell.fill",
+            completed: false,
+            
+        ),
+        .init(
+            title: "Read a Book",
+            xp: 8,
+            type: .custom,
+            category: .custom(.init(name: "Focus", colorHex: "#4ECDC4")),
+            icon: "book.fill",
+            completed: false,
+            
+        ),
+        .init(
+            title: "Meditate 10 min",
+            xp: 10,
+            type: .custom,
+            category: .custom(.init(name: "Mindfulness", colorHex: "#FFD93D")),
+            icon: "brain.head.profile",
+            completed: false,
+            
+        ),
     ]
     
+    
     static let sampleGlobalMissions: [Mission] = [
-        // Health & Fitness
-        .init(title: "Run 1 Mile", xp: 20, type: .global, icon: "figure.run", completed: false ),
-        .init(title: "Go to the Gym", xp: 25, type: .global, icon: "dumbbell.fill", completed: false),
-        .init(title: "Stretch for 10 Minutes", xp: 10, type: .global, icon: "figure.cooldown", completed: false),
-        .init(title: "Drink 8 Glasses of Water", xp: 15, type: .global, icon: "drop.fill", completed: false),
+        // 🌿 Health & Fitness
+        .init(
+            title: "Run 1 Mile",
+            xp: 20,
+            type: .global,
+            category: .custom(.init(name: "Fitness", colorHex: "#FF6B6B")),
+            icon: "figure.run",
+            completed: false,
+        ),
+        .init(
+            title: "Go to the Gym",
+            xp: 25,
+            type: .global,
+            category: .custom(.init(name: "Fitness", colorHex: "#FF6B6B")),
+            icon: "dumbbell.fill",
+            completed: false,
+            
+        ),
+        .init(
+            title: "Stretch for 10 Minutes",
+            xp: 10,
+            type: .global,
+            category: .custom(.init(name: "Fitness", colorHex: "#FF6B6B")),
+            icon: "figure.cooldown",
+            completed: false,
+            
+        ),
+        .init(
+            title: "Drink 8 Glasses of Water",
+            xp: 15,
+            type: .global,
+            category: .custom(.init(name: "Health", colorHex: "#1DD1A1")),
+            icon: "drop.fill",
+            completed: false,
+            
+        ),
 
-        // Learning & Mind
-        .init(title: "Read 20 Pages", xp: 15, type: .global, icon: "book.fill", completed: false),
-        .init(title: "Meditate for 5 Minutes", xp: 10, type: .global, icon: "brain.head.profile", completed: false),
-        .init(title: "Write in a Journal", xp: 12, type: .global, icon: "pencil.and.outline", completed: false),
+        // 📖 Learning & Mind
+        .init(
+            title: "Read 20 Pages",
+            xp: 15,
+            type: .global,
+            category: .custom(.init(name: "Focus", colorHex: "#4ECDC4")),
+            icon: "book.fill",
+            completed: false,
+            
+        ),
+        .init(
+            title: "Meditate for 5 Minutes",
+            xp: 10,
+            type: .global,
+            category: .custom(.init(name: "Mindfulness", colorHex: "#FFD93D")),
+            icon: "brain.head.profile",
+            completed: false,
+            
+        ),
+        .init(
+            title: "Write in a Journal",
+            xp: 12,
+            type: .global,
+            category: .custom(.init(name: "Mindfulness", colorHex: "#FFD93D")),
+            icon: "pencil.and.outline",
+            completed: false,
+            
+        ),
 
-        // Daily Life
-        .init(title: "Clean Your Room", xp: 15, type: .global, icon: "trash.fill", completed: false),
-        .init(title: "Cook a Healthy Meal", xp: 18, type: .global, icon: "fork.knife", completed: false),
-        .init(title: "Walk the Dog", xp: 10, type: .global, icon: "pawprint.fill", completed: false),
+        // 🧹 Daily Life
+        .init(
+            title: "Clean Your Room",
+            xp: 15,
+            type: .global,
+            category: .custom(.init(name: "Lifestyle", colorHex: "#FF9F43")),
+            icon: "trash.fill",
+            completed: false,
+            
+        ),
+        .init(
+            title: "Cook a Healthy Meal",
+            xp: 18,
+            type: .global,
+            category: .custom(.init(name: "Lifestyle", colorHex: "#FF9F43")),
+            icon: "fork.knife",
+            completed: false,
+            
+        ),
+        .init(
+            title: "Walk the Dog",
+            xp: 10,
+            type: .global,
+            category: .custom(.init(name: "Lifestyle", colorHex: "#FF9F43")),
+            icon: "pawprint.fill",
+            completed: false,
+            
+        ),
 
-        // Social
-        .init(title: "Call a Friend", xp: 10, type: .global, icon: "phone.fill", completed: false),
-        .init(title: "Help Someone Out", xp: 20, type: .global, icon: "hands.sparkles.fill", completed: false),
+        // 🫂 Social
+        .init(
+            title: "Call a Friend",
+            xp: 10,
+            type: .global,
+            category: .custom(.init(name: "Social", colorHex: "#54A0FF")),
+            icon: "phone.fill",
+            completed: false,
+            
+        ),
+        .init(
+            title: "Help Someone Out",
+            xp: 20,
+            type: .global,
+            category: .custom(.init(name: "Social", colorHex: "#54A0FF")),
+            icon: "hands.sparkles.fill",
+            completed: false,
+            
+        ),
 
-        // Productivity
-        .init(title: "Finish a Task on Time", xp: 15, type: .global, icon: "checkmark.circle.fill", completed: false),
-        .init(title: "Plan Tomorrow", xp: 12, type: .global, icon: "calendar", completed: false),
+        // ✅ Productivity
+        .init(
+            title: "Finish a Task on Time",
+            xp: 15,
+            type: .global,
+            category: .custom(.init(name: "Productivity", colorHex: "#5F27CD")),
+            icon: "checkmark.circle.fill",
+            completed: false,
+            
+        ),
+        .init(
+            title: "Plan Tomorrow",
+            xp: 12,
+            type: .global,
+            category: .custom(.init(name: "Thegrafico", colorHex: "#10AC84")),
+            icon: "calendar",
+            completed: false,
+            
+        ),
     ]
+}
+
+extension Mission {
     
     static let SampleLocalMissions: [Mission] = [
         // Health & Fitness

@@ -67,7 +67,7 @@ struct RootGate: View {
         }
         .task { await restoreSession() }
         .onAppear { userStore.attachContext(context) }
-        .onChange(of: userStore.user) { _, newUser in      // 👈 react to login/logout
+        .onChange(of: userStore.user) { _, newUser in
             withAnimation(.spring(duration: 0.35)) {
                 if let u = newUser {
                     state = .authenticated(u)

@@ -25,7 +25,6 @@ final class UserController {
 
 // MARK: ENUMS
 extension UserController {
-    
     enum UserError: LocalizedError {
         
         // MARK: - General / User-related

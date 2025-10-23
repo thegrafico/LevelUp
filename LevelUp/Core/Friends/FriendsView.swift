@@ -22,13 +22,13 @@ struct FriendsView: View {
     // MARK: State
     @State private var userQuery: String = ""
     @State private var selectedFriend: Friend? = nil
+    @State private var friendToReopen: Friend? = nil
     @State private var userController: UserController? = nil
     @State private var initialized = false
     
     @State private var showAddSheet = false
     @State private var showNotificationsSheet = false
-    @State private var showConfirmationModal: Bool = false
-    
+        
     // MARK: Queries
     @Query private var friendRequests: [FriendRequest]
     @Query private var userNotifications: [AppNotification]
@@ -98,12 +98,39 @@ struct FriendsView: View {
                 }
             }
             .sheet(item: $selectedFriend) { friend in
-                FriendPreviewCard(friend: friend)
-                    .presentationDetents([.medium])
+                FriendPreviewCard(friend: friend, type: .preview, onActionDelete: ({
+                    print("Deleting friend: : \(friend.username)")
+                    
+                    friendToReopen = selectedFriend
+                    selectedFriend = nil
+                    
+                    try? await Task.sleep(nanoseconds: 200_000_000)
+                    
+                    modalManager.presentModal(
+                        ConfirmationModalData(
+                            title: "Removing friend?",
+                            message: "Are you sure you want to remove \(friend.username)?",
+                            confirmButtonTitle: "Delete",
+                            cancelButtonTitle: "Cancel",
+                            confirmAction: {
+                                try await userController?.removeFriendFromList(friend: friend)
+                                print("Confirming...")
+                            },
+                            cancelAction: {
+                                selectedFriend = friendToReopen
+                                friendToReopen = nil
+                              print("canceling...")
+                            }
+                        )
+                    )
+                    
+                }))
+                .presentationDetents([.medium, .large], selection: .constant(.medium))
+
             }
-            .onAppear(perform: setupView)
             .offset(y: -40)
         }
+        .onAppear(perform: setupView)
         .background(theme.background.ignoresSafeArea())
     }
     

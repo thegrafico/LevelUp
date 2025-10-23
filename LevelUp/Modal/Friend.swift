@@ -15,8 +15,8 @@ final class Friend: Identifiable {
     var relationshipFriendId: UUID? // id of the other friend
     var username: String
     var avatar: String
+    var isFavorite: Bool
     
-    @Relationship(deleteRule: .cascade)
     var stats: UserStats
         
     init(
@@ -24,6 +24,7 @@ final class Friend: Identifiable {
         stats: UserStats,
         friendId: UUID = UUID(),
         relationshipFriendId: UUID? = nil,
+        isFavorite: Bool = false,
         avatar: String = "person.fill",
         id: UUID = UUID(),
     ) {
@@ -33,5 +34,6 @@ final class Friend: Identifiable {
         self.id = id
         self.stats = stats
         self.relationshipFriendId = relationshipFriendId
+        self.isFavorite = false
     }
 }

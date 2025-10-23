@@ -20,15 +20,39 @@ struct FriendPreviewCardHeader: View {
     var body: some View {
         Circle()
             .fill(theme.primary.opacity(0.15))
-            .frame(width: 100, height: 100)
+            .frame(width: 70, height: 70)
             .overlay(
                 Image(systemName: friend.avatar)
                     .font(.system(size: 50, weight: .bold))
                     .foregroundStyle(theme.primary)
             )
-        Text("@\(friend.username)")
-            .font(.title2.weight(.bold))
-            .foregroundStyle(theme.textPrimary)
+            .padding(.top, 20)
+        
+        HStack (spacing: 0) {
+            
+            Text("@\(friend.username)")
+                .font(.title2.weight(.bold))
+                .foregroundStyle(theme.textPrimary)
+            
+            
+            // ⭐ Favorite toggle
+            Button {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    friend.isFavorite.toggle()
+                }
+            } label: {
+                Image(systemName: friend.isFavorite ? "star.fill" : "star")
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(friend.isFavorite ? theme.primary : .secondary)
+                    .font(.title3)
+                    .padding(6)
+                    .contentShape(Rectangle())
+                    .animation(.easeInOut, value: friend.isFavorite)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(friend.isFavorite ? "Remove from favorites" : "Add to favorites")
+            
+        }
         
         HStack {
             Text("Level \(friend.stats.level)")

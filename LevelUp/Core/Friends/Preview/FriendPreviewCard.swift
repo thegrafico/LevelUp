@@ -11,25 +11,31 @@ struct FriendPreviewCard: View {
     @Environment(\.theme) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.currentUser) private var user
-
-    
-    var friend: Friend
-    var type: AppNotification.Kind? = nil
-    var onAction: ((Friend) async throws -> Void)? = nil
-    var onCancel: ((Friend) async throws -> Void)? = nil
-    
-    var onActionTitle: String? = nil
-    var onActionCancel: String? = nil
+    @EnvironmentObject private var modalManager: ModalManager
     
     // MARK: - Loading States
     @State private var isActionLoading = false
     @State private var isCancelLoading = false
     @State private var requestSuccess  = false
+//    @State private var isEditing = false
+    
+    
+    var friend: Friend
+    var type: AppNotification.Kind? = nil
+    var onAction: ((Friend) async throws -> Void)? = nil
+    var onCancel: ((Friend) async throws -> Void)? = nil
+    var onActionDelete: (() async throws -> Void)? = nil
+    
+    var onActionTitle: String? = nil
+    var onActionCancel: String? = nil
+        
+    var isMyFriend: Bool {
+        user.hasFriend(withId: friend.friendId)
+    }
     
     // MARK: - Body
     var body: some View {
         NavigationStack {
-            
             
             VStack(spacing: 16) {
                 
@@ -50,14 +56,15 @@ struct FriendPreviewCard: View {
                                 isCancelLoading = true
                                 do {
                                     try await onCancel(friend)
-                                    isCancelLoading = false
                                     requestSuccess = true
-                                    try await Task.sleep(nanoseconds: 1_000_000_000)
+                                    try await Task.sleep(nanoseconds: 600_000_000)
                                     dismiss()
                                 } catch {
                                     print("❌ Cancel action failed: \(error.localizedDescription)")
                                 }
                                 isCancelLoading = false
+                                try await Task.sleep(nanoseconds: 600_000_000)
+                                requestSuccess = false
                             }
                         } label: {
                             if isCancelLoading {
@@ -119,25 +126,56 @@ struct FriendPreviewCard: View {
             .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadiusLarge))
             .shadow(color: theme.shadowLight, radius: 10, y: 4)
             .presentationBackground(theme.background)
-            .overlay(alignment: .topTrailing) {
+//            .overlay(alignment: .topTrailing) {
+//                
+                // MARK: EDIT FRIEND: [add to favorite, remove]
+//                if isMyFriend {
+//                    Button {
+//                        let generator = UIImpactFeedbackGenerator(style: .medium)
+//                        generator.impactOccurred()
+//                        isEditing.toggle()
+//                    } label: {
+//                        Text( isEditing ? "Save" : "Edit")
+//                            .font(.headline.weight(.semibold))
+//                    }
+//                    .tint(theme.primary)
+//                    .padding(.horizontal, 24)
+//                    .padding(.top, 24)
+//                } else {
+//                    EmptyView()
+//                }
+//                
+//            }
+            .overlay(alignment: .topLeading) {
                 
                 // MARK: EDIT FRIEND: [add to favorite, remove]
-                if user.hasFriend(withId: friend.friendId) {
+                if isMyFriend || 1 == 1 {
                     Button {
-                        print("Edit tapped for \(friend.username)")
+                        Task {
+                            try await onActionDelete?()
+                        }
                     } label: {
-                        Text("Edit")
-                            .font(.headline.weight(.semibold))
+                        Image(systemName: "trash.fill")
+                            .font(.title2)
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(theme.primary)
+                            .symbolEffect(.bounce, value: isMyFriend )
                     }
-                    .tint(theme.primary)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
+                    .tint(theme.destructive)
+                    .padding(.horizontal, 30)
+                    .padding(.top, 30)
                 } else {
                     EmptyView()
                 }
-                
             }
         }
+    }
+}
+
+extension FriendPreviewCard {
+    
+    func removeFriend(friend: Friend) async throws {
+        
     }
 }
 
@@ -151,7 +189,9 @@ extension FriendPreviewCard {
             return Text("⚔️ Accept")
         case .friendRequest:
             return Text(Image(systemName: "hand.thumbsup.fill")) + Text(" Accept")
-        case .system, .preview, .none:
+        case .preview:
+            return Text("⚔️ Challenge")
+        case .system, .none:
             return Text("Close")
         }
     }
@@ -177,5 +217,9 @@ extension FriendPreviewCard {
         stats: UserStats(level: 20, bestStreakCount: 10, topMission: "Drink Water", challengeWonCount: 4)
     )
     
-    FriendPreviewCard(friend: testFriend, type: .challenge, onCancel: {_ in})
+    FriendPreviewCard(friend: testFriend, type: .preview, onCancel: {_ in})
+        .environmentObject(ModalManager())
+        .environment(\.currentUser, User.sampleUserWithLogs(), )
+    
+    
 }

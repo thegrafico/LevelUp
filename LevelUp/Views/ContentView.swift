@@ -108,11 +108,14 @@ struct ContentView: View {
                     cancelButtonTitle: modal.cancelButtonTitle,
                     confirmAction: {
                         try await modal.confirmAction()
-                        modalManager.dismissModal() // 👈 FIXED
+                        modalManager.dismissModal()
+                    },
+                    cancelAction: {
+                        try await modal.cancelAction?()
                     }
                 )
                 .transition(.scale(scale: 0.9).combined(with: .opacity))
-                .zIndex(100)
+                .zIndex(1000)
             }
             
         }

@@ -31,9 +31,9 @@ struct FriendRow: View {
     @Environment(\.theme) private var theme
     var friend: Friend
     var onPressLabel: String = "Challenge"
-    var onPress: ((Friend) async throws -> Void)? = nil
     var updateLabelOnComplete: Bool = false
-
+    var onPress: ((Friend) async throws -> Void)? = nil
+    
     @State private var isLoading = false
     @State private var isSent = false
     @State private var errorMessage: String?

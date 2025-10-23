@@ -9,9 +9,9 @@ struct MissionList: View {
     @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
     @Environment(\.currentUser) private var user
     @EnvironmentObject private var modalManager: ModalManager
-
-
-
+    
+    
+    
     private var missionController: MissionController {
         MissionController(context: context, user: user, badgeManager: badgeManager)
     }
@@ -32,15 +32,15 @@ struct MissionList: View {
     @State private var selectedFilter: MissionType = .custom
     @State private var selectedSort: MissionSort = .name
     @State private var showDeleteConfirmation = false
-        
+    
     // MARK: Active missions (filtered + sorted)
     private var filteredMissions: [Mission] {
         let base: [Mission]
-
+        
         switch selectedFilter {
-            case .all: base = globalMissions + customMissions
-            case .global: base = globalMissions
-            case .custom: base = customMissions
+        case .all: base = globalMissions + customMissions
+        case .global: base = globalMissions
+        case .custom: base = customMissions
         }
         
         // Keep only *active* ones here
@@ -48,27 +48,27 @@ struct MissionList: View {
         
         // Apply sorting
         switch selectedSort {
-            case .name:
-                return activeBase.sorted { $0.title < $1.title }
-            case .xpAscending:
-                return activeBase.sorted { $0.xp < $1.xp }
-            case .xpDescending:
-                return activeBase.sorted { $0.xp > $1.xp }
-            case .creationDateAscending:
-                return activeBase.sorted { $0.createdAt > $1.createdAt }
-            case .creationDateDescending:
-                return activeBase.sorted { $0.createdAt < $1.createdAt }
+        case .name:
+            return activeBase.sorted { $0.title < $1.title }
+        case .xpAscending:
+            return activeBase.sorted { $0.xp < $1.xp }
+        case .xpDescending:
+            return activeBase.sorted { $0.xp > $1.xp }
+        case .creationDateAscending:
+            return activeBase.sorted { $0.createdAt > $1.createdAt }
+        case .creationDateDescending:
+            return activeBase.sorted { $0.createdAt < $1.createdAt }
         }
     }
-
+    
     // MARK: Completed missions
     private var completedMissions: [Mission] {
         let base: [Mission]
-
+        
         switch selectedFilter {
-            case .all: base = globalMissions + customMissions
-            case .global: base = globalMissions
-            case .custom: base = customMissions
+        case .all: base = globalMissions + customMissions
+        case .global: base = globalMissions
+        case .custom: base = customMissions
         }
         
         return base.filter { $0.isDisabledToday }
@@ -105,18 +105,18 @@ struct MissionList: View {
                         generator.impactOccurred() // ✅ vibration feedback
                         
                         modalManager.presentModal(
-                                ConfirmationModalData(
-                                    title: "Delete Selected Missions?",
-                                    message: "You are about to delete \(selectedCustomMissions.count) mission(s). This action cannot be undone.",
-                                    confirmButtonTitle: "Delete",
-                                    cancelButtonTitle: "Cancel",
-                                    confirmAction: {
-                                        withAnimation {
-                                            missionController.deleteMissions(selectedCustomMissions)
-                                        }
+                            ConfirmationModalData(
+                                title: "Delete Selected Missions?",
+                                message: "You are about to delete \(selectedCustomMissions.count) mission(s). This action cannot be undone.",
+                                confirmButtonTitle: "Delete",
+                                cancelButtonTitle: "Cancel",
+                                confirmAction: {
+                                    withAnimation {
+                                        missionController.deleteMissions(selectedCustomMissions)
                                     }
-                                )
+                                }
                             )
+                        )
                         
                     } label: {
                         Image(systemName: "trash.fill")
@@ -133,11 +133,11 @@ struct MissionList: View {
                     ))
                     .id("trash")
                 }
-
+                
                 
                 // MARK: SORT
                 MissionSortMenu(selectedSort: $selectedSort)
-                    
+                
                 
             }.animation(
                 .spring(
@@ -167,7 +167,7 @@ struct MissionList: View {
                                 .opacity(0.5)
                                 .padding(.top, 30)
                                 .transition(.fadeRightToLeft)
-                
+                            
                         } else {
                             ContentUnavailableView("Cannot find missions at this moment", systemImage: "list.bullet.circle.fill")
                                 .fontWeight(.semibold)
@@ -176,7 +176,7 @@ struct MissionList: View {
                                 .transition(.explosion)
                         }
                     }
-
+                    
                     // ✅ Completed missions section (only if non-empty)
                     if !completedMissions.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
@@ -184,7 +184,7 @@ struct MissionList: View {
                                 .font(.footnote.weight(.semibold))
                                 .foregroundStyle(.secondary)
                                 .padding(.top, 8)
-
+                            
                             ForEach(completedMissions, id: \.id) { mission in
                                 MissionRow(mission: mission)
                                     .grayscale(1.0)
@@ -200,9 +200,9 @@ struct MissionList: View {
                     
                 }.animation(.spring(response: 0.6, dampingFraction: 0.8), value: completedMissions)
                 
-                .padding(.top, 16)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+                    .padding(.top, 16)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
             }
         }
     }
@@ -213,10 +213,10 @@ struct MissionListPreviewWrapper: View {
     
     @Query(filter: #Predicate<Mission> { $0.typeRaw == "Custom" })
     private var customMissions: [Mission]
-
-//    @Query(filter: #Predicate<Mission> { $0.typeRaw == MissionType.global.rawValue })
+    
+    //    @Query(filter: #Predicate<Mission> { $0.typeRaw == MissionType.global.rawValue })
     private var globalMissions: [Mission] = Mission.sampleGlobalMissions
-
+    
     var body: some View {
         MissionList(customMissions, globalMissions)
     }
@@ -228,5 +228,5 @@ struct MissionListPreviewWrapper: View {
         .modelContainer(SampleData.shared.modelContainer)
         .environment(BadgeManager())
         .environmentObject(ModalManager()) // 👈 Inject for all child views
-
+    
 }

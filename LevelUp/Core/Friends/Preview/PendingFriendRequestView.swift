@@ -18,7 +18,7 @@ struct PendingFriendRequestView: View {
                 ForEach(friendRequests) { request in
                     FriendRow(friend: request.to, onPressLabel: "Cancel", onPress: { _ in
                         onCancelRequest?(request)
-                    }, updateLabelOnComplete: false)
+                    })
                     .opacity(0.6)
                     .padding(.horizontal, 20)
                 }

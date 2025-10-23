@@ -15,6 +15,23 @@ struct ConfirmationModalData: Identifiable, Equatable {
     let confirmButtonTitle: String
     let cancelButtonTitle: String
     let confirmAction: () async throws -> Void
+    let cancelAction: (() async throws -> Void)?   // ✅ remove “Void?” inside
+    
+    init(
+        title: String,
+        message: String? = nil,
+        confirmButtonTitle: String,
+        cancelButtonTitle: String,
+        confirmAction: @escaping () async throws -> Void,
+        cancelAction: (() async throws -> Void)? = nil  // ✅ optional param
+    ) {
+        self.title = title
+        self.message = message
+        self.confirmButtonTitle = confirmButtonTitle
+        self.cancelButtonTitle = cancelButtonTitle
+        self.confirmAction = confirmAction
+        self.cancelAction = cancelAction
+    }
     
     static func == (lhs: ConfirmationModalData, rhs: ConfirmationModalData) -> Bool {
         lhs.id == rhs.id

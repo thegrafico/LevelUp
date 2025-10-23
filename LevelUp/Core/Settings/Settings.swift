@@ -41,7 +41,7 @@ struct SettingsView: View {
                             UIImpactFeedbackGenerator(style: .soft).impactOccurred()
                             let signOutModalData = ConfirmationModalData(
                                 title: "Sign Out?",
-                                message: "You’ll need to log in again to continue your journey.",
+                                message: "See you back soon, \(user.username)!",
                                 confirmButtonTitle: "Sign Out",
                                 cancelButtonTitle: "Cancel",
                                 confirmAction: {

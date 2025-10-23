@@ -10,6 +10,7 @@ struct AsyncConfirmationModal: View {
     var confirmButtonTitle: String = "Confirm"
     var cancelButtonTitle: String = "Cancel"
     var confirmAction: () async throws -> Void
+    var cancelAction: (() async throws -> Void?)? = nil
     var closeOnTapOutside: Bool = false
     
     @State private var isLoading = false
@@ -60,7 +61,13 @@ struct AsyncConfirmationModal: View {
                 // Buttons
                 HStack(spacing: 16) {
                     Button(cancelButtonTitle) {
-                        withAnimation { isPresented = false }
+                        
+                        Task {
+                            try await cancelAction?()
+                            
+                            withAnimation { isPresented = false }
+                        }
+                        
                     }
                     .buttonStyle(.bordered)
                     .tint(theme.textBlack)

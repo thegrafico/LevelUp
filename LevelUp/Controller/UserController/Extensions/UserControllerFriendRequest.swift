@@ -143,6 +143,35 @@ extension UserController {
         try context.save()
     }
     
+    @discardableResult
+    func removeFriendFromList(friend: Friend) async throws -> Bool {
+        guard let currentUser = user else {
+            throw UserError.invalidUser(message: "Cannot find user information")
+        }
+
+        guard currentUser.hasFriend(withId: friend.friendId) else {
+            throw UserError.friendGeneral(message: "This user does not belong to you.")
+        }
+
+        // Fetch the other user (the friend)
+        let friendUser = try await fetchUser(withId: friend.friendId)
+        
+
+        // Find and delete the reciprocal Friend object from the friend's list
+        if let reciprocal = friendUser.friends.first(where: { $0.friendId == currentUser.id }) {
+            print("Deleting my reference from friend: \(reciprocal.username)")
+            
+            friendUser.friends.removeAll(where: {$0.friendId == reciprocal.friendId})
+            context.delete(reciprocal)
+        }
+        
+        currentUser.friends.removeAll(where: {$0.friendId == friendUser.id })
+        context.delete(friend)
+
+        try context.save()
+        return true
+    }
+    
     func fetchFriendRequest(withId id: UUID) async throws -> FriendRequest {
         
         let descriptor = FetchDescriptor<FriendRequest>(

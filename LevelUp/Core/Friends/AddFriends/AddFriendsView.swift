@@ -88,7 +88,7 @@ struct AddFriendsView: View {
                                 ScrollView {
                                     LazyVStack(spacing: 12) {
                                         ForEach(searchResults) { foundUser in
-                                            FriendRow(friend: foundUser, onPressLabel: "Add") { friend in
+                                            FriendRow(friend: foundUser, onPressLabel: "Add", updateLabelOnComplete: true ) { friend in
                                                 
                                                 try await userController.sendFriendRequest(from: user, to: friend)
                                             }

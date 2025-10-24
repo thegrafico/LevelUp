@@ -15,6 +15,7 @@ struct MissionList: View {
     @State private var showDeleteConfirmation = false
     @State private var expandedCategories: Set<String> = ["General"]
     
+    
     private var missionController: MissionController {
         MissionController(context: context, user: user, badgeManager: badgeManager)
     }
@@ -22,6 +23,7 @@ struct MissionList: View {
     // MARK: Missions
     var customMissions: [Mission]
     var globalMissions: [Mission]
+    var showAllSection: Bool = false
     
     init(_ customMissions: [Mission], _ globalMissions: [Mission]) {
         self.customMissions = customMissions
@@ -29,10 +31,6 @@ struct MissionList: View {
         
         print("Custon Missions found: \(customMissions.count)")
         print("Global Missions found: \(globalMissions.count)")
-        
-        for mission in globalMissions {
-            mission.printMission()
-        }
     }
     
     // MARK: Active missions (filtered + sorted)
@@ -82,9 +80,16 @@ struct MissionList: View {
     
     private var groupedMissions: [(key: String, missions: [Mission])] {
         let grouped = Dictionary(grouping: filteredMissions, by: { $0.category.name })
-        return grouped
-            .map { (key: $0.key, missions: $0.value) } // ✅ rename .value → .missions
+        var result = grouped
+            .map { (key: $0.key, missions: $0.value) }
             .sorted { $0.key.localizedCaseInsensitiveCompare($1.key) == .orderedAscending }
+
+        // Add an “All” section at the top
+        if !filteredMissions.isEmpty && showAllSection {
+            result.insert((key: "All", missions: filteredMissions), at: 0)
+        }
+
+        return result
     }
     
     var body: some View {
@@ -210,7 +215,7 @@ struct MissionList: View {
                     // ✅ Completed missions section (only if non-empty)
                     if !completedMissions.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Completed")
+                            Text("Completed today")
                                 .font(.footnote.weight(.semibold))
                                 .foregroundStyle(.secondary)
                                 .padding(.top, 8)

@@ -77,7 +77,7 @@ extension Mission {
             title: "Run",
             xp: 10,
             type: .custom,
-            category: .custom(.init(name: "Fitness", colorHex: "#FF6B6B")),
+            category: .custom(.init(name: "Fitness")),
             icon: "figure.run",
             completed: false,
             
@@ -86,7 +86,7 @@ extension Mission {
             title: "Go to the Gym",
             xp: 12,
             type: .custom,
-            category: .custom(.init(name: "Fitness", colorHex: "#FF6B6B")),
+            category: .custom(.init(name: "Fitness")),
             icon: "dumbbell.fill",
             completed: false,
             
@@ -95,7 +95,7 @@ extension Mission {
             title: "Read a Book",
             xp: 8,
             type: .custom,
-            category: .custom(.init(name: "Focus", colorHex: "#4ECDC4")),
+            category: .custom(.init(name: "Focus")),
             icon: "book.fill",
             completed: false,
             
@@ -104,7 +104,7 @@ extension Mission {
             title: "Meditate 10 min",
             xp: 10,
             type: .custom,
-            category: .custom(.init(name: "Mindfulness", colorHex: "#FFD93D")),
+            category: .custom(.init(name: "Mindfulness")),
             icon: "brain.head.profile",
             completed: false,
             
@@ -118,7 +118,7 @@ extension Mission {
             title: "Run 1 Mile",
             xp: 20,
             type: .global,
-            category: .custom(.init(name: "Fitness", colorHex: "#FF6B6B")),
+            category: .custom(.init(name: "Fitness")),
             icon: "figure.run",
             completed: false,
         ),
@@ -126,7 +126,7 @@ extension Mission {
             title: "Go to the Gym",
             xp: 25,
             type: .global,
-            category: .custom(.init(name: "Fitness", colorHex: "#FF6B6B")),
+            category: .custom(.init(name: "Fitness")),
             icon: "dumbbell.fill",
             completed: false,
             
@@ -135,7 +135,7 @@ extension Mission {
             title: "Stretch for 10 Minutes",
             xp: 10,
             type: .global,
-            category: .custom(.init(name: "Fitness", colorHex: "#FF6B6B")),
+            category: .custom(.init(name: "Fitness")),
             icon: "figure.cooldown",
             completed: false,
             
@@ -144,7 +144,7 @@ extension Mission {
             title: "Drink 8 Glasses of Water",
             xp: 15,
             type: .global,
-            category: .custom(.init(name: "Health", colorHex: "#1DD1A1")),
+            category: .custom(.init(name: "Health")),
             icon: "drop.fill",
             completed: false,
             
@@ -155,7 +155,7 @@ extension Mission {
             title: "Read 20 Pages",
             xp: 15,
             type: .global,
-            category: .custom(.init(name: "Focus", colorHex: "#4ECDC4")),
+            category: .custom(.init(name: "Focus")),
             icon: "book.fill",
             completed: false,
             
@@ -164,7 +164,7 @@ extension Mission {
             title: "Meditate for 5 Minutes",
             xp: 10,
             type: .global,
-            category: .custom(.init(name: "Mindfulness", colorHex: "#FFD93D")),
+            category: .custom(.init(name: "Mindfulness")),
             icon: "brain.head.profile",
             completed: false,
             
@@ -173,7 +173,7 @@ extension Mission {
             title: "Write in a Journal",
             xp: 12,
             type: .global,
-            category: .custom(.init(name: "Mindfulness", colorHex: "#FFD93D")),
+            category: .custom(.init(name: "Mindfulness")),
             icon: "pencil.and.outline",
             completed: false,
             
@@ -184,7 +184,7 @@ extension Mission {
             title: "Clean Your Room",
             xp: 15,
             type: .global,
-            category: .custom(.init(name: "Lifestyle", colorHex: "#FF9F43")),
+            category: .custom(.init(name: "Lifestyle")),
             icon: "trash.fill",
             completed: false,
             
@@ -193,7 +193,7 @@ extension Mission {
             title: "Cook a Healthy Meal",
             xp: 18,
             type: .global,
-            category: .custom(.init(name: "Lifestyle", colorHex: "#FF9F43")),
+            category: .custom(.init(name: "Lifestyle")),
             icon: "fork.knife",
             completed: false,
             
@@ -202,7 +202,7 @@ extension Mission {
             title: "Walk the Dog",
             xp: 10,
             type: .global,
-            category: .custom(.init(name: "Lifestyle", colorHex: "#FF9F43")),
+            category: .custom(.init(name: "Lifestyle")),
             icon: "pawprint.fill",
             completed: false,
             
@@ -213,7 +213,7 @@ extension Mission {
             title: "Call a Friend",
             xp: 10,
             type: .global,
-            category: .custom(.init(name: "Social", colorHex: "#54A0FF")),
+            category: .custom(.init(name: "Social")),
             icon: "phone.fill",
             completed: false,
             
@@ -222,7 +222,7 @@ extension Mission {
             title: "Help Someone Out",
             xp: 20,
             type: .global,
-            category: .custom(.init(name: "Social", colorHex: "#54A0FF")),
+            category: .custom(.init(name: "Social")),
             icon: "hands.sparkles.fill",
             completed: false,
             
@@ -233,7 +233,7 @@ extension Mission {
             title: "Finish a Task on Time",
             xp: 15,
             type: .global,
-            category: .custom(.init(name: "Productivity", colorHex: "#5F27CD")),
+            category: .custom(.init(name: "Productivity")),
             icon: "checkmark.circle.fill",
             completed: false,
             
@@ -242,7 +242,7 @@ extension Mission {
             title: "Plan Tomorrow",
             xp: 12,
             type: .global,
-            category: .custom(.init(name: "Thegrafico", colorHex: "#10AC84")),
+            category: .custom(.init(name: "Thegrafico")),
             icon: "calendar",
             completed: false,
             

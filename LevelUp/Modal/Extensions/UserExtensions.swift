@@ -255,3 +255,30 @@ extension User {
         globalMissions + customMissions
     }
 }
+
+
+extension User {
+    /// Returns all unique categories (base + user-defined custom ones)
+    var missionCategories: [MissionCategory] {
+        guard !missions.isEmpty else {
+            return [.general, .morning, .afternoon, .noon, .saitama]
+        }
+
+        // Start with base categories and mark them as "seen"
+        var categories: [MissionCategory] = [.general, .morning, .afternoon, .noon, .saitama]
+        var seen = Set(categories.map { $0.name }) // ✅ prepopulate seen
+
+        for mission in missions {
+            let category = mission.category
+            let name = category.name
+
+            // Avoid duplicates based on name
+            if !seen.contains(name) {
+                categories.append(category)
+                seen.insert(name)
+            }
+        }
+
+        return categories
+    }
+}

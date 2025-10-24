@@ -45,7 +45,7 @@ struct AddMissionView: View {
                 // MARK: Title
                 Section("Mission Info") {
                     TextField("Title", text: $mission.title)
-                        .textInputAutocapitalization(.words)
+                        .disableAutocorrection(true)
                 }
                 
                 // MARK: XP
@@ -53,6 +53,9 @@ struct AddMissionView: View {
                 
                 // MARK: ICON
                 IconPicker(selectedIcon: $mission.icon)
+                
+                // MARK: CATEGORY
+                MissionCategoryPicker(selectedCategory: $mission.category)
                 
                 // MARK: Reminder
                 ReminderSection(reminderDate: $mission.reminderDate)
@@ -71,6 +74,7 @@ struct AddMissionView: View {
                         
                         if isNew {
                             missionController.insertMission(mission)
+                            mission.printMission()
                         }
                         onSave(mission)
                         dismiss()
@@ -88,4 +92,6 @@ struct AddMissionView: View {
     )
     .environment(\.theme, .orange)
     .environment(BadgeManager()) // 👈 inject preview manager
+    .environment(\.currentUser, User.sampleUserWithLogs())
+
 }

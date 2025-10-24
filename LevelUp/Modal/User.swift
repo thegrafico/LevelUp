@@ -110,7 +110,7 @@ extension User {
         ]
         
         let baseMissions: [Mission] = [
-            Mission(title: "Morning Run", xp: 30, type: .global, icon: "figure.run"),
+            Mission(title: "Morning Run", xp: 30, type: .global, category: .custom(.init(name: "Thegrafico")), icon: "figure.run"),
             Mission(title: "Read a Chapter", xp: 20, type: .global, icon: "book.fill"),
             Mission(title: "Cook a Meal", xp: 40, type: .global, icon: "fork.knife"),
             Mission(title: "Clean Desk", xp: 15, type: .custom, icon: "deskview.fill"),

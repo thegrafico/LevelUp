@@ -14,7 +14,7 @@ struct MissionList: View {
     @State private var selectedSort: MissionSort = .name
     @State private var showDeleteConfirmation = false
     @State private var expandedCategories: Set<String> = ["General"]
-    
+    @State private var selectedMission: Mission? = nil
     
     private var missionController: MissionController {
         MissionController(context: context, user: user, badgeManager: badgeManager)
@@ -83,12 +83,12 @@ struct MissionList: View {
         var result = grouped
             .map { (key: $0.key, missions: $0.value) }
             .sorted { $0.key.localizedCaseInsensitiveCompare($1.key) == .orderedAscending }
-
+        
         // Add an “All” section at the top
         if !filteredMissions.isEmpty && showAllSection {
             result.insert((key: "All", missions: filteredMissions), at: 0)
         }
-
+        
         return result
     }
     
@@ -115,11 +115,11 @@ struct MissionList: View {
                 
                 if selectedFilter == .custom {
                     MissionDeleteButton(
-                           selectedMissions: selectedCustomMissions
-                       ) {
-                           missionController.deleteMissions(selectedCustomMissions)
-                       }
-                       .id("trash")
+                        selectedMissions: selectedCustomMissions
+                    ) {
+                        missionController.deleteMissions(selectedCustomMissions)
+                    }
+                    .id("trash")
                 }
                 
                 
@@ -136,110 +136,96 @@ struct MissionList: View {
             .padding(.horizontal, 20)
             
             // MARK: List of missions
-            ScrollView {
-                LazyVStack(spacing: 16, pinnedViews: []) {
-                    // ✅ Active missions
-                    if !filteredMissions.isEmpty {
-                        ForEach(groupedMissions, id: \.key) { category, missions in
-                            VStack(alignment: .leading, spacing: 8) {
-                                // MARK: Section Header
-                                Button {
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                        if expandedCategories.contains(category) {
-                                            expandedCategories.remove(category)
-                                        } else {
-                                            expandedCategories.insert(category)
-                                        }
-                                    }
-                                } label: {
-                                    HStack {
-                                        
-                                        Text(category)
-                                            .font(.footnote.weight(.semibold))
-                                            .foregroundStyle(.secondary)
-                                            .padding(.top, 8)
-                                        
-                                        Spacer()
-                                        
-                                        if expandedCategories.contains(category) {
-                                            Image(systemName:"chevron.down")
-                                                .font(.subheadline)
-                                                .foregroundStyle(.secondary)
-                                        } else {
-                                            Text("\(missions.count)")
-                                                .font(.subheadline)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                    }
-                                    .contentShape(Rectangle())
-                                }
-                                .buttonStyle(.plain)
-
-                                // MARK: Collapsible Content
-                                if expandedCategories.contains(category) {
-                                    VStack(spacing: 16) {
-                                        ForEach(missions, id: \.id) { mission in
-                                            MissionRow(mission: mission)
-                                                .tapBounce()
-                                                .id(mission.id)
-                                                .transition(.opacity.combined(with: .slide))
-                                        }
-                                    }
-                                    .padding(.top, 4)
-                                    .transition(.asymmetric(
-                                        insertion: .opacity.combined(with: .move(edge: .top)),
-                                        removal: .opacity.combined(with: .move(edge: .top))
-                                    ))
-                                }
-                            }
-                            .padding(.bottom, 8)
-                        }
-                    } else {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // 👇 Static anchor stays even if the list updates
+                        Color.clear
+                            .frame(height: 0)
+                            .id("TOP")
                         
-                        if selectedFilter == .custom {
-                            ContentUnavailableView("Add Mission", systemImage: "list.bullet.circle.fill")
-                                .fontWeight(.semibold)
-                                .opacity(0.5)
-                                .padding(.top, 30)
-                                .transition(.fadeRightToLeft)
-                            
-                        } else {
-                            ContentUnavailableView("Cannot find missions at this moment", systemImage: "list.bullet.circle.fill")
-                                .fontWeight(.semibold)
-                                .opacity(0.5)
-                                .padding(.top, 30)
-                                .transition(.explosion)
-                        }
-                    }
-                    
-                    // ✅ Completed missions section (only if non-empty)
-                    if !completedMissions.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Completed today")
-                                .font(.footnote.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .padding(.top, 8)
-                            
-                            ForEach(completedMissions, id: \.id) { mission in
-                                MissionRow(mission: mission)
-                                    .grayscale(1.0)
+                        LazyVStack(spacing: 12, pinnedViews: []) {
+                            if !filteredMissions.isEmpty {
+                                ForEach(groupedMissions, id: \.key) { category, missions in
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        // MARK: Section Header
+                                        Button {
+                                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                                if expandedCategories.contains(category) {
+                                                    expandedCategories.remove(category)
+                                                } else {
+                                                    expandedCategories.insert(category)
+                                                }
+                                            }
+                                        } label: {
+                                            HStack {
+                                                Text(category)
+                                                    .font(.footnote.weight(.semibold))
+                                                    .foregroundStyle(.secondary)
+                                                    .padding(.top, 8)
+                                                
+                                                Spacer()
+                                                
+                                                if expandedCategories.contains(category) {
+                                                    Image(systemName:"chevron.down")
+                                                        .font(.subheadline)
+                                                        .foregroundStyle(.secondary)
+                                                } else {
+                                                    Text("\(missions.count)")
+                                                        .font(.subheadline)
+                                                        .foregroundStyle(.secondary)
+                                                }
+                                            }
+                                            .contentShape(Rectangle())
+                                        }
+                                        .buttonStyle(.plain)
+                                        
+                                        // MARK: Collapsible Content
+                                        if expandedCategories.contains(category) {
+                                            VStack(spacing: 12) {
+                                                ForEach(missions, id: \.id) { mission in
+                                                    MissionRow(mission: mission)
+                                                        .onTapGesture { selectedMission = mission }
+                                                        .tapBounce()
+                                                        .id(mission.id)
+                                                        .transition(.opacity.combined(with: .slide))
+                                                }
+                                            }
+//                                            .padding(.horizontal, 12)
+                                            .transition(.asymmetric(
+                                                insertion: .opacity.combined(with: .move(edge: .top)),
+                                                removal: .opacity.combined(with: .move(edge: .top))
+                                            ))
+                                        }
+                                    }
+                                    .padding(.bottom, 8)
+                                }
+                            } else {
+                                ContentUnavailableView("No missions available", systemImage: "list.bullet.circle.fill")
+                                    .fontWeight(.semibold)
                                     .opacity(0.5)
-                                    .allowsHitTesting(false)
-                                    .id(mission.id)
-                                    .transition(.opacity.combined(with: .scale))
+                                    .padding(.top, 30)
+                                    .transition(.fadeRightToLeft)
                             }
                         }
-                        .padding(.top, 12)
-                        .transition(.move(edge: .bottom).combined(with: .opacity)) // 👈 section slides in
+                        .padding(.top, 16)
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 20)
                     }
+                }
+                .padding(.horizontal, 6)
+                .onChange(of: selectedFilter) {
                     
-                }.animation(.spring(response: 0.6, dampingFraction: 0.8), value: completedMissions)
-                
-                    .padding(.top, 16)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) {
+                        proxy.scrollTo("TOP", anchor: .top)
+                    }
+                    // Optional: collapse sections
+                    expandedCategories.removeAll()
+                }
             }
             .padding(.horizontal, 6)
+        }.sheet(item: $selectedMission) { mission in
+            MissionPreviewCard(mission: mission)
         }
     }
 }

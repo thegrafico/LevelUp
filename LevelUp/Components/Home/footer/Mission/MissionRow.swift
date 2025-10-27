@@ -45,6 +45,17 @@ struct MissionRow: View {
                                 .foregroundStyle(theme.primary.opacity(0.5))
                                 .allowsHitTesting(false)  // so it doesn’t interfere with taps
                         }
+                        
+                        if mission.isNew {
+                            Text("NEW")
+                                .font(.caption2.weight(.bold))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(theme.accent.opacity(0.2))
+                                .foregroundStyle(theme.accent)
+                                .clipShape(Capsule())
+
+                        }
                     }
                 }
 
@@ -80,6 +91,10 @@ struct MissionRow: View {
     }
 }
 #Preview {
+    
+    MissionRow(mission: Mission.SampleLocalMissions.first!)
+        .environment(\.theme, .orange)
+    
     MissionRow(mission: Mission.sampleGlobalMissions.first!)
         .environment(\.theme, .orange)
 }

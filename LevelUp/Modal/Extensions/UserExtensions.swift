@@ -268,7 +268,7 @@ extension User {
         var categories: [MissionCategory] = [.general, .morning, .afternoon, .noon, .saitama]
         var seen = Set(categories.map { $0.name }) // ✅ prepopulate seen
 
-        for mission in missions {
+        for mission in missions.filter( {$0.isCustom} ) {
             let category = mission.category
             let name = category.name
 

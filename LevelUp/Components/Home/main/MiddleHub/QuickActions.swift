@@ -65,7 +65,7 @@ struct QuickActionsSheet: View {
                     }
                     
                     Group {
-                        ActionTile(icon: "figure.run",       title: "Start Run")
+                        ActionTile(icon: "bolt.fill",       title: "Start Quest")
                         ActionTile(icon: "dumbbell.fill",    title: "Gym")
                         ActionTile(icon: "book.fill",        title: "Read")
                         ActionTile(icon: "mappin.and.ellipse", title: "Visit Place")

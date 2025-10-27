@@ -9,7 +9,7 @@
 //  LevelUp
 //
 import SwiftUI
-//import SwiftData
+import SwiftData
 
 struct AddMissionView: View {
     @Environment(\.theme) private var theme
@@ -57,6 +57,12 @@ struct AddMissionView: View {
                 // MARK: CATEGORY
                 MissionCategoryPicker(selectedCategory: $mission.category)
                 
+                // MARK: Details
+                MissionDetailsSection(details: Binding(
+                   get: { mission.details ?? "" },
+                   set: { mission.details = $0.isEmpty ? nil : $0 }
+               ))
+              
                 // MARK: Reminder
                 ReminderSection(reminderDate: $mission.reminderDate)
                 

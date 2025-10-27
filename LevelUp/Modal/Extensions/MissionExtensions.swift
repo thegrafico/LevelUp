@@ -63,8 +63,10 @@ extension Mission {
     }
     
     var isNew: Bool {
-        // check if this mission creation data was less than 2 amount of hours
-        return Calendar.current.dateComponents([.hour], from: createdAt, to: Date()).hour! < 2
+        guard let minutes = Calendar.current.dateComponents([.minute], from: createdAt, to: Date()).minute else {
+            return false
+        }
+        return minutes < 5
     }
 
 }

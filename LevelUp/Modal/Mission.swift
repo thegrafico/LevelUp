@@ -36,6 +36,8 @@ final class Mission: Identifiable {
             categoryData = try? JSONEncoder().encode(newValue)
         }
     }
+    var details: String?
+    var completionTimes: Int?
     
     var createdAt: Date
     var id: UUID
@@ -45,6 +47,7 @@ final class Mission: Identifiable {
         xp: Int,
         type: MissionType = .custom,
         category: MissionCategory = .general,
+        details: String? = nil,
         icon: String,
         reminderDate: Date? = nil,
         completed: Bool = false,
@@ -59,6 +62,8 @@ final class Mission: Identifiable {
         self.createdAt = Date()
         self.typeRaw = type.rawValue
         self.category = category
+        self.details = details
+        self.completionTimes = 0
     }
 }
 

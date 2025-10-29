@@ -132,7 +132,7 @@ extension User {
 
         let calendar = Calendar.current
         let now = Date()
-        let daysRange = (-6 ... 0).compactMap { calendar.date(byAdding: .day, value: $0, to: now) }
+        let daysRange = (-6 ... -1).compactMap { calendar.date(byAdding: .day, value: $0, to: now) }
 
         for day in daysRange {
             let log = ProgressLog(date: calendar.startOfDay(for: day))

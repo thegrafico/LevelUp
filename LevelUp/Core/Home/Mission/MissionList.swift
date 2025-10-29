@@ -207,6 +207,27 @@ struct MissionList: View {
                                     .padding(.top, 30)
                                     .transition(.fadeRightToLeft)
                             }
+                            
+                            // ✅ Completed missions
+                            if !completedMissions.isEmpty {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Completed today")
+                                        .font(.footnote.weight(.semibold))
+                                        .foregroundStyle(.secondary)
+                                        .padding(.top, 8)
+                                    
+                                    ForEach(completedMissions, id: \.id) { mission in
+                                        MissionRow(mission: mission)
+                                            .grayscale(1.0)
+                                            .opacity(0.5)
+                                            .allowsHitTesting(false)
+                                            .id(mission.id)
+                                            .transition(.opacity.combined(with: .scale))
+                                    }
+                                }
+                                .padding(.top, 12)
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                            }
                         }
                         .padding(.top, 16)
                         .padding(.horizontal, 12)

@@ -26,19 +26,21 @@ struct QuickActionsView: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(theme.textPrimary)
                 }
-
+                
                 Text("Streak \(user.stats.streakCount) day\(user.stats.streakCount == 1 ? "" : "s")")
                     .font(.footnote)
                     .foregroundStyle(theme.textSecondary)
+                    .transition(.explosion)
+                    .id("streak.\(user.stats.streakCount)")
+                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: user.stats.streakCount)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .buttonStyle(.plain)
         .onAppear {
             // Only rebuild once if the streak hasn't been calculated yet
-            if user.stats.streakCount == 0 {
-                user.rebuildStreakFromLogs()
-            }
+            user.rebuildStreakFromLogs()
+            
         }
     }
 }

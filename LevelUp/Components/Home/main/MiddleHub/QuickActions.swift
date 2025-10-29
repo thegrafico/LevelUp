@@ -38,9 +38,9 @@ struct QuickActionsView: View {
         }
         .buttonStyle(.plain)
         .onAppear {
-            // Only rebuild once if the streak hasn't been calculated yet
-            user.rebuildStreakFromLogs()
-            
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                user.rebuildStreakFromLogs()
+           }
         }
     }
 }

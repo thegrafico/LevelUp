@@ -41,8 +41,9 @@ struct HomeView: View {
                 let selectedMissions = allMissions.filter(\.isSelected)
                 if !selectedMissions.isEmpty {
                     CompleteButton(title: "Complete \(selectedMissions.count)x") {
-                        missionController.markAsCompleted(selectedMissions)
-                        
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.9)) {
+                            missionController.markAsCompleted(selectedMissions)
+                        }
                     }
                     .scaleEffect(animateBounce ? 1.1 : 0.9)
                     .padding(.bottom, 20)

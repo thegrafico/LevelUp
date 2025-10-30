@@ -14,7 +14,7 @@ struct AppTopBanner: View {
 
     var title: String
     var subtitle: String
-    var onNotificationTap: (() -> Void)? = nil // 👈 callback
+    var onNotificationTap: (() -> Void)? = nil
     
     var height: CGFloat = 200
     var radius: CGFloat = 0

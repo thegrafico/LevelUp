@@ -128,10 +128,10 @@ struct FriendsView: View {
                 .presentationDetents([.medium, .large], selection: .constant(.medium))
 
             }
-            .offset(y: -40)
         }
+        .ignoresSafeArea()
         .onAppear(perform: setupView)
-        .background(theme.background.ignoresSafeArea())
+        .background(theme.background)
     }
     
     // MARK: Subviews

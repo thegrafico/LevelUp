@@ -21,14 +21,9 @@ struct SettingsView: View {
     @State private var showSignOutAlert = false
     
     var body: some View {
-        
-        
-        VStack(spacing: 0) {
-            ZStack(alignment: .top) {
-                AppTopBanner(title: "Settings", subtitle: "Customize your experience")
-                    .ignoresSafeArea(edges: .top)
-            }
-            .frame(height: 140)
+        VStack(spacing: 20) {
+            
+            AppTopBanner(title: "Settings", subtitle: "Customize your experience")
             
             ScrollView {
                 VStack(spacing: 20) {
@@ -95,12 +90,13 @@ struct SettingsView: View {
                         }
                         .tint(.red)
                     }
+                    .padding(.bottom, 100)
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 20)
                 .padding(.bottom, 40)
             }
         }
+        .ignoresSafeArea()
         .background(theme.background)
         
     }

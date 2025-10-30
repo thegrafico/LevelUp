@@ -270,67 +270,70 @@ struct MissionPreviewCard: View {
                     .textCase(.uppercase)
                     .padding(.bottom, 4)
                 
-                ZStack(alignment: .topLeading) {
-                    if isEditing {
-                        // 📝 Editable mode
-                        TextEditor(text: Binding(
-                            get: { mission.details ?? "" },
-                            set: { mission.details = $0 }
-                        ))
-                        .focused($isFocused)
-                        .font(.callout)
-                        .fontDesign(.rounded)
-                        .foregroundStyle(theme.textPrimary)
-                        .scrollContentBackground(.hidden)
-                        .padding(10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(theme.cardBackground.opacity(0.95))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(theme.accent.opacity(0.2), lineWidth: 1)
-                                )
-                        )
-                        .shadow(color: .black.opacity(0.8), radius: 4, y: 2)
-                        .frame(minHeight: 80, maxHeight: 160)
-                        .onAppear {
-                            lastValidDetails = mission.details ?? ""
-                            // 👇 ensure focus once the editor is actually on screen
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                isFocused = true
-                            }
+                // 📝 Editable mode (with counter)
+                // 📝 Editable mode (with counter)
+                ZStack(alignment: .bottomTrailing) {
+                    TextEditor(text: Binding(
+                        get: { mission.details ?? "" },
+                        set: {
+                            // Limit to ~140 characters
+                            let limited = String($0.prefix(140))
+                            mission.details = limited
                         }
-                        .onChange(of: isFocused) { _, focused in
-                            if !focused {
-                                validateAndSave()
-                            }
+                    ))
+                    .focused($isFocused)
+                    .font(.callout)
+                    .fontDesign(.rounded)
+                    .foregroundStyle(theme.textPrimary)
+                    .scrollContentBackground(.hidden)
+                    .padding(10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(theme.cardBackground.opacity(0.95))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(theme.accent.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+                    .shadow(color: .black.opacity(0.8), radius: 4, y: 2)
+                    .frame(minHeight: 80, maxHeight: 140)
+                    .onAppear {
+                        lastValidDetails = mission.details ?? ""
+                    }
+                    .onChange(of: isFocused) { _, focused in
+                        if !focused {
+                            validateAndSave()
                         }
-                    } else {
-                        // 📄 Display mode
-                        Text(mission.details?.isEmpty == false
-                             ? mission.details!
-                             : "No description yet. Tap to add details.")
+                    }
+
+                    // 💬 Placeholder — this is the magic
+                    if (mission.details ?? "").isEmpty {
+                        Text("Tap to add a description...")
                             .font(.callout)
                             .fontDesign(.rounded)
-                            .foregroundStyle(theme.textPrimary)
-                            .lineSpacing(4)
-                            .padding(12)
+                            .foregroundStyle(theme.textSecondary.opacity(0.5))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(theme.cardBackground.opacity(0.95))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(theme.accent.opacity(0.2), lineWidth: 1)
-                                    )
+                            .allowsHitTesting(false)
+                    }
+
+                    // 👇 Counter (unchanged)
+                    if isFocused {
+                        Text("\((mission.details ?? "").count)/140")
+                            .font(.caption2.monospacedDigit().weight(.semibold))
+                            .foregroundStyle(
+                                (mission.details ?? "").count >= 135
+                                ? theme.destructive.opacity(0.8)
+                                : theme.textSecondary.opacity(0.7)
                             )
-                            .shadow(color: .black.opacity(0.8), radius: 4, y: 2)
-                            .contentShape(Rectangle()) // ensures whole area is tappable
-                            .onTapGesture {
-                                withAnimation(.easeInOut(duration: 0.25)) {
-                                    isEditing = true
-                                }
-                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(theme.background.opacity(0.8))
+                            )
+                            .padding([.bottom, .trailing], 6)
                     }
                 }
                 
@@ -370,7 +373,6 @@ struct MissionPreviewCard: View {
             title: "Defeat the Procrastination Boss",
             xp: 60,
             type: .custom,
-            details: "Stay focused for 30 minutes without distractions. You win if you avoid opening social media or switching tasks.",
             icon: "flame.fill"
         )
     )

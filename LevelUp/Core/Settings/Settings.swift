@@ -58,8 +58,20 @@ struct SettingsView: View {
                     
                     // MARK: Appearance
                     SettingsSection(title: "Appearance") {
-                        SettingsToggleRow(icon: "moon.fill", title: "Dark Mode", isOn: $darkModeOn)
-                        SettingsRow(icon: "paintpalette.fill", title: "Theme")
+                        VStack(spacing: 8) {
+                            HStack {
+                                IconBox(icon: "paintpalette.fill", color: theme.primary)
+                                Text("Theme")
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(theme.textPrimary)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 12)
+                            
+                            ThemePickerRow()
+                                .padding(.bottom, 8)
+                        }
                     }
                     
                     // MARK: About
@@ -99,6 +111,50 @@ struct SettingsView: View {
         .ignoresSafeArea()
         .background(theme.background)
         
+    }
+    
+    struct ThemePickerRow: View {
+        @AppStorage("selectedTheme") private var selectedThemeRawValue: String = ThemeOption.system.rawValue
+        @Environment(\.colorScheme) private var colorScheme
+        @Environment(\.theme) private var theme
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 10) {
+                Picker("Theme", selection: $selectedThemeRawValue) {
+                    ForEach(ThemeOption.allCases) { option in
+                        HStack {
+                            Circle()
+                                .fill(option.resolve(using: colorScheme).primary)
+                                .frame(width: 22, height: 22)
+                            Text(option.displayName)
+                        }
+                        .tag(option.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 16)
+                // 👇 This forces a re-creation of the UIKit view with correct theme
+                .id(theme.primary.description)
+                .onAppear { updateSegmentedControlAppearance() }
+                .onChange(of: theme.primary) { 
+                    updateSegmentedControlAppearance()
+                }
+            }
+        }
+
+        private func updateSegmentedControlAppearance() {
+            let appearance = UISegmentedControl.appearance()
+            appearance.selectedSegmentTintColor = UIColor(theme.primary)
+            appearance.backgroundColor = UIColor(theme.cardBackground)
+            appearance.setTitleTextAttributes(
+                [.foregroundColor: UIColor(theme.textPrimary)],
+                for: .normal
+            )
+            appearance.setTitleTextAttributes(
+                [.foregroundColor: UIColor(theme.textInverse)],
+                for: .selected
+            )
+        }
     }
 }
 
@@ -192,7 +248,7 @@ struct IconBox: View {
         SettingsView()
     }
     .modelContainer(SampleData.shared.modelContainer)
-    .environment(\.theme, .orange)
+    .environment(\.theme, .dark)
     .environment(\.currentUser, User.sampleUser())
-    .environmentObject(ModalManager()) // 👈 Inject for all child views
+    .environmentObject(ModalManager())
 }

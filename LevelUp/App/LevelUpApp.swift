@@ -18,6 +18,15 @@ import SwiftData
 struct LevelUpApp: App {
     @StateObject private var userStore = UserStore()
     
+    @AppStorage("selectedTheme") private var selectedThemeRawValue: String = ThemeOption.system.rawValue
+    @Environment(\.colorScheme) private var colorScheme
+    
+    private var currentTheme: Theme {
+         // Safely resolve theme based on stored preference + system mode
+         let option = ThemeOption(rawValue: selectedThemeRawValue) ?? .system
+         return option.resolve(using: colorScheme)
+     }
+    
     var body: some Scene {
         WindowGroup {
             RootGate()
@@ -32,7 +41,7 @@ struct LevelUpApp: App {
                     UserStats.self
                 ])
                 .preferredColorScheme(.light)
-                .environment(\.theme, .orange)
+                .environment(\.theme, currentTheme)
                 .environmentObject(userStore)
         }
     }

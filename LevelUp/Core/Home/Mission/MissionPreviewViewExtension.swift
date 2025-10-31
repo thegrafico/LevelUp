@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-
-
 struct EditableXPView: View {
     @Environment(\.theme) private var theme
     @Bindable var mission: Mission
@@ -17,7 +15,7 @@ struct EditableXPView: View {
     @State private var lastValidXP: Int = 0
     @State private var showXPWarning = false
     
-    private let allowedXPValues = [10, 15, 20, 25]
+    private let allowedXPValues = Mission.xpValues
     
     var body: some View {
         ZStack {

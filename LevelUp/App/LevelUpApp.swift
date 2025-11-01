@@ -17,6 +17,7 @@ import SwiftData
 @main
 struct LevelUpApp: App {
     @StateObject private var userStore = UserStore()
+    @StateObject private var notificationManager = NotificationManager.shared
     
     @AppStorage("selectedTheme") private var selectedThemeRawValue: String = ThemeOption.system.rawValue
     @Environment(\.colorScheme) private var colorScheme
@@ -43,6 +44,7 @@ struct LevelUpApp: App {
                 .preferredColorScheme(.light)
                 .environment(\.theme, currentTheme)
                 .environmentObject(userStore)
+                .environmentObject(notificationManager)
         }
     }
 }
@@ -50,6 +52,8 @@ struct LevelUpApp: App {
 struct RootGate: View {
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var userStore: UserStore
+    @EnvironmentObject private var notificationManager: NotificationManager
+
     
     @State private var state: LaunchState = .loading
     
@@ -62,6 +66,9 @@ struct RootGate: View {
                 ContentView()
                     .environment(\.currentUser, user)
                     .transition(.move(edge: .trailing).combined(with: .opacity))
+                    .task {
+                        await notificationManager.requestAuthorization()
+                    }
             case .unauthenticated:
                 AuthView()
                     .transition(.move(edge: .leading).combined(with: .opacity))

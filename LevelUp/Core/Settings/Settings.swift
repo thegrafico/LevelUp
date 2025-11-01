@@ -12,6 +12,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.currentUser) private var user
     @EnvironmentObject private var userStore: UserStore
+    @EnvironmentObject private var notificationManager: NotificationManager
     
     @EnvironmentObject private var modalManager: ModalManager
     
@@ -51,11 +52,27 @@ struct SettingsView: View {
                         .tint(.red)
                     }
                     
-                    // MARK: Notifications
                     SettingsSection(title: "Notifications") {
-                        SettingsToggleRow(icon: "bell.fill", title: "Daily Reminders", isOn: $notificationsOn)
+                        
+                        SettingsToggleRow(
+                            icon: "bell.fill",
+                            title: "Daily Reminders",
+                            isOn: Binding(
+                                get: { notificationManager.permissionGranted },
+                                set: { newValue in
+                                    if newValue {
+                                        Task { await notificationManager.requestAuthorization() }
+                                    } else {
+                                        notificationManager.cancelAll()
+                                        notificationManager.updatePermissionGranded(false)
+                                    }
+                                }
+                            )
+                        )
+                        .task {
+                            await notificationManager.refreshAuthorizationStatus()
+                        }
                     }
-                    
                     // MARK: Appearance
                     SettingsSection(title: "Appearance") {
                         VStack(spacing: 8) {
@@ -251,4 +268,6 @@ struct IconBox: View {
     .environment(\.theme, .dark)
     .environment(\.currentUser, User.sampleUser())
     .environmentObject(ModalManager())
+    .environmentObject(NotificationManager())
+
 }

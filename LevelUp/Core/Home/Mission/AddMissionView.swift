@@ -17,10 +17,11 @@ struct AddMissionView: View {
     @Environment(\.modelContext) private var context
     @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
     @Environment(\.currentUser) private var user
+    @EnvironmentObject private var notificationManager: NotificationManager
 
     
     private var missionController: MissionController {
-        MissionController(context: context, user: user, badgeManager: badgeManager)
+        MissionController(context: context, user: user, badgeManager: badgeManager, notificationManager: notificationManager)
     }
     
     @Bindable var mission: Mission
@@ -64,9 +65,9 @@ struct AddMissionView: View {
                ))
               
                 // MARK: Reminder
-                ReminderSection(reminderDate: $mission.reminderDate)
-                
+                ReminderSection(reminder: $mission.reminder)
             }
+            
             .navigationTitle(isNew ? "New Mission" : "Edit Mission")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -77,18 +78,26 @@ struct AddMissionView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(isNew ? "Add" : "Save" ) {
-                        
-                        if isNew {
-                            missionController.insertMission(mission)
-                            mission.printMission()
+                        Task {
+                            await saveMission()
                         }
-                        onSave(mission)
-                        dismiss()
                    }.disabled(mission.title.isEmpty)
                 }
             }
         }
     }
+    @MainActor
+    private func saveMission() async {
+        
+        // MARK: Add the mission to swift Data
+        if isNew {
+            await missionController.insertMission(mission)
+        }
+
+        onSave(mission)
+        dismiss()
+    }
+    
 }
 
 #Preview {
@@ -99,5 +108,5 @@ struct AddMissionView: View {
     .environment(\.theme, .orange)
     .environment(BadgeManager()) // 👈 inject preview manager
     .environment(\.currentUser, User.sampleUserWithLogs())
-
+    .environmentObject(NotificationManager())
 }

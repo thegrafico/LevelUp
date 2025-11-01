@@ -28,18 +28,15 @@ struct MissionDetailsSection: View {
                     .font(.callout)
                     .foregroundStyle(theme.textPrimary)
                     .scrollContentBackground(.hidden)
-                    .frame(height: 60) // 👈 fixed height (~3 lines)
+                    .frame(height: 60)
                     .padding(6)
                     .background(
                         RoundedRectangle(cornerRadius: theme.cornerRadiusMedium)
                             .fill(theme.cardBackground)
-//                            .overlay(
-//                                RoundedRectangle(cornerRadius: theme.cornerRadiusMedium)
-//                                    .stroke(theme.accent.opacity(0.2), lineWidth: 1)
-//                            )
                     )
                     .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadiusMedium))
                     .shadow(color: .black.opacity(0.08), radius: 3, y: 2)
+                    .autocorrectionDisabled(true)
             }
         }
     }

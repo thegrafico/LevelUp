@@ -13,19 +13,29 @@ final class MissionController: ObservableObject {
     private let context: ModelContext
     private let badgeManager: BadgeManager?
     private let user: User?
+    private let notificationManager: NotificationManager?
     
-    init(context: ModelContext, user: User? = nil, badgeManager: BadgeManager? = nil) {
+    init(context: ModelContext, user: User? = nil, badgeManager: BadgeManager? = nil, notificationManager: NotificationManager? = nil) {
         self.context = context
         self.user = user
         self.badgeManager = badgeManager
+        self.notificationManager = notificationManager
     }
     
-    func insertMission(_ mission: Mission) {
+    func insertMission(_ mission: Mission) async {
         guard let user else { return }
         
         // Attach to user
         user.missions.append(mission)
         user.logEvent(.addMission, mission: mission)
+        
+        
+        if mission.reminder.isEnabled {
+            await notificationManager?.schedule(for: mission)
+        } else {
+            // just in case delete all notifications for this mission
+            notificationManager?.cancel(for: mission)
+        }
         
         do {
             try context.save()
@@ -52,8 +62,11 @@ final class MissionController: ObservableObject {
             }
             
             user.logEvent(.deleteMission, mission: mission)
+            
+            notificationManager?.cancel(for: mission)
+            
             user.missions.removeAll { $0.id == mission.id }
-            context.delete(mission) // not strictly needed since removing from user + cascade should handle it
+            context.delete(mission)
         }
         
         do {

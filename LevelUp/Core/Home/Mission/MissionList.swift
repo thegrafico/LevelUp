@@ -9,6 +9,8 @@ struct MissionList: View {
     @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
     @Environment(\.currentUser) private var user
     @EnvironmentObject private var modalManager: ModalManager
+    @EnvironmentObject private var notificationManager: NotificationManager
+
     
     @State private var selectedFilter: MissionType = .custom
     @State private var selectedSort: MissionSort = .name
@@ -17,7 +19,12 @@ struct MissionList: View {
     @State private var selectedMission: Mission? = nil
     
     private var missionController: MissionController {
-        MissionController(context: context, user: user, badgeManager: badgeManager)
+        MissionController(
+            context: context,
+            user: user,
+            badgeManager: badgeManager,
+            notificationManager: notificationManager
+        )
     }
     
     // MARK: Missions
@@ -114,9 +121,8 @@ struct MissionList: View {
                 Spacer()
                 
                 if selectedFilter == .custom {
-                    MissionDeleteButton(
-                        selectedMissions: selectedCustomMissions
-                    ) {
+                    // MARK: DELETE BUTTON
+                    MissionDeleteButton(selectedMissions: selectedCustomMissions) {
                         missionController.deleteMissions(selectedCustomMissions)
                     }
                     .id("trash")
@@ -271,6 +277,8 @@ struct MissionListPreviewWrapper: View {
         .modelContainer(SampleData.shared.modelContainer)
         .environment(BadgeManager())
         .frame(maxWidth: .infinity, maxHeight: .infinity) // ✅ allow scroll & fill space
-        .environmentObject(ModalManager()) // 👈 Inject for all child views
+        .environmentObject(ModalManager())
+        .environmentObject(NotificationManager())
+
     
 }

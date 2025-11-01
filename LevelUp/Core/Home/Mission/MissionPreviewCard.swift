@@ -11,6 +11,7 @@ extension View {
 struct MissionPreviewCard: View {
     @Environment(\.theme) private var theme
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var notificationManager: NotificationManager
     @Bindable var mission: Mission
 
     
@@ -135,12 +136,15 @@ struct MissionPreviewCard: View {
                 }
 
                 Divider().overlay(Color.white.opacity(0.15)).padding(.vertical, 8)
-
-                EditableDetailsView(mission: mission)
-       
-
-                Spacer()
-
+                
+                ScrollView {
+                    
+                    EditableDetailsView(mission: mission)
+                                
+                    ReminderSection(reminder: $mission.reminder, style: .inline)
+                        .padding(.vertical, 20)
+                }
+                .scrollIndicators(.hidden)
                 // 🎁 Close Button
                 Button {
                     dismiss()
@@ -172,7 +176,20 @@ struct MissionPreviewCard: View {
             }
         }
         .onAppear {
+            print("Appeared Mission Preview")
+            mission.refreshReminderStatus()
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        }
+        .onDisappear {
+            Task {
+                if mission.reminder.isEnabled {
+                    print("Schedule Mission")
+                    await notificationManager.schedule(for: mission)
+                } else {
+                    notificationManager.cancel(for: mission)
+                }
+            }
+            
         }
     }
     
@@ -270,8 +287,6 @@ struct MissionPreviewCard: View {
                     .textCase(.uppercase)
                     .padding(.bottom, 4)
                 
-                // 📝 Editable mode (with counter)
-                // 📝 Editable mode (with counter)
                 ZStack(alignment: .bottomTrailing) {
                     TextEditor(text: Binding(
                         get: { mission.details ?? "" },
@@ -296,7 +311,7 @@ struct MissionPreviewCard: View {
                             )
                     )
                     .shadow(color: .black.opacity(0.8), radius: 4, y: 2)
-                    .frame(minHeight: 80, maxHeight: 140)
+                    .frame(height: 140)
                     .onAppear {
                         lastValidDetails = mission.details ?? ""
                     }
@@ -377,4 +392,6 @@ struct MissionPreviewCard: View {
         )
     )
     .environment(\.theme, .orange)
+    .environmentObject(NotificationManager())
+
 }

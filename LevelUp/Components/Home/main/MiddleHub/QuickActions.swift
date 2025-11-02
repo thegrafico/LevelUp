@@ -11,7 +11,7 @@ struct QuickActionsView: View {
     @Environment(\.theme) private var theme
     @Environment(\.currentUser) private var user
     @Binding var showActionsSheet: Bool
-
+    
     var body: some View {
         Button {
             UIImpactFeedbackGenerator(style: .soft).impactOccurred()
@@ -40,7 +40,7 @@ struct QuickActionsView: View {
         .onAppear {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 user.rebuildStreakFromLogs()
-           }
+            }
         }
     }
 }
@@ -55,7 +55,7 @@ struct QuickActionsSheet: View {
     @State private var showPopup = false   // 👈 control variable
     
     private let columns = [GridItem(.adaptive(minimum: 120), spacing: 12, alignment: .top)]
-
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -67,9 +67,9 @@ struct QuickActionsSheet: View {
                     }
                     
                     Group {
-                        ActionTile(icon: "bolt.fill",       title: "Start Quest")
-                        ActionTile(icon: "dumbbell.fill",    title: "Gym")
-                        ActionTile(icon: "book.fill",        title: "Read")
+                        ActionTile(icon: "bolt.fill", title: "Start Quest")
+                        ActionTile(icon: "person.2.fill", title: "Challenge")
+                        ActionTile(icon: "square.and.arrow.up",title: "Share Mission")
                         ActionTile(icon: "mappin.and.ellipse", title: "Visit Place")
                         ActionTile(icon: "bell.badge.fill",  title: "Reminders")
                     }
@@ -84,9 +84,9 @@ struct QuickActionsSheet: View {
         }
         .sheet(item: $newMission) { mission in
             AddMissionView(mission: mission, isNew: true, onSave: { _ in
-                    self.showPopup.toggle()
+                self.showPopup.toggle()
             })
-                .environment(\.theme, theme)
+            .environment(\.theme, theme)
         }.overlay(
             
             Group {
@@ -107,7 +107,7 @@ struct ActionTile: View {
     var icon: String
     var title: String
     var action: () -> Void = {}   // default no-op
-
+    
     var body: some View {
         Button(action: {
             UIImpactFeedbackGenerator(style: .soft).impactOccurred()

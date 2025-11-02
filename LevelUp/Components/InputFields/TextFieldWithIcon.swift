@@ -1,20 +1,14 @@
-//
-//  TextFieldWithIcon.swift
-//  LevelUp
-//
-//  Created by Raúl Pichardo Avalo on 9/10/25.
-//
 import SwiftUI
 
 struct TextFieldWithIcon: View {
     @Environment(\.theme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
 
     var systemImage: String
     var placeholder: String
     @Binding var text: String
     var isSecure: Bool = false
 
-    // 👇 Add these parameters
     var isInvalid: Bool = false
     var errorText: String? = nil
 
@@ -31,18 +25,24 @@ struct TextFieldWithIcon: View {
                     .font(.system(size: 16, weight: .semibold))
             }
 
-            if isSecure && !reveal {
-                SecureField(placeholder, text: $text)
-                    .textContentType(.password)
-                    .foregroundColor(isInvalid ? .red : theme.textPrimary)
-            } else {
-                TextField(placeholder, text: $text)
-                    .textInputAutocapitalization(.never)
-                    .textContentType(isSecure ? .password : .username)
-                    .autocorrectionDisabled(true)
-                    .foregroundColor(isInvalid ? .red : theme.textPrimary)
+            // MARK: TextField / SecureField
+            Group {
+                if isSecure && !reveal {
+                    SecureField("", text: $text, prompt: Text(placeholder)
+                        .foregroundColor(placeholderColor))
+                        .textContentType(.password)
+                        .foregroundColor(isInvalid ? .red : theme.textPrimary)
+                } else {
+                    TextField("", text: $text, prompt: Text(placeholder)
+                        .foregroundColor(placeholderColor))
+                        .textInputAutocapitalization(.never)
+                        .textContentType(isSecure ? .password : .username)
+                        .autocorrectionDisabled(true)
+                        .foregroundColor(isInvalid ? .red : theme.textPrimary)
+                }
             }
 
+            // MARK: Eye toggle for secure field
             if isSecure {
                 Button {
                     withAnimation(.easeInOut(duration: 0.15)) { reveal.toggle() }
@@ -62,8 +62,6 @@ struct TextFieldWithIcon: View {
             RoundedRectangle(cornerRadius: theme.cornerRadiusSmall)
                 .stroke(isInvalid ? Color.red.opacity(0.8) : .clear, lineWidth: 1.2)
         )
-
-        // 👇 Game-style floating badge
         .overlay(alignment: .topTrailing) {
             if isInvalid, let errorText {
                 Text(errorText)
@@ -79,6 +77,15 @@ struct TextFieldWithIcon: View {
         }
         .animation(.spring(duration: 0.25), value: isInvalid)
     }
+
+    // MARK: - Dynamic placeholder color
+    private var placeholderColor: Color {
+        if colorScheme == .dark {
+            return theme.textSecondary.opacity(0.7)
+        } else {
+            return theme.textSecondary.opacity(0.9)
+        }
+    }
 }
 
 #Preview {
@@ -86,9 +93,7 @@ struct TextFieldWithIcon: View {
         TextFieldWithIcon(
             systemImage: "person.fill",
             placeholder: "Username",
-            text: .constant(""),
-            isInvalid: true,
-            errorText: "Too short!"
+            text: .constant("")
         )
 
         TextFieldWithIcon(
@@ -99,5 +104,5 @@ struct TextFieldWithIcon: View {
         )
     }
     .padding()
-    .environment(\.theme, .orange)
+    .environment(\.theme, .dark)
 }

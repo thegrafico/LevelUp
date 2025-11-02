@@ -11,22 +11,19 @@ struct SettingsView: View {
     @Environment(\.theme) private var theme
     @Environment(\.modelContext) private var context
     @Environment(\.currentUser) private var user
+    
     @EnvironmentObject private var userStore: UserStore
     @EnvironmentObject private var notificationManager: NotificationManager
-    
     @EnvironmentObject private var modalManager: ModalManager
     
-    @State private var notificationsOn = true
-    @State private var darkModeOn = false
     @State private var showResetAlert = false
     @State private var showSignOutAlert = false
     
     var body: some View {
-        
-        
         NavigationStack {
             VStack(spacing: 20) {
                 
+                // MARK: Header
                 AppTopBanner(title: "Settings", subtitle: "Customize your experience")
                 
                 ScrollView {
@@ -35,7 +32,11 @@ struct SettingsView: View {
                         
                         // MARK: Account
                         SettingsSection(title: "Account") {
-                            SettingsRow(icon: "person.crop.circle", title: "Profile")
+                            
+                            NavigationLink {
+                                ProfileView()
+                            } label: {
+                                SettingsRow(icon: "person.crop.circle", title: "Profile")                            }
                             
                             Button {
                                 UIImpactFeedbackGenerator(style: .soft).impactOccurred()
@@ -59,9 +60,9 @@ struct SettingsView: View {
                         // MARK: NOTIFICATIONS
                         SettingsSection(title: "Notifications") {
                             
-                            SettingsToggleRow(
+                            ToggleRow(
                                 icon: "bell.fill",
-                                title: "Daily Reminders",
+                                title: "Allow Reminders",
                                 isOn: Binding(
                                     get: { notificationManager.permissionGranted },
                                     set: { newValue in
@@ -137,135 +138,6 @@ struct SettingsView: View {
             }
             .ignoresSafeArea()
             .background(theme.background)
-        }
-    }
-    
-    struct ThemePickerRow: View {
-        @AppStorage("selectedTheme") private var selectedThemeRawValue: String = ThemeOption.system.rawValue
-        @Environment(\.colorScheme) private var colorScheme
-        @Environment(\.theme) private var theme
-        
-        var body: some View {
-            VStack(alignment: .leading, spacing: 10) {
-                Picker("Theme", selection: $selectedThemeRawValue) {
-                    ForEach(ThemeOption.allCases) { option in
-                        HStack {
-                            Circle()
-                                .fill(option.resolve(using: colorScheme).primary)
-                                .frame(width: 22, height: 22)
-                            Text(option.displayName)
-                        }
-                        .tag(option.rawValue)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 16)
-                // 👇 This forces a re-creation of the UIKit view with correct theme
-                .id(theme.primary.description)
-                .onAppear { updateSegmentedControlAppearance() }
-                .onChange(of: theme.primary) {
-                    updateSegmentedControlAppearance()
-                }
-            }
-        }
-        
-        private func updateSegmentedControlAppearance() {
-            let appearance = UISegmentedControl.appearance()
-            appearance.selectedSegmentTintColor = UIColor(theme.primary)
-            appearance.backgroundColor = UIColor(theme.cardBackground)
-            appearance.setTitleTextAttributes(
-                [.foregroundColor: UIColor(theme.textPrimary)],
-                for: .normal
-            )
-            appearance.setTitleTextAttributes(
-                [.foregroundColor: UIColor(theme.textInverse)],
-                for: .selected
-            )
-        }
-    }
-}
-
-// MARK: - Section Container
-struct SettingsSection<Content: View>: View {
-    @Environment(\.theme) private var theme
-    var title: String
-    @ViewBuilder var content: Content
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title.uppercased())
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(theme.textSecondary)
-                .padding(.horizontal, 4)
-            
-            VStack(spacing: 1) {
-                content
-            }
-            .padding(.vertical, 8)
-            .background(theme.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadiusLarge, style: .continuous))
-            .shadow(color: theme.shadowLight, radius: 6, y: 3)
-        }
-    }
-}
-
-// MARK: - Normal Row
-struct SettingsRow: View {
-    @Environment(\.theme) private var theme
-    var icon: String
-    var title: String
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            IconBox(icon: icon, color: theme.primary)
-            Text(title)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(theme.textPrimary)
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(theme.textSecondary.opacity(0.6))
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-    }
-}
-
-// MARK: - Toggle Row
-struct SettingsToggleRow: View {
-    @Environment(\.theme) private var theme
-    var icon: String
-    var title: String
-    @Binding var isOn: Bool
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            IconBox(icon: icon, color: theme.primary)
-            Text(title)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(theme.textPrimary)
-            Spacer()
-            Toggle("", isOn: $isOn)
-                .labelsHidden()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-    }
-}
-
-// MARK: - Icon Box
-struct IconBox: View {
-    var icon: String
-    var color: Color
-    
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(color.opacity(0.12))
-                .frame(width: 36, height: 36)
-            Image(systemName: icon)
-                .foregroundStyle(color)
-                .font(.system(size: 16, weight: .semibold))
         }
     }
 }

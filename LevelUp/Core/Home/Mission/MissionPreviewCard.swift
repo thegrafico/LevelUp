@@ -13,13 +13,13 @@ struct MissionPreviewCard: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var notificationManager: NotificationManager
     @Bindable var mission: Mission
-
+    
     
     @State private var lastValidTitle: String = ""
     @State private var showTitleWarning: Bool = false
     @State private var glow = false
     @FocusState private var isEditingTitle: Bool
-
+    
     var body: some View {
         ZStack {
             // 🎨 Background
@@ -30,140 +30,135 @@ struct MissionPreviewCard: View {
             )
             .ignoresSafeArea()
             .onTapGesture {
-                    hideKeyboard()
-                }
-
-            VStack(spacing: 22) {
-                // 🏅 Icon
+                hideKeyboard()
+            }
+            
+            ScrollView {
                 ZStack {
-                    Circle()
-                        .fill(theme.primary.opacity(0.15))
-                        .frame(width: 140, height: 140)
-                        .shadow(color: theme.accent.opacity(glow ? 0.6 : 0.25), radius: 25)
-                        .blur(radius: glow ? 0.8 : 4)
-                        .scaleEffect(glow ? 1.07 : 1.0)
-                        .animation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true), value: glow)
+                    
+                    Color.clear
+                    .contentShape(Rectangle()) // make it tappable
+                    .onTapGesture {
+                        hideKeyboard()
+                    }
 
-                    Image(systemName: mission.icon)
-                        .font(.system(size: 60, weight: .bold))
-                        .foregroundStyle(theme.accent)
-                        .shadow(color: theme.accent.opacity(0.7), radius: 8, y: 3)
-                }
-                .onAppear { glow = true }
-
-                // 🧾 Title (editable but same design)
-                ZStack {
-                    TextField("", text: $mission.title)
-                        .focused($isEditingTitle)
-                        .onAppear {
-                            // Initialize with the mission’s current title
-                            lastValidTitle = mission.title
-                        }
-                        .onChange(of: isEditingTitle) {_,focused in
-                            if !focused {
-                                // When the field loses focus, validate
-                                let trimmed = mission.title.trimmingCharacters(in: .whitespacesAndNewlines)
-                                if trimmed.isEmpty {
-                                    showTitleWarning = true
-                                    mission.title = lastValidTitle // 👈 revert to the last valid one
-                                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                        // Optional: Shake animation feedback
+                    VStack(spacing: 22) {
+                    // 🏅 Icon
+                    ZStack {
+                        Circle()
+                            .fill(theme.primary.opacity(0.15))
+                            .frame(width: 140, height: 140)
+                            .shadow(color: theme.accent.opacity(glow ? 0.6 : 0.25), radius: 25)
+                            .blur(radius: glow ? 0.8 : 4)
+                            .scaleEffect(glow ? 1.07 : 1.0)
+                            .animation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true), value: glow)
+                        
+                        Image(systemName: mission.icon)
+                            .font(.system(size: 60, weight: .bold))
+                            .foregroundStyle(theme.accent)
+                            .shadow(color: theme.accent.opacity(0.7), radius: 8, y: 3)
+                            
+                    }
+                    .padding(.top, 20)
+                    
+                    .onAppear { glow = true }
+                    
+                    // 🧾 Title (editable but same design)
+                    ZStack {
+                        TextField("", text: $mission.title)
+                            .focused($isEditingTitle)
+                            .onAppear {
+                                // Initialize with the mission’s current title
+                                lastValidTitle = mission.title
+                            }
+                            .onChange(of: isEditingTitle) {_,focused in
+                                if !focused {
+                                    // When the field loses focus, validate
+                                    let trimmed = mission.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                                    if trimmed.isEmpty {
+                                        showTitleWarning = true
+                                        mission.title = lastValidTitle // 👈 revert to the last valid one
+                                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            // Optional: Shake animation feedback
+                                        }
+                                        // Hide warning after delay
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                            withAnimation(.easeOut) { showTitleWarning = false }
+                                        }
+                                    } else {
+                                        mission.title = trimmed
                                     }
-                                    // Hide warning after delay
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                        withAnimation(.easeOut) { showTitleWarning = false }
-                                    }
-                                } else {
-                                    mission.title = trimmed
                                 }
                             }
-                        }
-                        .multilineTextAlignment(.center)
-                        .font(.system(size: 26, weight: .heavy, design: .rounded))
-                        .foregroundStyle(theme.textInverse.opacity(0.9))
-                        .padding(.horizontal)
-                        .shadow(color: theme.textBlack, radius: 1, x: 1, y: 1)
-                        .shadow(color: theme.textBlack, radius: 1, x: -1, y: 1)
-                        .shadow(color: theme.textBlack, radius: 1, x: 1, y: -1)
-                        .shadow(color: theme.textBlack, radius: 1, x: -1, y: -1)
-                        .lineLimit(2)
-                        .textFieldStyle(.plain)
-                        .opacity(isEditingTitle ? 1 : 0.001) // invisible when not editing
-                        .allowsHitTesting(isEditingTitle)
-                    
-                    // overlay non-editable text for same look
-                    if !isEditingTitle {
-                        Text(mission.title)
+                            .multilineTextAlignment(.center)
                             .font(.system(size: 26, weight: .heavy, design: .rounded))
                             .foregroundStyle(theme.textInverse.opacity(0.9))
-                            .multilineTextAlignment(.center)
                             .padding(.horizontal)
                             .shadow(color: theme.textBlack, radius: 1, x: 1, y: 1)
                             .shadow(color: theme.textBlack, radius: 1, x: -1, y: 1)
                             .shadow(color: theme.textBlack, radius: 1, x: 1, y: -1)
                             .shadow(color: theme.textBlack, radius: 1, x: -1, y: -1)
                             .lineLimit(2)
-                            .onTapGesture {
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    isEditingTitle = true
+                            .textFieldStyle(.plain)
+                            .opacity(isEditingTitle ? 1 : 0.001) // invisible when not editing
+                            .allowsHitTesting(isEditingTitle)
+                        
+                        // overlay non-editable text for same look
+                        if !isEditingTitle {
+                            Text(mission.title)
+                                .font(.system(size: 26, weight: .heavy, design: .rounded))
+                                .foregroundStyle(theme.textInverse.opacity(0.9))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                                .shadow(color: theme.textBlack, radius: 1, x: 1, y: 1)
+                                .shadow(color: theme.textBlack, radius: 1, x: -1, y: 1)
+                                .shadow(color: theme.textBlack, radius: 1, x: 1, y: -1)
+                                .shadow(color: theme.textBlack, radius: 1, x: -1, y: -1)
+                                .lineLimit(2)
+                                .onTapGesture {
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        isEditingTitle = true
+                                    }
                                 }
-                            }
+                        }
                     }
-                }
-
-                // ⚡ Stats Row
-                HStack(spacing: 10) {
-                    EditableXPView(mission: mission)
-
-                    Text("•")
-                        .foregroundStyle(.gray.opacity(0.7))
-
-                    Text(mission.category.name)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.gray.opacity(0.95))
-
-                    Text("•")
-                        .foregroundStyle(.gray.opacity(0.7))
-
-                    Text(mission.type == .global ? "GLOBAL" : "CUSTOM")
-                        .font(.caption.weight(.bold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(theme.accent.opacity(0.15))
-                        .foregroundStyle(theme.primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                }
-
-                Divider().overlay(Color.white.opacity(0.15)).padding(.vertical, 8)
-                
-                ScrollView {
+                    
+                    // ⚡ Stats Row
+                    HStack(spacing: 10) {
+                        EditableXPView(mission: mission)
+                        
+                        Text("•")
+                            .foregroundStyle(.gray.opacity(0.7))
+                        
+                        Text(mission.category.name)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.gray.opacity(0.95))
+                        
+                        Text("•")
+                            .foregroundStyle(.gray.opacity(0.7))
+                        
+                        Text(mission.type == .global ? "GLOBAL" : "CUSTOM")
+                            .font(.caption.weight(.bold))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(theme.accent.opacity(0.15))
+                            .foregroundStyle(theme.primary)
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                    }
+                    
+                    Divider().overlay(Color.white.opacity(0.15)).padding(.vertical, 8)
                     
                     EditableDetailsView(mission: mission)
-                                
+                    
                     ReminderSection(reminder: $mission.reminder, style: .inline)
                         .padding(.vertical, 20)
                 }
-                .scrollIndicators(.hidden)
-                // 🎁 Close Button
-                Button {
-                    dismiss()
-                } label: {
-                    Label("Close", systemImage: "xmark.circle.fill")
-                        .font(.headline.weight(.semibold))
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            LinearGradient(colors: [theme.accent, theme.primary], startPoint: .leading, endPoint: .trailing)
-                                .cornerRadius(14)
-                        )
-                        .foregroundStyle(.white)
-                        .shadow(color: theme.accent.opacity(0.6), radius: 6, y: 3)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 12)
             }
+            .scrollIndicators(.hidden)
             .padding(.vertical, 32)
+            
         }
         .overlay(alignment: .topTrailing) {
             Button {
@@ -209,10 +204,12 @@ struct MissionPreviewCard: View {
                     HStack(spacing: 8) {
                         ForEach(allowedXPValues, id: \.self) { xpValue in
                             Text("\(xpValue)")
-                                .font(.subheadline.weight(.semibold))
+                                .font(.caption2.weight(.semibold))
                                 .foregroundStyle(
                                     mission.xp == xpValue ? theme.textInverse : theme.textPrimary
                                 )
+                                .lineLimit(1)
+                                .fixedSize()
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
                                 .background(
@@ -320,7 +317,7 @@ struct MissionPreviewCard: View {
                             validateAndSave()
                         }
                     }
-
+                    
                     // 💬 Placeholder — this is the magic
                     if (mission.details ?? "").isEmpty {
                         Text("Tap to add a description...")
@@ -332,7 +329,7 @@ struct MissionPreviewCard: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .allowsHitTesting(false)
                     }
-
+                    
                     // 👇 Counter (unchanged)
                     if isFocused {
                         Text("\((mission.details ?? "").count)/140")
@@ -393,5 +390,5 @@ struct MissionPreviewCard: View {
     )
     .environment(\.theme, .orange)
     .environmentObject(NotificationManager())
-
+    
 }

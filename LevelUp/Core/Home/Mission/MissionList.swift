@@ -30,7 +30,7 @@ struct MissionList: View {
     // MARK: Missions
     var customMissions: [Mission]
     var globalMissions: [Mission]
-    var showAllSection: Bool = false
+    var showAllSection: Bool = true
     
     init(_ customMissions: [Mission], _ globalMissions: [Mission]) {
         self.customMissions = customMissions
@@ -279,6 +279,4 @@ struct MissionListPreviewWrapper: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity) // ✅ allow scroll & fill space
         .environmentObject(ModalManager())
         .environmentObject(NotificationManager())
-
-    
 }

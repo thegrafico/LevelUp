@@ -47,10 +47,9 @@ struct FriendsView: View {
         )
         
         // MARK: User notifications
-        let pendingStatusNotification: String = AppNotification.StatusNotification.pending.rawValue
         _userNotifications = Query(
             filter: #Predicate<AppNotification> {
-                $0.statusRaw == pendingStatusNotification
+                $0.statusRaw == pendingStatus
                 && $0.receiverId == userId
             },
             sort: [SortDescriptor(\.createdAt, order: .reverse)]
@@ -98,7 +97,7 @@ struct FriendsView: View {
                 }
             }
             .sheet(item: $selectedFriend) { friend in
-                FriendPreviewCard(friend: friend, type: .preview, onActionDelete: ({
+                FriendPreviewCard(friend: friend, onActionDelete: ({
                     print("Deleting friend: : \(friend.username)")
                     
                     friendToReopen = selectedFriend

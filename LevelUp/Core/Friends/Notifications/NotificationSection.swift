@@ -15,8 +15,7 @@ struct NotificationSection: View {
     var notifications: [AppNotification]
     var isExpanded: Bool
     var onToggle: () -> Void
-    var onViewTap: (AppNotification) -> Void
-        
+    var onViewTap: (AppNotification) async throws -> Void
     var notificationBadgeType: AppNotification.Kind {
         
         if let firtsElementKind = notifications.first?.kind {
@@ -29,7 +28,6 @@ struct NotificationSection: View {
     // MARK: NEW NOTIFICATIONS COUNTER
     var newNotificationsCount: Int {
         notifications.filter({!$0.isRead}).count
-//        notifications.count
     }
     
     var body: some View {

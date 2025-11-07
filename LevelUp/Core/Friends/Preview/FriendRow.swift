@@ -32,6 +32,7 @@ struct FriendRow: View {
     var friend: Friend
     var onPressLabel: String = "Challenge"
     var updateLabelOnComplete: Bool = false
+    var externalError: String?
     var onPress: ((Friend) async throws -> Void)? = nil
     
     @State private var isLoading = false
@@ -98,7 +99,7 @@ struct FriendRow: View {
             .shadow(color: theme.shadowLight, radius: 6, y: 3)
             .shake(trigger: shakeTrigger) // 👈 Apply shake effect
 
-            if let error = errorMessage {
+            if let error = errorMessage ?? externalError {
                 Text(error)
                     .font(.footnote)
                     .foregroundColor(.red)

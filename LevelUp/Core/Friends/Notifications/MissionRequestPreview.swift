@@ -1,13 +1,14 @@
 //
-//  FriendsPreviewCard.swift
+//  MissionRequestPreview.swift
 //  LevelUp
 //
-//  Created by Raúl Pichardo Avalo on 10/11/25.
+//  Created by Raúl Pichardo Avalo on 11/6/25.
 //
 
 import SwiftUI
 
-struct FriendPreviewCard: View {
+
+struct MissionRequestPreview: View {
     @Environment(\.theme) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.currentUser) private var user
@@ -20,7 +21,16 @@ struct FriendPreviewCard: View {
     //    @State private var isEditing = false
     
     
-    var friend: Friend
+    var missionRequest: MissionRequest
+    
+    private var friend: Friend {
+        missionRequest.from
+    }
+    
+    private var mission: Mission {
+        missionRequest.mission
+    }
+    
     var onAction: ((Friend) async throws -> Void)? = nil
     var onCancel: ((Friend) async throws -> Void)? = nil
     var onActionDelete: (() async throws -> Void)? = nil
@@ -42,7 +52,76 @@ struct FriendPreviewCard: View {
                 
                 Divider().padding(.vertical, 8)
                 
-                FriendPreviewCardStatsOverview(friend.stats)
+                VStack(spacing: 12) {
+                    
+                    Text("@\(friend.username) sent you a mission.")
+                        .font(.subheadline)
+                        .foregroundStyle(theme.textSecondary)
+                    
+                    VStack {
+                        
+                        VStack(spacing: 8) {
+                            Text(mission.title)
+                                .font(.headline)
+                                .foregroundStyle(theme.textInverse)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .lineLimit(2)
+                                .background(theme.primary.opacity(0.8))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            
+                            HStack {
+                                Text("\(mission.xp) XP")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(theme.primary)
+                                    .lineLimit(1)
+                                    .fixedSize()
+                                
+                                Text("•")
+                                    .foregroundStyle(theme.textSecondary.opacity(0.5))
+                                
+                                Text(mission.category.name )
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(theme.textSecondary.opacity(0.5))
+                                
+                                Text("•")
+                                    .foregroundStyle(theme.textSecondary.opacity(0.5))
+                                
+                                Button {
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "square.and.arrow.up") // share icon
+                                            .font(.caption.bold())
+                                        Text(mission.type == .global ? "GLOBAL" : "CUSTOM")
+                                            .font(.caption.weight(.bold))
+                                            .lineLimit(1)
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                            .fill(theme.accent.opacity(0.18))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(theme.accent.opacity(0.4), lineWidth: 1)
+                                            )
+                                            .shadow(color: theme.accent.opacity(0.25), radius: 3, y: 2)
+                                    )
+                                    .foregroundStyle(theme.primary)
+                                    .contentShape(Rectangle()) // expands tap area
+                                }
+                                .buttonStyle(.scaleOnTap) // 👈 custom animation (below)
+                            }
+                            .padding(.top, 4)
+                        }
+                    }
+                    .frame(width: 300)
+                    .padding()
+                    
+                    .background(theme.background)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
                 
                 Spacer()
                 
@@ -125,115 +204,12 @@ struct FriendPreviewCard: View {
             .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadiusLarge))
             .shadow(color: theme.shadowLight, radius: 10, y: 4)
             .presentationBackground(theme.background)
-            .overlay(alignment: .topTrailing) {
-                
-                // MARK: EDIT FRIEND: [add to favorite, remove]
-                if isMyFriend {
-                    Button {
-                        Task {
-                            try await onActionDelete?()
-                        }
-                    } label: {
-                        Image(systemName: "trash.fill")
-                            .font(.title3)
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(theme.primary)
-                            .symbolEffect(.bounce, value: isMyFriend )
-                    }
-                    .tint(theme.destructive)
-                    .padding(.horizontal, 30)
-                    .padding(.top, 40)
-                } else {
-                    EmptyView()
-                }
-            }
         }
     }
-    
-//    @ViewBuilder
-//    private func dynamicContentSection() -> some View {
-//        switch type {
-//        case .missionRequest:
-//            VStack(spacing: 12) {
-//                
-//                Text("\(friend.username) sent you a new mission.")
-//                    .font(.subheadline)
-//                    .foregroundStyle(theme.textSecondary)
-//            
-//                
-//                VStack {
-//                    
-//                    VStack(spacing: 8) {
-//                        Text(mission?.title ?? "Untitle")
-//                            .font(.headline)
-//                            .foregroundStyle(theme.textInverse)
-//                            .padding(.horizontal, 14)
-//                            .padding(.vertical, 8)
-//                            .lineLimit(2)
-//                            .background(theme.primary.opacity(0.8))
-//                            .clipShape(RoundedRectangle(cornerRadius: 8))
-//                        
-//                        HStack {
-//                            Text("\(mission?.xp ?? 0 ) XP")
-//                                .font(.subheadline.weight(.semibold))
-//                                .foregroundStyle(theme.primary)
-//                                .lineLimit(1)
-//                                .fixedSize()
-//                            
-//                            Text("•")
-//                                .foregroundStyle(theme.textSecondary.opacity(0.5))
-//                            
-//                            Text(mission?.category.name ?? "General")
-//                                .font(.subheadline.weight(.medium))
-//                                .foregroundStyle(theme.textSecondary.opacity(0.5))
-//                            
-//                            Text("•")
-//                                .foregroundStyle(theme.textSecondary.opacity(0.5))
-//                            
-//                            Button {
-//                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-//                            } label: {
-//                                HStack(spacing: 4) {
-//                                    Image(systemName: "square.and.arrow.up") // share icon
-//                                        .font(.caption.bold())
-//                                    Text(mission?.type == .global ? "GLOBAL" : "CUSTOM")
-//                                        .font(.caption.weight(.bold))
-//                                        .lineLimit(1)
-//                                }
-//                                .padding(.horizontal, 10)
-//                                .padding(.vertical, 6)
-//                                .background(
-//                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-//                                        .fill(theme.accent.opacity(0.18))
-//                                        .overlay(
-//                                            RoundedRectangle(cornerRadius: 8)
-//                                                .stroke(theme.accent.opacity(0.4), lineWidth: 1)
-//                                        )
-//                                        .shadow(color: theme.accent.opacity(0.25), radius: 3, y: 2)
-//                                )
-//                                .foregroundStyle(theme.primary)
-//                                .contentShape(Rectangle()) // expands tap area
-//                            }
-//                            .buttonStyle(.scaleOnTap) // 👈 custom animation (below)
-//                        }
-//                        .padding(.top, 4)
-//                    }
-//                }
-//                .frame(width: 300)
-//                .padding()
-//                
-//                .background(theme.background)
-//                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-//            }
-//            
-//            
-//        case .friendRequest, .challenge, .preview, .system, .none:
-//        }
-//    }
 }
 
 
-extension FriendPreviewCard {
+extension MissionRequestPreview {
     // MARK: - Dynamic Titles
     var actionTitle: Text {
         if let custom = onActionTitle { return Text(custom) }
@@ -256,9 +232,25 @@ extension FriendPreviewCard {
         stats: UserStats(level: 20, bestStreakCount: 10, topMission: "Drink Water", challengeWonCount: 4)
     )
     
-    FriendPreviewCard(friend: testFriend, onCancel: {_ in})
+    let mission = Mission(
+        title: "Drink Water",
+        xp: 100,
+        details: "Drink 1 liter of water",
+        icon: "plus"
+    )
+    
+    let missionRequest = MissionRequest(
+        from: testFriend,
+        to: testFriend,
+        mission: mission,
+        status: .pending
+    )
+    
+    MissionRequestPreview(missionRequest: missionRequest)
         .environmentObject(ModalManager())
         .environment(\.currentUser, User.sampleUserWithLogs(), )
     
     
 }
+
+

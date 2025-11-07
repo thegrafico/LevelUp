@@ -203,7 +203,17 @@ extension SampleData {
             payloadId: UUID()
         ),
 
-        .init(kind: .friendRequest, message: "wants to connect with you.")
+        .init(kind: .friendRequest, message: "wants to connect with you."),
+        .init(
+            kind: .missionRequest,
+            sender: .init(username: "Thegrafico",
+                          stats: UserStats(level: 10)
+                         ),
+            message: "Sent you a mission",
+            isRead: false,
+            payloadId: UUID()
+        ),
+        
     ]
 }
 

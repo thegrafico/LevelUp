@@ -51,6 +51,7 @@ extension AppNotification {
         case challenge = "Challenges"
         case system = "System"
         case preview = "Preview"
+        case missionRequest = "Mission Requests"
     }
     
     enum StatusNotification: String, Codable, Identifiable, CaseIterable {
@@ -61,7 +62,7 @@ extension AppNotification {
         
         case pending, accepted, canceled, declined, expired
     }
-
+    
     
     var title: String {
         kind.rawValue
@@ -69,12 +70,12 @@ extension AppNotification {
     
     var actionTitle: String {
         switch self.kind {
-            case .friendRequest:
-                return "Accept"
-            case .challenge:
-                return "Challenge"
+        case .friendRequest, .missionRequest:
+            return "Accept"
+        case .challenge:
+            return "Challenge"
         case .system, .preview:
-                return "Open"
+            return "Open"
         }
     }
 }

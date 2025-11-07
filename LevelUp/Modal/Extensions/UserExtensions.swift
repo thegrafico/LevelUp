@@ -281,4 +281,15 @@ extension User {
 
         return categories
     }
+    
+    func addMission(_ mission: Mission) {
+        // check if mission is already added
+        guard self.missions.first(where: { $0.id == mission.id }) == nil else {
+            print("Mission already added")
+            return
+        }
+        
+        missions.append(mission)
+        
+    }
 }

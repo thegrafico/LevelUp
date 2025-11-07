@@ -83,7 +83,21 @@ final class Mission: Identifiable {
         self.reminder = reminder
     }
 }
+
 extension Mission {
+    
+    func asCopy() -> Mission {
+        let copy = Mission(
+            title: self.title,
+            xp: self.xp,
+            type: self.type,
+            category: self.category,
+            details: self.details,
+            icon: self.icon,
+        )
+        
+        return copy
+    }
 
     /// Updates the reminder state based on current date/time.
      func refreshReminderStatus() {

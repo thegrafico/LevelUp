@@ -36,8 +36,6 @@ extension UserController {
             throw UserError.friendGeneral(message: "Is already my friend.")
         }
         
-        // TODO: remove on production. just for testing purpouse
-        
         let friendId = friend.friendId
         let senderId = sender.id
         
@@ -97,7 +95,7 @@ extension UserController {
             throw UserError.invalidUser(message: "Invalid user. Log in again")
         }
         
-        if friendRequest.from.friendId != userId {
+        guard friendRequest.belogsToUser(withId: userId) else {
             print("This is not your friend request to cancel")
             throw UserError.authenticationFailed(message: "You cannot cancel another user's friend request.")
         }
@@ -117,17 +115,8 @@ extension UserController {
     
     func acceptFriendRequest(with id: UUID) async throws {
         
-        guard let myUserId = user?.id else {
-            throw UserError.invalidUser(message: "User is not logged in or cannot find user in session")
-        }
-        
         // get friend request
         let friendRequest = try await fetchFriendRequest(withId: id)
-        
-        // am I the receiver?
-        if myUserId != friendRequest.to.friendId {
-            throw UserError.friendGeneral(message: "Cannot accept a friend request that doest not belong to you.")
-        }
         
         // get users involved
         let senderUser = try await fetchUser(withId: friendRequest.from.friendId)
@@ -143,6 +132,20 @@ extension UserController {
         try context.save()
     }
     
+    func acceptMission(with id: UUID) async throws {
+        
+        guard let receiver = user else {
+            throw UserError.invalidUser(message: "User is not logged in or cannot find user in session")
+        }
+        
+        let missionRequest = try await fetchMissionRequest(withId: id)
+        
+        receiver.addMission(missionRequest.mission.asCopy())
+        missionRequest.updateStatus(to: .accepted)
+        
+        try context.save()
+    }
+        
     @discardableResult
     func removeFriendFromList(friend: Friend) async throws -> Bool {
         guard let currentUser = user else {
@@ -172,22 +175,12 @@ extension UserController {
         return true
     }
     
-    func fetchFriendRequest(withId id: UUID) async throws -> FriendRequest {
-        
-        let descriptor = FetchDescriptor<FriendRequest>(
-            predicate: #Predicate { $0.id == id }
-        )
-        
-        guard let request = try context.fetch(descriptor).first else {
-            print("⚠️ No FriendRequest found with id: \(id)")
-            throw UserError.notFound
-        }
-        
-        return request
-    }
-    
     func declineFriendRequest(with id: UUID) async throws {
         try await updateFriendRequestStatus(withId: id, to: .declined)
+    }
+    
+    func declineMissionRequest(withId id: UUID) async throws -> Void {
+        try await updateMissionStatus(withId: id, to: .declined)
     }
     
     @discardableResult
@@ -195,14 +188,25 @@ extension UserController {
     async throws -> FriendRequest {
         
         let friendRequest = try await fetchFriendRequest(withId: id)
-        
-        print("🫂 Updating Friend Request \(id) with status: \(status.rawValue)")
-        
+   
         friendRequest.updateStatus(to: status)
         
         try context.save()
         
         return friendRequest
+    }
+    
+    @discardableResult
+    private func updateMissionStatus(withId id: UUID, to status: AppNotification.StatusNotification)
+    async throws -> MissionRequest {
+        
+        let missionRequest = try await fetchMissionRequest(withId: id)
+             
+        missionRequest.updateStatus(to: status)
+        
+        try context.save()
+        
+        return missionRequest
     }
     
     private func fetchUser(withId id: UUID) async throws -> User {
@@ -213,5 +217,45 @@ extension UserController {
             throw UserError.notFound
         }
         return user
+    }
+    
+    func fetchFriendRequest(withId id: UUID) async throws -> FriendRequest {
+        
+        guard let userId = user?.id else {
+            throw UserError.invalidUser(message: "Cannot find user information")
+        }
+        
+        let descriptor = FetchDescriptor<FriendRequest>(
+            predicate: #Predicate { $0.id == id && $0.from.friendId == userId || $0.to.friendId == userId }
+        )
+        
+        guard let request = try context.fetch(descriptor).first else {
+            print("⚠️ No FriendRequest found with id: \(id)")
+            throw UserError.notFound
+        }
+        
+        return request
+    }
+    
+    func fetchMissionRequest(withId id: UUID) async throws -> MissionRequest {
+        
+        guard let userId = user?.id else {
+            throw UserError.invalidUser(message: "Cannot find user information")
+        }
+        
+        let queryToGetMission = FetchDescriptor<MissionRequest>(
+            predicate: #Predicate {
+                $0.id == id
+                && ($0.from.friendId == userId
+                    ||  $0.to.friendId == userId)
+            }
+        )
+        
+        guard let foundMissionRequest = try context.fetch(queryToGetMission).first else {
+            print("⚠️ No MissionRequest found with id: \(id)")
+            throw UserError.notFound
+        }
+        
+        return foundMissionRequest
     }
 }

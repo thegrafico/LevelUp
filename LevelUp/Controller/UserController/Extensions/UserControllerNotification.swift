@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 
- // MARK: NOTIFICATION HELPERS
+// MARK: NOTIFICATION HELPERS
 extension UserController {
     
     func acceptNotification(_ notification: AppNotification) async throws {
@@ -21,7 +21,6 @@ extension UserController {
             
         case .friendRequest:
             try await acceptFriendRequest(with: payloadId)
-            notification.updateStatus(to: .accepted)
         case .challenge:
             print("Not supported now")
             break
@@ -31,7 +30,13 @@ extension UserController {
         case .preview:
             print("Preview cannot be declined.")
             break
+        case .missionRequest:
+            print("Accepting Mission request ")
+            try await acceptMission(with: payloadId)
+            
         }
+        notification.updateStatus(to: .accepted)
+        try context.save()
     }
     
     func declineNotification(_ notification: AppNotification) async throws {
@@ -42,20 +47,25 @@ extension UserController {
         }
         
         switch notification.kind {
-                
-            case .friendRequest:
-              try await declineFriendRequest(with: payloadId)
-            case .challenge:
-                print("Not supported now")
-                break
-            case .system:
-                print("System notification cannot be declined.")
-                break
-            case .preview:
-                print("Preview cannot be declined.")
-                break
+            
+        case .friendRequest:
+            try await declineFriendRequest(with: payloadId)
+            break
+        case .challenge:
+            print("Not supported now")
+            break
+        case .system:
+            print("System notification cannot be declined.")
+            break
+        case .preview:
+            print("Preview cannot be declined.")
+            break
+        case .missionRequest:
+            try await declineMissionRequest(withId: payloadId)
+            print("Declining Mission request...")
         }
         
+        // MARK: Update notification object
         notification.updateStatus(to: .declined)
         try context.save()
     }
@@ -65,22 +75,22 @@ extension UserController {
         let descriptor = FetchDescriptor<AppNotification>(
             predicate: #Predicate { $0.payloadId == payloadId }
         )
-
+        
         let notifications = try context.fetch(descriptor)
-
+        
         guard !notifications.isEmpty else {
             print("No notification found for this request.")
             return
         }
-
+        
         // 2️⃣ Update all matching notifications
         for notification in notifications {
             notification.updateStatus(to: newStatus)
         }
-
+        
         // 3️⃣ Save the context
         try context.save()
-
+        
         print("✅ Updated \(notifications.count) notification(s) to status '\(newStatus.rawValue)' for payloadId: \(payloadId)")
     }
     
@@ -97,23 +107,23 @@ extension UserController {
             print("Invalid user for loading notifications")
             return
         }
-    
+        
         print("Loading user notifications...")
         var newNotificationsCount: Int = 0
         
         // on memory notifications
         let existingNotifications = try await getNotifications()
+        print("init Notifications found: \(existingNotifications.count)")
+        
         newNotificationsCount += existingNotifications.filter({!$0.isRead}).count
-    
-        // Possible New Notifications
+        
+        // MARK: Friend request
         let friendRequestsAsNotifications = try await getFriendRequestAsNotifications()
         
-        print("🆕 Incoming friend request notifications (\(friendRequestsAsNotifications.count)):")
-           for note in friendRequestsAsNotifications {
-               print("   - FriendRequest ID: \(note.payloadId?.uuidString ?? "nil")")
-           }
-
+        // MARK: Mission Request
+        let missionRequestsAsNotifications = try await getMissionRequestAsNotifications()
         
+        // MARK: Add Friend request as notification
         for friendNotification in friendRequestsAsNotifications {
             if !existingNotifications.contains(where: { $0.payloadId == friendNotification.payloadId }) {
                 newNotificationsCount += 1
@@ -124,16 +134,21 @@ extension UserController {
             }
         }
         
+        // MARK: Add Mission request as notification
+        for missionNotification in missionRequestsAsNotifications {
+            if !existingNotifications.contains(where: { $0.payloadId == missionNotification.payloadId }) {
+                newNotificationsCount += 1
+                print("Adding new Mission Notification for current user!")
+                context.insert(missionNotification)
+            }else {
+                print("Notification already exists! \(String(describing: missionNotification.payloadId))")
+            }
+        }
+        
         badgeManager?.set(.FriendsNotification, to: newNotificationsCount)
-
+        
         // 5️⃣ Save context and return all notifications for the user
         try context.save()
-        
-        // MARK: TODO: FRIEND CHALLENGES
-        // MARK: TODO: SYSTEM NOTIFICATIONS
-        
-        print("Notifications found: \(friendRequestsAsNotifications.count)")
-        return
     }
     
     func getFriendRequestAsNotifications() async throws -> [AppNotification] {
@@ -144,7 +159,7 @@ extension UserController {
         }
         
         print("Loading Friend Request as notifications...")
-
+        
         let pendingStatus: String = AppNotification.StatusNotification.pending.rawValue
         
         let queryToGetMyFriendRequest = FetchDescriptor<FriendRequest> (
@@ -157,6 +172,30 @@ extension UserController {
         print("Found \(friendRequest.count) Friend Request for user ID: \(userId)")
         
         return friendRequest.asNotifications()
+    }
+    
+    
+    func getMissionRequestAsNotifications() async throws -> [AppNotification] {
+        
+        guard let userId = user?.id else {
+            print("Invalid user for loading Mission Request")
+            return []
+        }
+        
+        print("Loading Mission Request as notifications...")
+        
+        let pendingStatus: String = AppNotification.StatusNotification.pending.rawValue
+        
+        let queryToGetMyMissionRequest = FetchDescriptor<MissionRequest> (
+            predicate: #Predicate { missionRequest in
+                missionRequest.to.friendId == userId && missionRequest.statusRaw == pendingStatus
+            }
+        )
+        
+        let missionRequests = try context.fetch(queryToGetMyMissionRequest)
+        print("Found \(missionRequests.count) Mission Request for user ID: \(userId)")
+        
+        return missionRequests.asNotifications()
     }
     
     func getNotifications(withStatus: AppNotification.StatusNotification = .pending) async throws -> [AppNotification] {
@@ -182,10 +221,10 @@ extension UserController {
         let notifications = try context.fetch(queryToGetexistingNotifications)
         print("Found \(notifications.count) existing notifications for user ID: \(userId)")
         
-//        for notification in notifications {
-//            print("RECEIVER: \(String(describing: notification.receiverId))")
-//            print("PAYLOAD: \(String(describing: notification.payloadId))")
-//        }
+        //        for notification in notifications {
+        //            print("RECEIVER: \(String(describing: notification.receiverId))")
+        //            print("PAYLOAD: \(String(describing: notification.payloadId))")
+        //        }
         
         print()
         

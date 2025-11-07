@@ -11,11 +11,12 @@ struct FriendsNotifications: View {
     @Environment(\.theme) private var theme
     @Environment(\.dismiss) private var dismiss
     
-    @State private var expandedSections: Set<AppNotification.Kind> = [.friendRequest, .challenge]
+    @State private var expandedSections: Set<AppNotification.Kind> = [.missionRequest]
     
     var notifications: [AppNotification]
     @State private var localNotifications: [AppNotification] = []
     @State private var selectedNotification: AppNotification? = nil
+    @State private var missionRequest: MissionRequest? = nil
     
     
     var groupedNotifications: [AppNotification.Kind: [AppNotification]] {
@@ -32,7 +33,7 @@ struct FriendsNotifications: View {
                         VStack(spacing: 20) {
                             ForEach(AppNotification.Kind.allCases, id: \.self) { type in
                                 let items = groupedNotifications[type] ?? []
-
+                                
                                 if !items.isEmpty {
                                     NotificationSection(
                                         title: type.rawValue,
@@ -48,6 +49,11 @@ struct FriendsNotifications: View {
                                             }
                                         },
                                         onViewTap: { notification in
+                                            
+                                            try await loadPayloadFromNotification(notification: notification)
+                                            
+                                            try await Task.sleep(nanoseconds: 400_000_000)
+                                            
                                             selectedNotification = notification
                                         }
                                     )
@@ -61,7 +67,7 @@ struct FriendsNotifications: View {
                         .padding(.horizontal, 16)
                         .padding(.vertical, 20)
                     }
-
+                    
                     if notifications.isEmpty {
                         EmptyNotificationsView()
                             .transition(.opacity.combined(with: .scale))
@@ -88,27 +94,58 @@ struct FriendsNotifications: View {
             .background(theme.background.ignoresSafeArea())
         }
         .sheet(item: $selectedNotification) { notification in
-            
-            if let friend = notification.sender {
-                FriendPreviewCard(
-                    friend: friend,
-                    type: notification.kind,
-                    onAction: { _ in
-                        await acceptNotification(notification)
-                    },
-                    onCancel: { _ in
-                        await declinedNotification(notification)
-                    }
-                )
+            notificationView(for: notification)
                 .presentationDetents([.medium])
-            }
-        }
-        .onAppear {
-            print("Controller: \(String(describing: userController))")
         }
         .interactiveDismissDisabled(true)
         .presentationDetents([.fraction(1.0)])  // full height
         .presentationDragIndicator(.hidden)
+    }
+    
+    private func loadPayloadFromNotification(notification: AppNotification) async throws {
+        
+        switch notification.kind {
+        case .friendRequest, .challenge, .system, .preview:
+            break
+        case .missionRequest:
+            guard let controller = userController else { throw UserController.UserError.friendGeneral(message: "Controller not found.") }
+            guard let payloadId = notification.payloadId else { throw UserController.UserError.friendGeneral(message: "Payload id not found.") }
+            
+            // MARK: Load missionRequest State
+            missionRequest = try await controller.fetchMissionRequest(withId: payloadId)
+    
+            break
+        }
+        
+    }
+    
+    @ViewBuilder
+    private func notificationView(for notification: AppNotification) -> some View {
+        
+        let onAccept: (Friend) async throws -> Void = { _ in
+            await acceptNotification(notification)
+        }
+
+        let onDecline: (Friend) async throws -> Void = { _ in
+            await declinedNotification(notification)
+        }
+        
+        
+        switch notification.kind {
+        case .friendRequest, .challenge, .preview, .system:
+            FriendPreviewCard(
+                friend: notification.sender!,
+                onAction: onAccept,
+                onCancel: onDecline,
+            )
+        case .missionRequest:
+            
+            if missionRequest != nil {
+                MissionRequestPreview(missionRequest: missionRequest!, onAction: onAccept, onCancel: onDecline)
+            }else {
+                Text("Sorry, no mission request here.")
+            }
+        }
     }
     
     private func acceptNotification(_ notification: AppNotification) async {
@@ -118,7 +155,7 @@ struct FriendsNotifications: View {
             print("Controller not found")
             return
         }
-       
+        
         await MainActor.run {
             withAnimation(.easeInOut(duration: 0.25)) {
                 selectedNotification = nil
@@ -127,8 +164,22 @@ struct FriendsNotifications: View {
         
         print("accepting now...")
         try? await controller.acceptNotification(notification)
-
+        
     }
+    
+    //    private func getMissionForNotification(_ notification: AppNotification) async throws -> MissionRequest {
+    //
+    //        guard let missionId = notification.payloadId else {
+    //            print("Cannot find any mission for this notification")
+    //            throw NSError(domain: "Invalid notification payload Id", code: 0, userInfo: nil)
+    //        }
+    //
+    //        guard let mission =  try await userController?.fetchMissionRequest(withId: missionId) else {
+    //            throw NSError(domain: "No mission found", code: 0, userInfo: nil)
+    //        }
+    //
+    //        return mission
+    //    }
     
     
     private func declinedNotification(_ notification: AppNotification) async {

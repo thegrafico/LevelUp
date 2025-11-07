@@ -7,11 +7,15 @@
 
 import SwiftUI
 
+
 struct NotificationRow: View {
     @Environment(\.theme) private var theme
     
     var notification: AppNotification
-    var onViewTap: (AppNotification) -> Void
+    var onViewTap: (AppNotification) async throws -> Void
+    
+    @State private var isLoading = false
+    @State private var didFail = false
     
     var body: some View {
         HStack(spacing: 14) {
@@ -37,21 +41,54 @@ struct NotificationRow: View {
             Spacer()
             
             Button {
-                notification.isRead = true
-                print("Updating notification is read: \(notification.isRead)")
-                onViewTap(notification)
+                guard !isLoading else { return }
+                Task {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isLoading = true
+                        didFail = false
+                        
+                    }
+
+                    do {
+                        notification.isRead = true
+                        try await onViewTap(notification)
+                    } catch {
+                        print("❌ Notification action failed: \(error.localizedDescription)")
+                        withAnimation(.easeInOut) { didFail = true }
+                        // optional haptic feedback
+                        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+                        try? await Task.sleep(nanoseconds: 1_000_000_000)
+                        withAnimation(.easeOut) { didFail = false }
+                    }
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isLoading = false
+                    }
+                }
             } label: {
-                Text(notification.kind == .friendRequest ? "View" : "Challenge")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(theme.textInverse)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule().fill(theme.primary)
+                ZStack {
+                    if isLoading {
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .tint(theme.textInverse)
+                            .frame(width: 40, height: 16)
+                    } else {
+                        Text(didFail ? "Retry" : "View")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(theme.textInverse)
+                            .frame(minWidth: 40)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule().fill(
+                        didFail ? theme.destructive.opacity(0.8) : theme.primary
                     )
+                )
+                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isLoading)
             }
             .buttonStyle(.plain)
-            .disabled(notification.sender == nil)
+            .disabled(notification.sender == nil || isLoading)
             .opacity(notification.sender != nil ? 1 : 0.8)
         }
         .padding(10)

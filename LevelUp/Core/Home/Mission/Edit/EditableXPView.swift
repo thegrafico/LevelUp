@@ -10,12 +10,15 @@ import SwiftUI
 struct EditableXPView: View {
     @Environment(\.theme) private var theme
     @Bindable var mission: Mission
+    var canEdit: Bool = false
     
     @State private var isEditingXP = false
     @State private var lastValidXP: Int = 0
     @State private var showXPWarning = false
+    @State private var deniedEdit = false
+    @State private var shakeOffset: CGFloat = 0
     
-    private let allowedXPValues = Mission.xpValues
+    private let allowedXPValues = [10, 15, 20, 25]
     
     var body: some View {
         ZStack {
@@ -23,10 +26,12 @@ struct EditableXPView: View {
                 HStack(spacing: 8) {
                     ForEach(allowedXPValues, id: \.self) { xpValue in
                         Text("\(xpValue)")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.caption2.weight(.semibold))
                             .foregroundStyle(
                                 mission.xp == xpValue ? theme.textInverse : theme.textPrimary
                             )
+                            .lineLimit(1)
+                            .fixedSize()
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
                             .background(
@@ -46,38 +51,21 @@ struct EditableXPView: View {
             } else {
                 Label("\(mission.xp) XP", systemImage: "bolt.fill")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(theme.primary)
+                    .foregroundStyle(deniedEdit ? .red : theme.primary)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .offset(x: shakeOffset)
                     .onTapGesture {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            lastValidXP = mission.xp
-                            isEditingXP = true
+                        if canEdit {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                lastValidXP = mission.xp
+                                isEditingXP = true
+                            }
+                        } else {
+                            triggerDeniedFeedback(active: $deniedEdit, offset: $shakeOffset)
                         }
                     }
             }
         }
-        .onChange(of: isEditingXP) { _, editing in
-            if !editing {
-                // Validate XP in case user cancels out somehow
-                if !allowedXPValues.contains(mission.xp) {
-                    mission.xp = lastValidXP
-                    showXPWarning = true
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                        withAnimation { showXPWarning = false }
-                    }
-                }
-            }
-        }
-        .overlay(
-            Group {
-                if showXPWarning {
-                    Text("⚠️ Invalid XP reverted")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.red)
-                        .transition(.opacity)
-                        .offset(y: -24)
-                }
-            }
-        )
     }
 }

@@ -36,10 +36,11 @@ struct LevelUpApp: App {
                     Friend.self,
                     FriendRequest.self,
                     Mission.self,
+                    MissionRequest.self,
                     ProgressLog.self,
                     User.self,
                     UserSettings.self,
-                    UserStats.self
+                    UserStats.self,
                 ])
                 .preferredColorScheme(.light)
                 .environment(\.theme, currentTheme)

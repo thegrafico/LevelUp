@@ -18,6 +18,8 @@ struct MissionList: View {
     @State private var expandedCategories: Set<String> = ["General"]
     @State private var selectedMission: Mission? = nil
     
+    private let allCategory = "All"
+    
     private var missionController: MissionController {
         MissionController(
             context: context,
@@ -92,8 +94,8 @@ struct MissionList: View {
             .sorted { $0.key.localizedCaseInsensitiveCompare($1.key) == .orderedAscending }
         
         // Add an “All” section at the top
-        if !filteredMissions.isEmpty && showAllSection {
-            result.insert((key: "All", missions: filteredMissions), at: 0)
+        if !filteredMissions.isEmpty && selectedFilter == .all {
+            result.insert((key: allCategory, missions: filteredMissions), at: 0)
         }
         
         return result
@@ -163,13 +165,32 @@ struct MissionList: View {
                                                     expandedCategories.insert(category)
                                                 }
                                             }
+                                            
+                                            let newCategoriesCount = (badgeManager?.count(for: .missionCategory(category)) ?? 0) * -1
+                                            
+                                            if newCategoriesCount != 0 {
+                                                badgeManager?.clear(.missionCategory(category))
+                                                badgeManager?.increment(.filterMission(selectedFilter), by: newCategoriesCount)
+                                            }
+                                            
                                         } label: {
                                             HStack {
                                                 Text(category)
                                                     .font(.footnote.weight(.semibold))
                                                     .foregroundStyle(.secondary)
                                                     .padding(.top, 8)
-                                                
+                                                    .overlay(alignment: .topTrailing) {
+                                                        if let badgeManager = badgeManager {
+                                                            
+                                                            let count = badgeManager.count(for: .missionCategory(category))
+                                                            if count > 0 {
+                                                                BadgeView(count: count, size: 20)
+                                                                    .offset(x: 14, y: -14)
+                                                            } else {
+                                                                EmptyView()
+                                                            }
+                                                        }
+                                                    }
                                                 Spacer()
                                                 
                                                 if expandedCategories.contains(category) {
@@ -185,7 +206,7 @@ struct MissionList: View {
                                             .contentShape(Rectangle())
                                         }
                                         .buttonStyle(.plain)
-                                        
+                                    
                                         // MARK: Collapsible Content
                                         if expandedCategories.contains(category) {
                                             VStack(spacing: 12) {
@@ -197,14 +218,17 @@ struct MissionList: View {
                                                         .transition(.opacity.combined(with: .slide))
                                                 }
                                             }
-//                                            .padding(.horizontal, 12)
+                                            .allowsHitTesting(expandedCategories.contains(category))
                                             .transition(.asymmetric(
                                                 insertion: .opacity.combined(with: .move(edge: .top)),
-                                                removal: .opacity.combined(with: .move(edge: .top))
+                                                removal: .identity,//.opacity.combined(with: .move(edge: .top)) // adding animation here causes a bug that if clicked to fast a sheet is opened.
                                             ))
                                         }
                                     }
+                                    .id("section-\(category)")
                                     .padding(.bottom, 8)
+                                    
+                                    
                                 }
                             } else {
                                 ContentUnavailableView("No missions available", systemImage: "list.bullet.circle.fill")
@@ -253,6 +277,8 @@ struct MissionList: View {
             .padding(.horizontal, 6)
         }.sheet(item: $selectedMission) { mission in
             MissionPreviewCard(mission: mission)
+                .id(mission.id) // 👈 Forces SwiftUI to rebuild the sheet context
+
         }
     }
 }

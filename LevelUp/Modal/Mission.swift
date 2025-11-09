@@ -86,6 +86,14 @@ final class Mission: Identifiable {
 
 extension Mission {
     
+    var categoryBadgeKey: BadgeKey {
+           .missionCategory(category.name)
+       }
+    
+    var filterBadgeKey: BadgeKey {
+        .filterMission(type)
+    }
+    
     func asCopy() -> Mission {
         let copy = Mission(
             title: self.title,

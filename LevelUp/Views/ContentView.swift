@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(\.theme) private var theme
-    @State private var badgeManager = BadgeManager()
+    @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
     @State private var leaderBoardIsAvailable: Bool = false
     @Environment(\.modelContext) private var context
     @Environment(\.currentUser) private var user
@@ -19,6 +19,10 @@ struct ContentView: View {
     
     private var missionController: MissionController {
         MissionController(context: context, user: user, badgeManager: badgeManager)
+    }
+    
+    private var userController: UserController {
+        UserController(context: context, user: user, badgeManager: badgeManager)
     }
     
     var userId: UUID {
@@ -35,7 +39,6 @@ struct ContentView: View {
                     
                     Tab("Home", systemImage: "house") {
                         HomeView()
-                            .environment(badgeManager)
                             .task {
                                 // Runs when HomeView appears
                                 await DataSeeder.loadGlobalMissions(for: user, in: context)
@@ -45,7 +48,7 @@ struct ContentView: View {
                                 
                                 missionController.updateCompleteStatus(for: user.missions)
                                 
-                                badgeManager.clear(.tabBarOption(.Home))
+                                badgeManager?.clear(.tabBarOption(.Home))
                                 
                             }
                             .onChange(of: scenePhase) { _, newPhase in
@@ -58,35 +61,33 @@ struct ContentView: View {
                                 }
                             }
                     }
-                    .badge(badgeManager.count(for: .tabBarOption(.Home)))
+                    .badge(badgeManager?.count(for: .tabBarOption(.Home)) ?? 0)
                     
                     if leaderBoardIsAvailable {
                         Tab("Leaderboard", systemImage: "trophy.fill") {
                             LeaderboardView()
                                 .task {
-                                    badgeManager.clear(.tabBarOption(.Leadboard))
+                                    badgeManager?.clear(.tabBarOption(.Leadboard))
                                 }
                         }
-                        .badge(badgeManager.count(for: .tabBarOption(.Leadboard)))
+                        .badge(badgeManager?.count(for: .tabBarOption(.Leadboard)) ?? 0)
                     }
                     
                     Tab("Friends", systemImage: "person.3.fill") {
                         FriendsView(userId: userId)
-                            .environment(badgeManager)
-                        
                             .task {
-                                badgeManager.clear(.tabBarOption(.Friends))
+                                badgeManager?.clear(.tabBarOption(.Friends))
                             }
                     }
-                    .badge(badgeManager.count(for: .tabBarOption(.Friends)))
+                    .badge(badgeManager?.count(for: .tabBarOption(.Friends)) ?? 0)
                     
                     Tab("Settings", systemImage: "gear") {
                         SettingsView()
                             .task {
-                                badgeManager.clear(.tabBarOption(.Settings))
+                                badgeManager?.clear(.tabBarOption(.Settings))
                             }
                     }
-                    .badge(badgeManager.count(for: .tabBarOption(.Settings)))
+                    .badge(badgeManager?.count(for: .tabBarOption(.Settings)) ?? 0)
                 }
                 .tint(theme.primary)
                 .toolbarBackground(theme.cardBackground, for: .tabBar)
@@ -128,4 +129,5 @@ struct ContentView: View {
         .modelContainer(SampleData.shared.modelContainer)
         .environment(\.theme, .orange)
         .environment(\.currentUser, User.sampleUserWithLogs())
+        .environmentObject(ModalManager())
 }

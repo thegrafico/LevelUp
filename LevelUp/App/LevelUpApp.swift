@@ -54,6 +54,7 @@ struct RootGate: View {
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var userStore: UserStore
     @EnvironmentObject private var notificationManager: NotificationManager
+    @State private var badgeManager = BadgeManager()
 
     
     @State private var state: LaunchState = .loading
@@ -66,9 +67,15 @@ struct RootGate: View {
             case .authenticated(let user):
                 ContentView()
                     .environment(\.currentUser, user)
+                    .environment(badgeManager)
                     .transition(.move(edge: .trailing).combined(with: .opacity))
                     .task {
+                        
+                        // ask user if can send notification
                         await notificationManager.requestAuthorization()
+                        
+                        // load notifications
+                        try? await UserController(context: context, user: user, badgeManager: badgeManager).loadNotifications(updateTabs: true)
                     }
             case .unauthenticated:
                 AuthView()

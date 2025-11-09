@@ -39,7 +39,8 @@ final class MissionController: ObservableObject {
         
         do {
             try context.save()
-            badgeManager?.increment(.filterMission(mission.type))
+            badgeManager?.increment(mission.filterBadgeKey)
+            badgeManager?.increment(mission.categoryBadgeKey)
         } catch {
             print("❌ Failed to insert mission: \(error)")
         }

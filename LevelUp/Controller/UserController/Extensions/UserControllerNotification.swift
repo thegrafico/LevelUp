@@ -101,7 +101,7 @@ extension UserController {
         try context.save()
     }
     
-    func loadNotifications() async throws -> Void {
+    func loadNotifications(updateTabs: Bool = false) async throws -> Void {
         
         guard user != nil else {
             print("Invalid user for loading notifications")
@@ -146,6 +146,10 @@ extension UserController {
         }
         
         badgeManager?.set(.FriendsNotification, to: newNotificationsCount)
+        
+        if updateTabs {
+            badgeManager?.set(.tabBarOption(.Friends), to: newNotificationsCount)
+        }
         
         // 5️⃣ Save context and return all notifications for the user
         try context.save()

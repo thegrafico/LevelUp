@@ -143,6 +143,10 @@ extension UserController {
         receiver.addMission(missionRequest.mission.asCopy())
         missionRequest.updateStatus(to: .accepted)
         
+        badgeManager?.increment(missionRequest.mission.filterBadgeKey)
+        badgeManager?.increment(missionRequest.mission.categoryBadgeKey)
+        badgeManager?.increment(.tabBarOption(.Home))
+        
         try context.save()
     }
         

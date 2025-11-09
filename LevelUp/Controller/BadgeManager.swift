@@ -53,6 +53,8 @@ enum BadgeKey: Hashable {
     
     case AppNotification(AppNotification.Kind)
     case filterMission(MissionType)
+
+    case missionCategory(String)
 }
 
 enum TabBarNotificationType: String, CaseIterable, Identifiable {

@@ -177,20 +177,11 @@ struct FriendsView: View {
         guard !initialized else { return }
         initialized = true
         
-        // Now environments exist → safe to build the controller
+        // load the controller
         userController = UserController(context: context, user: user, badgeManager: badgeManager)
         
         Task {
             await loadFriendsNotifications()
-            
-            //            try await userController?.deleteAllFriendRequest()
-            //            try await userController?.deleteAllNotifications()
-            
-            try? await Task.sleep(nanoseconds: 200_000_000)
-            print("=============")
-            print("Friend Requests: \(friendRequests.count)")
-            print("Notifications: \(userNotifications.count)")
-            print("=============")
         }
     }
     

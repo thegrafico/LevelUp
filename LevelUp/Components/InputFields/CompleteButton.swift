@@ -10,12 +10,16 @@ import SwiftUI
 struct CompleteButton: View {
     @Environment(\.theme) private var theme
     var title: String = "COMPLETE"
-    var action: () -> Void = {
+    var action: () async throws -> Void = {
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
     }
-
+    
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            Task {
+                try await action()
+            }
+        }) {
             Text(title)
                 .font(.headline.weight(.heavy))
                 .kerning(1)

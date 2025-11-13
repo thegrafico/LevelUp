@@ -14,6 +14,10 @@ struct HomeView: View {
         MissionController(context: context, user: user, badgeManager: badgeManager)
     }
     
+    private var userController : UserController {
+        UserController(context: context, user: user, badgeManager: badgeManager)
+     }
+
     // MARK: All Missions
     private var allMissions: [Mission] {
         user.allMissions
@@ -44,6 +48,8 @@ struct HomeView: View {
                         withAnimation(.spring(response: 0.5, dampingFraction: 0.9)) {
                             missionController.markAsCompleted(selectedMissions)
                         }
+                        
+                        try await userController.updateUserAchievements()
                     }
                     .scaleEffect(animateBounce ? 1.1 : 0.9)
                     .padding(.bottom, 20)
@@ -60,6 +66,13 @@ struct HomeView: View {
                     }
                 }
             }
+        }
+        .onAppear() {
+            Task {
+                print("Updating user achievements")
+                try await userController.updateUserAchievements()
+            }
+            
         }
     }
 }

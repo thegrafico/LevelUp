@@ -12,16 +12,13 @@ import SwiftData
 final class UserStats: Identifiable {
     var level: Int
     var xp: Int
-    
     var streakCount: Int
     var bestStreakCount: Int
     var lastStreakCompletedDate: Date?
-    
     var challengeWonCount: Int
-    
     var topMission: String?
+    var missionCompletedCount: Int
     var lastActive: Date
-    
     var id: UUID
     
     var isOnline: Bool  {
@@ -36,6 +33,7 @@ final class UserStats: Identifiable {
         topMission: String? = nil,
         challengeWonCount: Int = 0,
         lastActive: Date = .now,
+        missionCompletedCount: Int = 0,
         id: UUID = UUID()
     ) {
         self.level = level
@@ -45,6 +43,7 @@ final class UserStats: Identifiable {
         self.topMission = topMission
         self.challengeWonCount = challengeWonCount
         self.lastActive = lastActive
+        self.missionCompletedCount = missionCompletedCount
         self.id = id
     }
 }
@@ -61,8 +60,16 @@ extension UserStats {
         self.topMission = nil
     }
     
+    func updateBestStreakCountIfNeeded() {
+        if self.streakCount > self.bestStreakCount {
+            self.bestStreakCount = self.streakCount
+        }
+    }
+    
     func incrementStreakCount(forDate: Date? = nil) {
         self.streakCount += 1
+        
+        updateBestStreakCountIfNeeded()
         
         if let forDate = forDate {
             self.lastStreakCompletedDate = forDate
@@ -74,6 +81,7 @@ extension UserStats {
     
     func setStreakCount(to count: Int, forDate: Date? = nil) {
         self.streakCount = count
+        updateBestStreakCountIfNeeded()
         
         if let forDate = forDate {
             self.lastStreakCompletedDate = forDate
@@ -99,14 +107,33 @@ extension UserStats {
         self.xp = xp
     }
     
-    func addXP(_ amount: Int) {
+    // MARK: - add xp to user. return true if level up
+    @discardableResult
+    func addXP(_ amount: Int) -> Bool {
         self.xp += amount
+        var didUserLevelUp = false
 
         // Loop in case we level up multiple times at once
         while xp >= requiredXP() {
             xp -= requiredXP() // carry over extra XP
             self.level += 1
+            didUserLevelUp = true
         }
+        
+        return didUserLevelUp
+    }
+    
+    // MARK: - Complete a mission. Return true if user level up
+    @discardableResult
+    func completeMission(_ mission: Mission) -> Bool {
+        
+        mission.markCompleted()
+        
+        let userDidLevelUp = addXP(mission.xp)
+        
+        self.missionCompletedCount += 1
+        
+        return userDidLevelUp
     }
     
     func requiredXP() -> Int {

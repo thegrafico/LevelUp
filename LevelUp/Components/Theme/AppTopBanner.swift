@@ -51,16 +51,7 @@ struct AppTopBanner: View {
                     }
                     .buttonStyle(.plain)    
                     .overlay(alignment: .topTrailing) {
-                        if let badgeManager = badgeManager {
-                            
-                            let count = badgeManager.count(for: .FriendsNotification)
-                            if count > 0 {
-                                BadgeView(count: count, size: 30)
-                                    .offset(x: 6, y: -14)
-                            } else {
-                                EmptyView()
-                            }
-                        }
+                        badgeManager?.badgeView(for: .FriendsNotification, size: 30, offsetX: 6, offsetY: -14)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -73,6 +64,6 @@ struct AppTopBanner: View {
 
 #Preview {
     AppTopBanner(title: "Friends", subtitle: "Add or challenge them!")
-        .environment(BadgeManager()) // 👈 inject preview manager
+        .environment(BadgeManager(defaultCount: 1)) // 👈 inject preview manager
 
 }

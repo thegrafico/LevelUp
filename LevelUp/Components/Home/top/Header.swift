@@ -8,11 +8,10 @@
 import SwiftUI
 
 
-
 struct Header: View {
     @Environment(\.currentUser) private var user
+    @State private var showProfileSheet = false
 
-    
     var body: some View {
         ZStack(alignment: .top) {
             TopBannerBackground()
@@ -20,9 +19,16 @@ struct Header: View {
 
             VStack(spacing: 0) {
                 BannerTitle(username: user.username)
-                UserLevelXPCard(stats: user.stats)
+
+                UserLevelXPCard(stats: user.stats) {
+                    showProfileSheet = true
+                }
             }
             .padding(.horizontal, 12)
+        }
+        .sheet(isPresented: $showProfileSheet) {
+            PlayerProfileSheet() 
+            .presentationDetents([.large])
         }
     }
 }

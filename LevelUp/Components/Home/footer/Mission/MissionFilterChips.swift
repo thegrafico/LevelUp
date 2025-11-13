@@ -30,16 +30,7 @@ struct MissionFilterChips: View {
                             .stroke(theme.textPrimary.opacity(0.08), lineWidth: isSelected ? 0 : 1)
                     )
                     .overlay(alignment: .topTrailing) {
-                        if let badgeManager = badgeManager {
-                            
-                            let count = badgeManager.count(for: .filterMission(filter))
-                            if count > 0 {
-                                BadgeView(count: count, size: 20)
-                                    .offset(x: 8, y: -8)
-                            } else {
-                                EmptyView()
-                            }
-                        }
+                        badgeManager?.badgeView(for: .filterMission(filter), size: 20, offsetX: 8, offsetY: -8)
                     }.onTapGesture { selectedFilter = filter }
                     
             }
@@ -48,7 +39,7 @@ struct MissionFilterChips: View {
 }
 
 #Preview {
-    MissionFilterChips(selectedFilter: .constant(.custom))        .environment(BadgeManager(defaultCount: 20)) // 👈 inject once
+    MissionFilterChips(selectedFilter: .constant(.custom))        .environment(BadgeManager(defaultCount: 15)) // 👈 inject once
 
 
     MissionFilterChips(selectedFilter: .constant(.global))

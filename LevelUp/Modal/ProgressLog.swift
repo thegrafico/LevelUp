@@ -18,10 +18,12 @@ final class ProgressLog: Identifiable {
     @Relationship(deleteRule: .cascade)
     var events: [ProgressEvent] = []
 
-    init(date: Date = Date()) {
+    init(date: Date = Date(), events: [ProgressEvent] = []) {
         self.id = UUID()
         // Normalize to start of day
         self.date = Calendar.current.startOfDay(for: date)
+        
+        self.events = events
     }
 }
 
@@ -37,6 +39,7 @@ final class ProgressEvent: Identifiable {
     var missionCompletionTime: Date?
     var userLevel: Int?
     var details: String?
+    var userXP: Double?
 
     var type: ProgressEventType {
         get { ProgressEventType(rawValue: typeRaw) ?? .addMission }
@@ -52,6 +55,7 @@ final class ProgressEvent: Identifiable {
         missionCompletionTime: Date? = nil,
         userLevel: Int? = nil,
         details: String? = nil,
+        userXp: Double? = nil,
         date: Date = Date()
     ) {
         self.id = UUID()
@@ -64,6 +68,7 @@ final class ProgressEvent: Identifiable {
         self.missionCompletionTime = missionCompletionTime
         self.userLevel = userLevel
         self.details = details
+        self.userXP = userXp
         
     }
 }

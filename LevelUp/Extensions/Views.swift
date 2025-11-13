@@ -39,3 +39,15 @@ struct ScaleOnTapButtonStyle: ButtonStyle {
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
+
+
+extension Color {
+    func toHex() -> String {
+        guard let components = UIColor(self).cgColor.components else { return "#FFFFFF" }
+        let r = components[0]
+        let g = components.count >= 3 ? components[1] : r
+        let b = components.count >= 3 ? components[2] : r
+        return String(format: "#%02lX%02lX%02lX", Int(r*255), Int(g*255), Int(b*255))
+    }
+}
+

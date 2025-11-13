@@ -22,7 +22,7 @@ extension UserController {
         }
         
         // Hash the password (you can replace with proper cryptographic hash later)
-        let passwordHash = hash(password)
+        let passwordHash = UserController.hash(password)
         
         let user = User(
             username: username,
@@ -47,7 +47,7 @@ extension UserController {
             throw AuthError.userNotFound
         }
         
-        guard user.passwordHash == hash(password) else {
+        guard user.passwordHash == UserController.hash(password) else {
             throw AuthError.invalidPassword
         }
         
@@ -70,8 +70,12 @@ extension UserController {
         return try context.fetch(descriptor)
     }
     
-    /// Fake hash for now — replace with CryptoKit later.
-    private func hash(_ string: String) -> String {
+   
+}
+
+extension UserController {
+    
+    static func hash(_ string: String) -> String {
         return String(string.reversed()) + "_hash"
     }
 }

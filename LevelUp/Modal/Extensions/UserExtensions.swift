@@ -28,7 +28,8 @@ extension User {
         _ type: ProgressEventType,
         mission: Mission? = nil,
         level: Int? = nil,
-        details: String? = nil
+        details: String? = nil,
+        userXp: Double? = nil
     ) {
         let logEntry = log(for: Date())
         let event = ProgressEvent(
@@ -39,7 +40,8 @@ extension User {
             missionType: mission?.type,
             missionCompletionTime: mission?.completionDate,
             userLevel: level,
-            details: details
+            details: details,
+            userXp: userXp
         )
         logEntry.events.append(event)
         lastRefreshTrigger = Date() // ✅ forces SwiftUI to refresh computed values
@@ -283,6 +285,7 @@ extension User {
     }
     
     func addMission(_ mission: Mission) {
+        
         // check if mission is already added
         guard self.missions.first(where: { $0.id == mission.id }) == nil else {
             print("Mission already added")
@@ -291,5 +294,36 @@ extension User {
         
         missions.append(mission)
         
+    }
+}
+
+
+extension User {
+    func addAchievement(_ achievement: Achievement) {
+        
+        guard self.achievements.first(where: { $0.id == achievement.id || $0.title == achievement.title }) == nil else {
+            print("Achivement already added")
+            return
+        }
+        achievements.append(achievement)
+    }
+}
+
+extension User {
+    /// Generates an array of LevelLog entries from level-up events in the user's progress logs.
+    var levelProgressionLogs: [LevelLog] {
+        progressLogs
+            .flatMap { log in
+                log.events
+                    .filter { $0.type == .userLevelUp }
+                    .compactMap { event in
+                        return LevelLog(
+                            level: event.userLevel ?? 0,
+                            gainedXP: Int(event.userXP ?? 0),
+                            date: event.date
+                        )
+                    }
+            }
+            .sorted(by: { $0.date > $1.date }) // newest first
     }
 }

@@ -23,9 +23,16 @@ struct FriendPreviewCardStatsOverview: View {
             statRow(icon: "clock.fill", title: "Last Active", value: "2 hours ago")
         }
     }
+}
+
+struct statRow: View {
+    @Environment(\.theme) private var theme
     
-    @ViewBuilder
-    private func statRow(icon: String, title: String, value: String) -> some View {
+    var icon: String
+    var title: String
+    var value: String
+    
+    var body: some View {
         HStack {
             Image(systemName: icon)
                 .foregroundStyle(theme.primary)

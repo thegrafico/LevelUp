@@ -15,7 +15,7 @@ struct MissionList: View {
     @State private var selectedFilter: MissionType = .custom
     @State private var selectedSort: MissionSort = .name
     @State private var showDeleteConfirmation = false
-    @State private var expandedCategories: Set<String> = ["General"]
+    @State private var expandedCategories: Set<String> = []
     @State private var selectedMission: Mission? = nil
     
     private let allCategory = "All"
@@ -180,16 +180,7 @@ struct MissionList: View {
                                                     .foregroundStyle(.secondary)
                                                     .padding(.top, 8)
                                                     .overlay(alignment: .topTrailing) {
-                                                        if let badgeManager = badgeManager {
-                                                            
-                                                            let count = badgeManager.count(for: .missionCategory(category))
-                                                            if count > 0 {
-                                                                BadgeView(count: count, size: 20)
-                                                                    .offset(x: 14, y: -14)
-                                                            } else {
-                                                                EmptyView()
-                                                            }
-                                                        }
+                                                        badgeManager?.badgeView(for: .missionCategory(category), size: 20, offsetX: 14, offsetY: -14)
                                                     }
                                                 Spacer()
                                                 
@@ -264,6 +255,7 @@ struct MissionList: View {
                         .padding(.bottom, 20)
                     }
                 }
+                .scrollIndicators(.hidden)
                 .padding(.horizontal, 6)
                 .onChange(of: selectedFilter) {
                     
@@ -301,7 +293,7 @@ struct MissionListPreviewWrapper: View {
 #Preview {
     MissionListPreviewWrapper()
         .modelContainer(SampleData.shared.modelContainer)
-        .environment(BadgeManager())
+        .environment(BadgeManager(defaultCount: 2))
         .frame(maxWidth: .infinity, maxHeight: .infinity) // ✅ allow scroll & fill space
         .environmentObject(ModalManager())
         .environmentObject(NotificationManager())

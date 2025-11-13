@@ -9,25 +9,50 @@ import SwiftUI
 
 struct UserLevelXPCard: View {
     @Environment(\.theme) private var theme
-    
+    @Environment(BadgeManager.self) private var badgeManager: BadgeManager?
+
     @Bindable var stats: UserStats
     
-    var onTap: () -> Void = {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-    }
+    var onTap: () async throws -> Void
     
+    var notificationsAvailable: Bool {
+        badgeManager?.count(for: .userAchievementProfile) ?? 0 > 0
+    }
+
     var body: some View {
         Button {
-            onTap()
-        } label: {
+            Task {
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                badgeManager?.clear(.userAchievementProfile)
+                try await onTap()
+            }
             
+        } label: {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Lv. \(stats.level)")
-                            .font(.title3.weight(.bold))
-                            .foregroundStyle(theme.textPrimary)
-                            .monospaced()
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack (spacing: 0) {
+                            Text("Lv. \(stats.level)")
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(theme.textPrimary)
+                                .monospaced()
+                            
+                            Spacer()
+                            
+                            // MARK: - Notifications badge
+                            // MARK: - Notifications badge
+                            Image(systemName: "bell.badge.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(theme.primary)
+                                .background(
+                                    Circle()
+                                        .fill(theme.textInverse.opacity(0.1))
+                                )
+                                // Scale and opacity animation
+                                .scaleEffect(notificationsAvailable ? 1.2 : 0.5) // scale up when appears
+                                .opacity(notificationsAvailable ? 1 : 0)
+                                .animation(.spring(response: 0.4, dampingFraction: 0.5), value: notificationsAvailable)
+                        }
                         
                         HStack(spacing: 0) {
                             AnimatedNumberText(value: stats.xp, font: theme.bodyFont)
@@ -42,11 +67,8 @@ struct UserLevelXPCard: View {
                                 .font(theme.bodyFont)
                                 .foregroundStyle(theme.textSecondary)
                                 .monospaced()
+                            
                         }
-//                        Text("\(user.xp) / \(user.requiredXP()) XP")
-//                            .font(theme.bodyFont)
-//                            .foregroundStyle(theme.textSecondary)
-//                            .monospaced()
                     }
                     Spacer()
                 }
@@ -110,5 +132,7 @@ struct AnimatedNumberText: View {
 
 
 #Preview {
-    UserLevelXPCard(stats: UserStats())
+    UserLevelXPCard(stats: UserStats(), onTap: {} )
+        .environment(BadgeManager(defaultCount: 02))
+
 }

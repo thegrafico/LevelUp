@@ -37,16 +37,7 @@ struct NotificationSection: View {
                     .font(.headline.weight(.bold))
                     .foregroundStyle(theme.textPrimary)
                     .overlay(alignment: .topTrailing) {
-                        if let badgeManager = badgeManager {
-                            
-                            let count = badgeManager.count(for: .AppNotification(notificationBadgeType))
-                            if count > 0 {
-                                BadgeView(count: count, size: 20)
-                                    .offset(x: 14, y: -14)
-                            } else {
-                                EmptyView()
-                            }
-                        }
+                        badgeManager?.badgeView(for: .AppNotification(notificationBadgeType), size: 20, offsetX: 14, offsetY: -14)
                     }
                 Spacer()
                 Image(systemName: isExpanded ? "chevron.up" : "chevron.down")

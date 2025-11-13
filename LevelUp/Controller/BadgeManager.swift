@@ -55,6 +55,9 @@ enum BadgeKey: Hashable {
     case filterMission(MissionType)
 
     case missionCategory(String)
+    
+    case userAchievementProfile
+    case userAchievement(String)
 }
 
 enum TabBarNotificationType: String, CaseIterable, Identifiable {
@@ -67,4 +70,20 @@ enum TabBarNotificationType: String, CaseIterable, Identifiable {
         UUID()
     }
     
+}
+
+extension BadgeManager {
+    
+    
+    @ViewBuilder
+    func badgeView(for type: BadgeKey, size: CGFloat = 30,  offsetX: CGFloat = 6, offsetY: CGFloat = -14) -> some View {
+    
+        let count = count(for: type)
+        if count > 0 {
+            BadgeView(count: count, size: size)
+                .offset(x: offsetX, y: offsetY)
+        } else {
+            EmptyView()
+        }
+    }
 }

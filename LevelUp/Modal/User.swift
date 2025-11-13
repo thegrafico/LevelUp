@@ -31,6 +31,8 @@ final class User: Identifiable {
     var settings: UserSettings
     @Relationship(deleteRule: .cascade)
     var stats: UserStats
+    @Relationship(deleteRule: .cascade)
+    var achievements: [Achievement] = []
     
     init(
         username: String,
@@ -182,4 +184,54 @@ extension User {
         user.stats.setLevel(1 + (totalXP / 500))
         return user
     }
+    
+    static func sampleUserWithLevelUps() -> User {
+            let user = User(
+                username: "LevelTester",
+                passwordHash: "hash123",
+                email: "level@test.com",
+                stats: .init(level: 10, xp: 1200)
+            )
+
+            let calendar = Calendar.current
+            let now = Date()
+
+            // Create fake progress logs for the last few days
+            let logs: [ProgressLog] = [
+                ProgressLog(
+                    date: calendar.date(byAdding: .day, value: -10, to: now)!,
+                    events: [
+                        ProgressEvent(type: .userLevelUp, userLevel: 2, userXp: 150)
+                    ]
+                ),
+                ProgressLog(
+                    date: calendar.date(byAdding: .day, value: -7, to: now)!,
+                    events: [
+                        ProgressEvent(type: .userLevelUp, userLevel: 3, userXp: 220),
+                        ProgressEvent(type: .completedMission, missionTitle: "Read a Chapter", missionXP: 25)
+                    ]
+                ),
+                ProgressLog(
+                    date: calendar.date(byAdding: .day, value: -5, to: now)!,
+                    events: [
+                        ProgressEvent(type: .userLevelUp, userLevel: 4, userXp: 300)
+                    ]
+                ),
+                ProgressLog(
+                    date: calendar.date(byAdding: .day, value: -3, to: now)!,
+                    events: [
+                        ProgressEvent(type: .userLevelUp, userLevel: 5, userXp: 350)
+                    ]
+                ),
+                ProgressLog(
+                    date: calendar.date(byAdding: .day, value: -1, to: now)!,
+                    events: [
+                        ProgressEvent(type: .userLevelUp, userLevel: 6, userXp: 420)
+                    ]
+                )
+            ]
+
+            user.progressLogs = logs
+            return user
+        }
 }

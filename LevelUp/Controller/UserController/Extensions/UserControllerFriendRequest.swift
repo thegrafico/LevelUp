@@ -129,6 +129,9 @@ extension UserController {
         // upadte friend request status 
         friendRequest.updateStatus(to: .accepted)
         
+        // MARK: - Optional updating user achivements
+        try await updateUserAchievements()
+        
         try context.save()
     }
     
@@ -146,6 +149,9 @@ extension UserController {
         badgeManager?.increment(missionRequest.mission.filterBadgeKey)
         badgeManager?.increment(missionRequest.mission.categoryBadgeKey)
         badgeManager?.increment(.tabBarOption(.Home))
+        
+        // MARK: - Optional updating user achivements
+        try await updateUserAchievements()
         
         try context.save()
     }

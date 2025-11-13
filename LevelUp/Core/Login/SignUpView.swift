@@ -32,10 +32,7 @@ struct SignUpView: View {
     }
 
     private var isPasswordValid: Bool {
-        let regex = try! NSRegularExpression(
-            pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$"
-        )
-        return regex.firstMatch(in: password, range: NSRange(password.startIndex..., in: password)) != nil
+        userStore.isPasswordValid(password)
     }
 
     private var doPasswordsMatch: Bool {

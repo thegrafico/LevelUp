@@ -133,6 +133,80 @@ final class UserStore: ObservableObject {
     func setActiveUserId(_ id: UUID?) {
         self.activeUserId = id?.uuidString
     }
+    
+    func validateUserPassword(_ password: String) -> Bool {
+        guard let user else {
+            print("⚠️ UserController or user not available.")
+            return false
+        }
+        
+        // Hash the provided password
+        let hashedInput = UserController.hash(password)
+        
+        // Compare against the stored hash
+        let isValid = hashedInput == user.passwordHash
+        
+        print(isValid ? "✅ Password validated successfully" : "❌ Invalid password")
+        return isValid
+    }
+    
+    func isPasswordValid(_ password: String) -> Bool {
+        let regex = try! NSRegularExpression(
+            pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{4,}$"
+        )
+        return regex.firstMatch(in: password, range: NSRange(password.startIndex..., in: password)) != nil
+    }
+    
+    @discardableResult
+    func validateUsername(_ username: String) async throws -> Bool {
+        let trimmed = username.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // 1️⃣ Empty check
+        guard !trimmed.isEmpty else {
+            throw UsernameValidationError.empty
+        }
+
+        // 2️⃣ Length check
+        guard trimmed.count >= 3 else {
+            throw UsernameValidationError.tooShort
+        }
+
+        guard trimmed.count <= 20 else {
+            throw UsernameValidationError.tooLong
+        }
+
+        // 3️⃣ Character validation
+        let regex = try! NSRegularExpression(pattern: "^[A-Za-z0-9._]+$")
+        let range = NSRange(location: 0, length: trimmed.utf16.count)
+        guard regex.firstMatch(in: trimmed, range: range) != nil else {
+            throw UsernameValidationError.invalidCharacters
+        }
+
+        // 4️⃣ Duplicate check
+        if let controller = userController {
+            do {
+                let existingUser = try await controller.searchUsers(byUsername: trimmed)
+
+                if !existingUser.isEmpty {
+                    throw UsernameValidationError.usernameTaken
+                }
+            } catch let error as UsernameValidationError {
+                // Re-throw your intentional validation errors
+                throw error
+            } catch {
+                // Only handle unexpected (e.g. network/database) errors here
+                print("⚠️ Username lookup failed: \(error)")
+                throw UsernameValidationError.lookupFailed
+            }
+        }
+
+        // ✅ All checks passed
+        return true
+    }
+    
+    func emcrypPassword(_ password: String) -> String {        
+        UserController.hash(password)
+    }
 }
 
 // MARK: - Environment Injection
@@ -151,5 +225,32 @@ extension EnvironmentValues {
     var currentUser: User {
         get { self[CurrentUserKey.self] }
         set { self[CurrentUserKey.self] = newValue }
+    }
+}
+
+
+enum UsernameValidationError: LocalizedError {
+    case empty
+    case tooShort
+    case tooLong
+    case invalidCharacters
+    case usernameTaken
+    case lookupFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .empty:
+            "Username cannot be empty."
+        case .tooShort:
+            "Username must be at least 3 characters long."
+        case .tooLong:
+            "Username cannot exceed 20 characters."
+        case .invalidCharacters:
+            "Username can only contain letters, numbers, underscores, or dots."
+        case .usernameTaken:
+            "This username is already taken."
+        case .lookupFailed:
+            "Something went wrong while checking the username."
+        }
     }
 }

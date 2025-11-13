@@ -81,8 +81,12 @@ final class MissionController: ObservableObject {
         guard let user else { return }
 
         for mission in missions {
-            mission.markCompleted()
-            user.stats.addXP(mission.xp)
+            let userDidLevelUp = user.stats.completeMission(mission)
+            
+            if userDidLevelUp {
+                user.logEvent(.userLevelUp, level: user.stats.level, userXp: user.xpGainedTotal)
+            }
+            
             user.logEvent(.completedMission, mission: mission)
         }
 

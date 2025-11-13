@@ -8,32 +8,55 @@
 import SwiftUI
 import SwiftData
 
+enum ProfileUpdateError: LocalizedError {
+    case usernameUnavailable
+    case usernameValidationFailed(String)
+    case invalidCurrentPassword
+    case weakNewPassword
+
+    var errorDescription: String? {
+        switch self {
+        case .usernameUnavailable:
+            "Username is already taken."
+        case .usernameValidationFailed(let reason):
+            reason
+        case .invalidCurrentPassword:
+            "Current password is incorrect."
+        case .weakNewPassword:
+            "New password is too weak."
+        }
+    }
+
+    // ✅ Mapper initializer
+    init(from usernameError: UsernameValidationError) {
+        switch usernameError {
+        case .usernameTaken:
+            self = .usernameUnavailable
+        default:
+            self = .usernameValidationFailed(usernameError.localizedDescription)
+        }
+    }
+}
+
 struct ProfileView: View {
     @Environment(\.theme) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(\.currentUser) private var user
     @EnvironmentObject private var userStore: UserStore
-
+    
     // MARK: - User Input
     @State private var username: String = ""
     @State private var currentPassword: String = ""
     @State private var newPassword: String = ""
     @State private var confirmPassword: String = ""
-
+    @FocusState private var isConfirmFocused: Bool
+    
     // MARK: - UI State
     @State private var errorMessage: String?
     @State private var successMessage: String?
     @State private var isLoading = false
-
-    // MARK: - Validation
-    private var isFormValid: Bool {
-        !username.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !currentPassword.isEmpty &&
-        !newPassword.isEmpty &&
-        newPassword == confirmPassword
-    }
-
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
@@ -49,13 +72,13 @@ struct ProfileView: View {
                             .foregroundStyle(theme.primary)
                     }
                     
-                    Text(username)
+                    Text(user.username)
                         .font(.title3.bold())
                         .foregroundStyle(theme.textPrimary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.bottom, 8)
-
+                
                 // MARK: - Username
                 TextFieldWithIcon(
                     systemImage: "person.fill",
@@ -64,7 +87,7 @@ struct ProfileView: View {
                 )
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled(true)
-
+                
                 // MARK: - Email (read-only)
                 TextFieldWithIcon(
                     systemImage: "envelope.fill",
@@ -73,38 +96,65 @@ struct ProfileView: View {
                 )
                 .disabled(true)
                 .opacity(0.7)
-
+                
                 // MARK: - Password Section
                 Divider().padding(.vertical, 10)
-
+                
                 Text("Change Password")
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(theme.textSecondary)
                     .padding(.bottom, 4)
-
+                
                 TextFieldWithIcon(
                     systemImage: "lock.fill",
                     placeholder: "Current Password",
                     text: $currentPassword,
                     isSecure: true
                 )
-
+                
                 TextFieldWithIcon(
                     systemImage: "lock.rotation",
                     placeholder: "New Password",
                     text: $newPassword,
-                    isSecure: true
-                )
-
-                TextFieldWithIcon(
-                    systemImage: "lock.rotation.open",
-                    placeholder: "Confirm New Password",
-                    text: $confirmPassword,
                     isSecure: true,
-                    isInvalid: !confirmPassword.isEmpty && confirmPassword != newPassword,
-                    errorText: "Passwords don’t match"
+                    isInvalid: !isPasswordValid && !newPassword.isEmpty,
+                    errorText: "Weak password!"
                 )
-
+                .onChange(of: newPassword) { oldValue, newValue in
+                    // Reset confirmation when new password changes
+                    if oldValue != newValue {
+                        confirmPassword = ""
+                    }
+                }
+                
+                // CONDITIONAL CONFIRM FIELD OR FEEDBACK
+                if newPassword.count > 1 && !doPasswordsMatch {
+                    TextFieldWithIcon(
+                        systemImage: "lock.rotation.open",
+                        placeholder: "Confirm New Password",
+                        text: $confirmPassword,
+                        isSecure: true,
+                        isInvalid: !doPasswordsMatch && !confirmPassword.isEmpty,
+                        errorText: "Doesn’t match!"
+                    )
+                    .focused($isConfirmFocused)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    
+                } else if doPasswordsMatch && !newPassword.isEmpty {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.system(size: 18, weight: .semibold))
+                        Text("Password confirmed")
+                            .font(.footnote.bold())
+                            .foregroundColor(.green)
+                    }
+                    .transition(.scale.combined(with: .opacity))
+                    .onAppear {
+                        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                    }
+                }
+                
                 // MARK: - Feedback Messages
                 if let errorMessage {
                     HStack {
@@ -133,16 +183,16 @@ struct ProfileView: View {
                     .foregroundColor(.white)
                     .transition(.opacity)
                 }
-
+                
                 // MARK: - Save Button
                 PrimaryButton(title: isLoading ? "Saving..." : "Save Changes") {
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     Task { await saveProfile() }
                 }
-                .disabled(!isFormValid || isLoading)
-                .opacity(isFormValid ? 1 : 0.6)
+                .disabled(!hasChanges || isLoading)
+                .opacity(hasChanges ? 1 : 0.6)
                 .padding(.top, 10)
-
+                
                 // MARK: - Cancel
                 Button("Cancel") {
                     dismiss()
@@ -164,40 +214,87 @@ struct ProfileView: View {
             username = user.username
         }
     }
-
-    // MARK: - Actions
+    
     @MainActor
     private func saveProfile() async {
         isLoading = true
         errorMessage = nil
         successMessage = nil
-
-        // Verify current password
-        guard currentPassword == user.passwordHash else {
-            errorMessage = "Current password is incorrect."
-            isLoading = false
-            return
-        }
-
-        // Update user data
-        user.username = username
-        user.passwordHash = newPassword
-
+        
         do {
+            try await updateUsername()
+            
+            try await updatePassword()
+            
             try context.save()
+        
             successMessage = "Profile updated successfully!"
+            
             print("✅ Profile updated for \(user.username)")
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                 dismiss()
             }
+            
         } catch {
             print("❌ Error saving profile: \(error)")
-            errorMessage = "Failed to save profile."
+            
+            if let profileError = error as? ProfileUpdateError {
+                errorMessage = profileError.localizedDescription
+            } else {
+                errorMessage = "Unexpected error: \(error.localizedDescription)"
+            }
+            
         }
-
+        
         isLoading = false
     }
+    
+    private func updateUsername() async throws {
+        if username != user.username {
+            do {
+                try await userStore.validateUsername(username)
+                user.username = username
+            } catch let usernameError as UsernameValidationError {
+                throw ProfileUpdateError(from: usernameError)
+            } catch {
+                throw ProfileUpdateError.usernameValidationFailed("Unexpected error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    private func updatePassword() async throws {
+        if !newPassword.isEmpty {
+            
+            guard userStore.validateUserPassword(currentPassword) else {
+                throw ProfileUpdateError.invalidCurrentPassword
+            }
+            
+            guard userStore.isPasswordValid(newPassword) else {
+                throw ProfileUpdateError.weakNewPassword
+            }
+            
+            user.passwordHash = userStore.emcrypPassword(newPassword)
+        }
+    }
+    
+    // MARK: - FORM - Validation
+    private var isFormValid: Bool {
+        !username.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+    
+    private var isPasswordValid: Bool {
+        userStore.isPasswordValid(newPassword)
+    }
+    
+    private var doPasswordsMatch: Bool {
+        !confirmPassword.isEmpty && confirmPassword == newPassword
+    }
+    
+    private var hasChanges: Bool {
+        username != user.username || !newPassword.isEmpty
+    }
+    
 }
 
 #Preview {

@@ -41,6 +41,7 @@ struct LevelUpApp: App {
                     User.self,
                     UserSettings.self,
                     UserStats.self,
+                    Achievement.self,
                 ])
                 .preferredColorScheme(.light)
                 .environment(\.theme, currentTheme)
